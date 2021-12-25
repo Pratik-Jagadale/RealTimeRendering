@@ -40,9 +40,9 @@ int main(void)
 
     // *** CONVERTING 2D INTEGR ARRAY TO 1D INTEGER ARRAY ***
 
-    for (i = 0; i < NUM_COLUMNS; i++)
+    for (i = 0; i < NUM_ROWS; i++)
     {
-        for (j = 0; j < NUM_ROWS; j++)
+        for (j = 0; j < NUM_COLUMNS; j++)
         {
             iArray_1D_PRJ[(i * NUM_COLUMNS) + j] = iArray_2D_PRJ[i][j];
         }
