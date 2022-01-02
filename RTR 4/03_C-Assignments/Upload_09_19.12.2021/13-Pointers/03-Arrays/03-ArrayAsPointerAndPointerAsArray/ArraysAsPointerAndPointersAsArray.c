@@ -33,16 +33,16 @@ int main(void)
     printf("\n\n");
     printf("Using Pointer as Array Name i.e : Value of xTh Element of iArray_PRJ :ptr_iArray[x] And Address of xTh Element of iArray : &ptr_iArray[x] \n\n");
 
-    printf("ptr_iArray_PRJ[0] = %d \t At Address : %p\n", ptr_iArray_PRJ[0], &Array_PRJ[0]);
-    printf("ptr_iArray_PRJ[1] = %d \t At Address : %p\n", ptr_iArray_PRJ[1], &Array_PRJ[1]);
-    printf("ptr_iArray_PRJ[2] = %d \t At Address : %p\n", ptr_iArray_PRJ[2], &Array_PRJ[2]);
-    printf("ptr_iArray_PRJ[3] = %d \t At Address : %p\n", ptr_iArray_PRJ[3], &Array_PRJ[3]);
-    printf("ptr_iArray_PRJ[4] = %d \t At Address : %p\n", ptr_iArray_PRJ[4], &Array_PRJ[4]);
-    printf("ptr_iArray_PRJ[5] = %d \t At Address : %p\n", ptr_iArray_PRJ[5], &Array_PRJ[5]);
-    printf("ptr_iArray_PRJ[6] = %d \t At Address : %p\n", ptr_iArray_PRJ[6], &Array_PRJ[6]);
-    printf("ptr_iArray_PRJ[7] = %d \t At Address : %p\n", ptr_iArray_PRJ[7], &Array_PRJ[7]);
-    printf("ptr_iArray_PRJ[8] = %d \t At Address : %p\n", ptr_iArray_PRJ[8], &Array_PRJ[8]);
-    printf("ptr_iArray_PRJ[9] = %d \t At Address : %p\n", ptr_iArray_PRJ[9], &Array_PRJ[9]);
+    printf("ptr_iArray_PRJ[0] = %d \t At Address : %p\n", ptr_iArray_PRJ[0], &ptr_iArray_PRJ[0]);
+    printf("ptr_iArray_PRJ[1] = %d \t At Address : %p\n", ptr_iArray_PRJ[1], &ptr_iArray_PRJ[1]);
+    printf("ptr_iArray_PRJ[2] = %d \t At Address : %p\n", ptr_iArray_PRJ[2], &ptr_iArray_PRJ[2]);
+    printf("ptr_iArray_PRJ[3] = %d \t At Address : %p\n", ptr_iArray_PRJ[3], &ptr_iArray_PRJ[3]);
+    printf("ptr_iArray_PRJ[4] = %d \t At Address : %p\n", ptr_iArray_PRJ[4], &ptr_iArray_PRJ[4]);
+    printf("ptr_iArray_PRJ[5] = %d \t At Address : %p\n", ptr_iArray_PRJ[5], &ptr_iArray_PRJ[5]);
+    printf("ptr_iArray_PRJ[6] = %d \t At Address : %p\n", ptr_iArray_PRJ[6], &ptr_iArray_PRJ[6]);
+    printf("ptr_iArray_PRJ[7] = %d \t At Address : %p\n", ptr_iArray_PRJ[7], &ptr_iArray_PRJ[7]);
+    printf("ptr_iArray_PRJ[8] = %d \t At Address : %p\n", ptr_iArray_PRJ[8], &ptr_iArray_PRJ[8]);
+    printf("ptr_iArray_PRJ[9] = %d \t At Address : %p\n", ptr_iArray_PRJ[9], &ptr_iArray_PRJ[9]);
 
     return (0);
 }
