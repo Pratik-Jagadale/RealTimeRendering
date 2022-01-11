@@ -4,6 +4,9 @@
 /* global variables */
 bool bFullScreen = false;
 
+float yellow[] = { 1.0f,1.0f,0.0f};
+float lavender[] = { 0.5f,0.5f,1.0f};
+
 /* entry-point function */
 int main(int argc, char *argv[]) {//argc = argument count ,argv = argument vector
 
@@ -53,9 +56,7 @@ void display(void) {
 
 	//const declartion
 	const float r =  0.5f;
-	static float yellow[] = { 1.0f,1.0f,0.0f};
-	static float lavender[] = { 0.5f,0.5f,1.0f};
-
+	
 	/* code */
 	glClear(GL_COLOR_BUFFER_BIT);
 	/* Yello to Lavender */
