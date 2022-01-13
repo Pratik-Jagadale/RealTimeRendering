@@ -27,9 +27,11 @@ int main(void)
 
     printf("\ndg\n");
     get_beg(p_list, &p_data);
+
     printf("\ndgwefw\n");
     printf("Get Beg = %d\n", p_data);
     printf("\n--------------\n");
+    
     get_end(p_list, &p_data);
     printf("Get End = %d\n", p_data);
     printf("\n--------\n");
