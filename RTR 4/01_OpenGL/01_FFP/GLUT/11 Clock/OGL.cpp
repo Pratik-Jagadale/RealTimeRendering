@@ -5,16 +5,16 @@
 /* global variables */
 bool bFullScreen = false;
 
+SYSTEMTIME st;
+
 //#define macros
 #define PI 3.1459265
 
-const float r1 = 0.40f;
-const float r2 = 0.38f;
-const float r3 = 0.34f;
+const float r1 = 0.52f;
+const float r2 = 0.50f;
+const float r3 = 0.44f;
 
-float hr_hand = 360.0f;
-float mn_hand = 360.0f;
-float sc_hand = 360.0f;
+const float clockTime = -(3.1459265 / 5) / 6;
 
 /* entry-point function */
 int main(int argc, char *argv[])
@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
 
-	glutInitWindowSize(800, 800);
+	glutInitWindowSize(1000, 1000);
 	glutInitWindowPosition(100, 100);
 	glutCreateWindow("Pratik Rajendra Jagadale");
 
@@ -54,7 +54,7 @@ void initialize(void)
 {
 
 	/* code */
-	glClearColor(0.6367188575f, 0.62890625f, 0.65625f, 0.0f);
+	glClearColor(0.960784313725490f, 0.9176470588235f,0.8745098039f, 0.0f);
 }
 
 void resize(int width, int height)
@@ -77,6 +77,8 @@ void display(void)
 	void DrawCenter(void);
 
 	/* code */
+	GetSystemTime(&st);
+
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	DrawCircle();
@@ -149,7 +151,7 @@ void DrawCircle(void)
 		float x, y;
 		x = r1 * cos(angle);
 		y = r1 * sin(angle);
-		glColor3f(0.99609337f, 0.546875f, 0.390625f);
+		glColor3f(0.894117647058823529f, 0.87058823529f, 0.8235294117647f);
 		glVertex3f(x, y, 0.0f);
 	}
 	glEnd();
@@ -161,12 +163,13 @@ void DrawInnerBackgroundCircle(void)
 	glBegin(GL_LINES);
 	for (float angle = 0.0f; angle < 360.0f; angle = angle + 0.01f)
 	{
-		glColor3f(0.99609375f, 0.495703125f, 0.52735355f);
+
+		glColor3f(0.894117647058823529f, 0.87058823529f, 0.8235294117647f);
 		glVertex3f(0.0f, 0.0f, 0.0f);
 		float x, y;
 		x = r2 * cos(angle);
 		y = r2 * sin(angle);
-		glColor3f(0.99609375f, 0.95703125f, 0.52734355f);
+		glColor3f(0.184313725490196f, 0.2705882352f, 0.3803921568627f);
 		glVertex3f(x, y, 0.0f);
 	}
 	glEnd();
@@ -182,7 +185,7 @@ void DrawPoints(void)
 		float x, y;
 		x = r3 * cos(angle);
 		y = r3 * sin(angle);
-		glColor3f(0.99609375f, 0.3984375f, 0.3515625f);
+		glColor3f(0.894117647058823529f, 0.87058823529f, 0.8235294117647f);
 		glVertex3f(x, y, 0.1f);
 	}
 	glEnd();
@@ -192,12 +195,12 @@ void DrawHrHand(void)
 {
 	glLineWidth(5);
 	glBegin(GL_LINES);
-	glColor3f(1.0f, 1.0f, 1.0f);
+	glColor3f(0.4f, 0.33725f, 0.494117f);
 	glVertex3f(0.0f, 0.0f, 0.0f);
 	float x = 0.0, y = 0.0;
-	x = 0.17 * cos(hr_hand);
-	y = 0.17 * sin(hr_hand);
-	glColor3f(1.0f, 0.0f, 0.0f);
+	x = 0.17 * cos(clockTime * st.wHour);
+	y = 0.17 * sin(clockTime * st.wHour);
+	glColor3f(0.4f, 0.33725f, 0.494117f);
 	glVertex3f(x, y, 0.0f);
 	glEnd();
 }
@@ -207,26 +210,14 @@ void DrawMinutrHand(void)
 	// Minute Hand
 	glLineWidth(3);
 	glBegin(GL_LINES);
-	if (mn_hand > 0)
-	{
-		glColor3f(1.0f, 1.0f, 1.0f);
-		glVertex3f(0.0f, 0.0f, 0.0f);
-		float x = 0.0, y = 0.0;
-		x = 0.24 * cos(mn_hand);
-		y = 0.24 * sin(mn_hand);
-		glColor3f(1.0f, 0.0f, 0.0f);
-		glVertex3f(x, y, 0.0f);
+	glColor3f(0.4f, 0.33725f, 0.494117f);
+	glVertex3f(0.0f, 0.0f, 0.0f);
+	float x = 0.0, y = 0.0;
+	x = 0.24 * cos(clockTime * st.wMinute);
+	y = 0.24 * sin(clockTime * st.wMinute);
+	glColor3f(0.4f, 0.33725f, 0.494117f);
+	glVertex3f(x, y, 0.0f);
 
-		if (mn_hand  == 353.613770f)
-		{
-			hr_hand = hr_hand - 0.01f;
-			mn_hand = 360.0f;
-		}
-	}
-	else
-	{
-		mn_hand = 360.0f;
-	}
 	glEnd();
 }
 void DrawSecondHand(void)
@@ -234,24 +225,13 @@ void DrawSecondHand(void)
 	// Second Hand
 	glLineWidth(1);
 	glBegin(GL_LINES);
-	if (sc_hand > 0.0f)
-	{
-		glColor3f(1.0f, 1.0f, 1.0f);
-		glVertex3f(0.0f, 0.0f, 0.0f);
-		float x = 0.0, y = 0.0;
-		x = 0.25 * cos(sc_hand);
-		y = 0.25 * sin(sc_hand);
-		glColor3f(1.0f, 0.0f, 0.1f);
-		glVertex3f(x, y, 0.5f);
-		sc_hand = sc_hand - 0.01f;
-
-//		printf("%f\n",sc_hand );
-		if (sc_hand  == 353.613770f) //((int)(sc_hand) % 6 == 0)
-		{
-			mn_hand = mn_hand - 0.1f;
-			sc_hand = 360.0f;
-		}
-	}
+	glColor3f(0.894117647058823529f, 0.87058823529f, 0.8235294117647f);
+	glVertex3f(0.0f, 0.0f, 0.0f);
+	float x = 0.0, y = 0.0;
+	x = 0.25 * cos(clockTime * st.wSecond);
+	y = 0.25 * sin(clockTime * st.wSecond);
+	glColor3f(1.0f, 0.0f, 0.1f);
+	glVertex3f(x, y, 0.5f);
 	glEnd();
 }
 
@@ -265,11 +245,11 @@ void DrawSubLines(void)
 		float x, y;
 		x = r3 * cos(angle);
 		y = r3 * sin(angle);
-		glColor3f(0.48828125f, 0.41796875f, 0.48828125f);
+		glColor3f(0.894117647058823529f, 0.87058823529f, 0.8235294117647f);
 		glVertex3f(x, y, 0.1f);
 
 		
-		glColor3f(0.48828125f, 0.41796875f, 0.48828125f);
+		glColor3f(0.894117647058823529f, 0.87058823529f, 0.8235294117647f);
 		if (x > 0 && y > 0)
 		{
 			glVertex3f(x - 0.0001, y - 0.0001, 0.2f);
