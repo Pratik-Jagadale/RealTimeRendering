@@ -36,7 +36,7 @@ int main(void)
         exit(0);
     }
     else
-        printf("SUCCESSFFULLY ALLOCATED MEMORY FOR %d EEMPLOYEES !!!\n\n", num_employees);
+        printf("SUCCESSFFULLY ALLOCATED MEMORY FOR %d EMPLOYEES !!!\n\n", num_employees);
 
     // *** USER INPUT INITAILIZATION OF ARRAY struct EMPLOYEE ***
 
@@ -51,6 +51,78 @@ int main(void)
         printf("\n\n\n");
         printf("Enter Employees age (in years) : ");
         scanf("%d", &pEmployeeRecord[i].age_PRJ);
+
+        printf("\n\n");
+        printf("Enter Employees Sex (M/m For Male , F/f For female) : ");
+        pEmployeeRecord[i].sex_PRJ = getch();
+        printf("%c", pEmployeeRecord[i].sex_PRJ);
+        pEmployeeRecord[i].sex_PRJ = toupper(pEmployeeRecord[i].sex_PRJ);
+
+        printf("\n\n");
+        printf("Enter Employee's Salary (in Indian Ruppes) :");
+        scanf("%f", &pEmployeeRecord[i].salary_PRJ);
+
+        printf("\n\n");
+        printf("Is The Employee Married (Y/y For yes , N/n For No) : ");
+        pEmployeeRecord[i].marital_status_PRJ = getch();
+        printf("%c", pEmployeeRecord[i].marital_status_PRJ);
+        pEmployeeRecord[i].marital_status_PRJ = toupper(pEmployeeRecord[i].marital_status_PRJ);
     }
+
+    // DISPLAY
+    printf("\n\n");
+    printf("------ DISPLAYING EMPLOYEE RECORDS-------\n\n");
+    printf("\n\n");
+    printf("*** DISPLAYING EMPLOYEE RECORDS ***");
+    for (i = 0; i < num_employees; i++)
+    {
+        printf("*** Employee Number %d **** \n\n", (i + 1));
+        printf(" Name                   = %s \n", pEmployeeRecord[i].name_PRJ);
+        printf("Age                    = %d \n", pEmployeeRecord[i].age_PRJ);
+
+        if (pEmployeeRecord[i].sex_PRJ == 'M' || pEmployeeRecord[i].sex_PRJ == 'm')
+            printf("Sex                    = Male \n");
+        else
+            printf("Sex                    = Female \n");
+
+        printf("Salary                 = %.2f \n", pEmployeeRecord[i].salary_PRJ);
+
+        if (pEmployeeRecord[i].marital_status_PRJ == 'Y' || pEmployeeRecord[i].marital_status_PRJ == 'y')
+            printf("Marital Status          Married\n");
+        else
+            printf("Marital Status          UnMarried\n");
+
+        printf("\n\n");
+    }
+
+    if (pEmployeeRecord)
+    {
+        free(pEmployeeRecord);
+        pEmployeeRecord = NULL;
+        printf("MEMORY ALLOCATION TO %d EMPLOYEES HAS BEEN SUCCESFULLY FREED !!!\n\n", num_employees);
+    }
+
     return (0);
+}
+
+void MyGetString(char str[], int str_size)
+{
+    //VARIABLE DECLATION
+    int i;
+    char ch = '\0';
+
+    //code
+    i = 0;
+    do
+    {
+        ch = getch();
+        str[i] = ch;
+        printf("%c", str[i]);
+        i++;
+    } while ((ch != '\r') && (i < str_size));
+
+    if (i == str_size)
+        str[i - 1] = '\0';
+    else
+        str[i] = '\0';
 }
