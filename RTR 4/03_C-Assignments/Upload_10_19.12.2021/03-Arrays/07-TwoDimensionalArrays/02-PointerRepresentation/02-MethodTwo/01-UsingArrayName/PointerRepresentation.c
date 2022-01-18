@@ -7,7 +7,7 @@
 int main(void)
 {
     // Variable declaerations
-    int iArray_PRJ[NUM_COLUMNS][NUM_ROWS];
+    int iArray_PRJ[NUM_ROWS][NUM_COLUMNS];
     int i, j;
 
     // code
@@ -24,11 +24,11 @@ int main(void)
         // (*(iArray + 0) + 0) = (iArray[0] + 0) = ADDRESS OF 0TH ELEMENT FROM BASE
             ADDRESS OF 0TH ROW = (iArray[0] + 0) = (iArray[0][0])
     */
+        {
 
     for (i = 0; i < NUM_ROWS; i++)
     {
         for (j = 0; j < NUM_COLUMNS; j++)
-        {
             *(*(iArray_PRJ + i) + j) = (i + 1) * (j + 1); // 'iArray[][]' Can be treated as As 1D Array using Pointers...
         }
     }

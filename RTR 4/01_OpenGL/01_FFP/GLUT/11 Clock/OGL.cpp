@@ -10,9 +10,9 @@ SYSTEMTIME st;
 //#define macros
 #define PI 3.1459265
 
-const float r1 = 0.52f;
-const float r2 = 0.50f;
-const float r3 = 0.44f;
+const float r1 = 0.42f;
+const float r2 = 0.39f;
+const float r3 = 0.37f;
 
 const float clockTime = -(3.1459265 / 5) / 6;
 
@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
 
-	glutInitWindowSize(1000, 1000);
+	glutInitWindowSize(800, 800);
 	glutInitWindowPosition(100, 100);
 	glutCreateWindow("Pratik Rajendra Jagadale");
 
@@ -54,7 +54,7 @@ void initialize(void)
 {
 
 	/* code */
-	glClearColor(0.960784313725490f, 0.9176470588235f,0.8745098039f, 0.0f);
+	glClearColor(1.0f, 1.0f,1.0f, 0.0f);
 }
 
 void resize(int width, int height)

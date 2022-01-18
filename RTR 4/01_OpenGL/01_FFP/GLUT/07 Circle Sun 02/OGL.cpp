@@ -1,4 +1,8 @@
+
+
+/*
 /* header files */
+/*
 #include <GL/freeglut.h>
 #include <math.h>
 /* global variables */

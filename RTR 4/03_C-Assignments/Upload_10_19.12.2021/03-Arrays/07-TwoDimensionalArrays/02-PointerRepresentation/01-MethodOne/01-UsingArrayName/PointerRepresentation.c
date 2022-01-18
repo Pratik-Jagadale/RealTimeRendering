@@ -7,7 +7,7 @@
 int main(void)
 {
     // Variable declaerations
-    int iArray_PRJ[NUM_COLUMNS][NUM_ROWS];
+    int iArray_PRJ[NUM_ROWS][NUM_COLUMNS];
     int i, j;
 
     // code
@@ -23,9 +23,11 @@ int main(void)
     {
         for (j = 0; j < NUM_COLUMNS; j++)
         {
-            *(iArray_PRJ[i] + j) = (i + 1) * (j + 1);
+            *(iArray_PRJ[i] + j) = (i + 5) * (j + 5);
         }
     }
+
+    printf("%d\n",iArray_PRJ[4][0]);
 
     printf("\n\n");
     printf("2D Integer Array Elements Along With Addresses : \n\n");
