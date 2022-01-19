@@ -30,7 +30,7 @@ int main(void)
     //ASSIGNING VALUES TO 2D ARRAY
     for (i = 0; i < NUM_ROWS; i++)
     {
-        for (j = 0; j < (NUM_COLUMNS - 1); j++)
+        for (j = 0; j < (NUM_COLUMNS - i); j++)
         {
             iArray_PRJ[i][j] = (i + 1) * (j + 1);
         }
@@ -41,7 +41,7 @@ int main(void)
     printf("2D Integer Array Elements Along With Addresses : \n\n");
     for (i = 0; i < NUM_ROWS; i++)
     {
-        for (j = 0; j < (NUM_COLUMNS - 1); j++)
+        for (j = 0; j < (NUM_COLUMNS - i); j++)
         {
             printf("iArray_PRJ[%d][%d] = %d \t\t At Addresses : %p\n", i, j, iArray_PRJ[i][j], &iArray_PRJ[i][j]);
         }
