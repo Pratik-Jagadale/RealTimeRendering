@@ -53,51 +53,103 @@ void display(void) {
 
 	//function prototype
 	void cloud(float, float,float,float);
-	float r = 0.5;
+	float r = 0.4;
 
 	/* code */
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	// Back Cloudes - left most
+	r = 0.4f;
 	glBegin(GL_LINES);
 	for(float angle =  0.0f; angle < 360.0f ; angle = angle + 0.01f)
 	{
-		glColor3f(1.0f,1.0f,1.0f);
-		glVertex3f(0.0f + 0.5f,0.0f,0.0f);
-		float x, y;
-		x = (r * cos(angle)) + 0.6;
-		y =  r * sin(angle);
-		glColor3f(1.0f,1.0f,1.0f);
-		glVertex3f(x,y,0.0f);
-	}
-	glEnd();
-
-	r = 0.4;
-	glBegin(GL_LINES);
-	for(float angle =  0.0f; angle < 360.0f ; angle = angle + 0.01f)
-	{
-		glColor3f(1.0f,1.0f,1.0f);
-		glVertex3f(0.0f,0.0f,0.0f);
+		glColor3f(0.20f,0.54f,0.74f);
+		glVertex3f(0.3f,0.0f,0.1f);
 		float x, y;
 		x = (r * cos(angle)) + 0.4;
-		y =  r * sin(angle);
-		glColor3f(1.0f,1.0f,1.0f);
-		glVertex3f(x,y,0.0f);
+		y =  (r * sin(angle) )-0.1f;
+		glColor3f(0.20f,0.54f,0.74f);
+		glVertex3f(x,y,0.1);
 	}
 	glEnd();
 
+	// middle
 	r = 0.3;
 	glBegin(GL_LINES);
 	for(float angle =  0.0f; angle < 360.0f ; angle = angle + 0.01f)
 	{
-		glColor3f(1.0f,1.0f,1.0f);
-		glVertex3f(-0.2f,0.0f,0.0f);
+		glColor3f(0.0f,0.0f,0.0f);
+		glVertex3f(- 0.2,0.03f,0.1);
 		float x, y;
-		x = (r * cos(angle)) + 0.5;
+		x = (r * cos(angle)) -0.1;
+		y =  (r * sin(angle)) - 0.1f;
+		glColor3f(0.0f,0.0f,0.0f);
+		glVertex3f(x,y,0.1);
+	}
+	glEnd();
+
+	//left most
+	r = 0.2;
+	glBegin(GL_LINES);
+	for(float angle =  0.0f; angle < 360.0f ; angle = angle + 0.01f)
+	{
+		glColor3f(0.0f,0.0f,0.0f);
+		glVertex3f(-0.3,-0.06f,0.0f);
+		float x, y;
+		x = (r * cos(angle)) -0.3;
+		y =  (r * sin(angle) ) -0.1f;
+		glColor3f(0.0f,0.0f,0.0f);
+		glVertex3f(x,y,0.1);
+	}
+	glEnd();
+
+
+	//Front Cloudes - Right most
+	r = 0.4f;
+	glBegin(GL_LINES);
+	for(float angle =  0.0f; angle < 360.0f ; angle = angle + 0.01f)
+	{
+		glColor3f(0.65f,0.75f,0.85f);
+		glVertex3f(0.3f,0.1f,0.0f);
+		float x, y;
+		x = (r * cos(angle)) + 0.4;
 		y =  r * sin(angle);
-		glColor3f(1.0f,1.0f,1.0f);
+		glColor3f(0.65f,0.75f,0.85f);
 		glVertex3f(x,y,0.0f);
 	}
 	glEnd();
+
+	// middle
+	r = 0.3;
+	glBegin(GL_LINES);
+	for(float angle =  0.0f; angle < 360.0f ; angle = angle + 0.01f)
+	{
+		glColor3f(0.65f,0.75f,0.85f);
+		glVertex3f(- 0.2,0.05f,0.0f);
+		float x, y;
+		x = (r * cos(angle)) -0.1;
+		y =  r * sin(angle) ;
+		glColor3f(0.65f,0.75f,0.85f);
+		glVertex3f(x,y,0.0f);
+	}
+	glEnd();
+
+	//left most
+	r = 0.2;
+	glBegin(GL_LINES);
+	for(float angle =  0.0f; angle < 360.0f ; angle = angle + 0.01f)
+	{
+		glColor3f(0.65f,0.75f,0.85f);
+		glVertex3f(-0.3,-0.05f,0.0f);
+		float x, y;
+		x = (r * cos(angle)) -0.3;
+		y =  r * sin(angle) ;
+		glColor3f(0.65f,0.75f,0.85f);
+		glVertex3f(x,y,0.0f);
+	}
+	glEnd();
+
+
 
 	glutSwapBuffers();
 }
