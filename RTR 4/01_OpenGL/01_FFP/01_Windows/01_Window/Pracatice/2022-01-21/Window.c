@@ -13,7 +13,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 
 	//code
 	// intializing wndlcass struct variabled
-	wndclass.cbSize = sizeof(WNDCLASSEX);
+	wndclass.cbSize = sizeof(WNDCLASSEX  ); //NEW After EX
 	wndclass.style = CS_HREDRAW | CS_VREDRAW;
 	wndclass.cbClsExtra = 0;
 	wndclass.cbWndExtra = 0;
@@ -24,7 +24,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	wndclass.lpszClassName = szAppName;
 	wndclass.hCursor = LoadCursor(NULL, IDC_HAND);
 	wndclass.lpszMenuName = NULL;
-	wndclass.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+	wndclass.hIconSm = LoadIcon(NULL, IDI_APPLICATION); // NEW 
 
 	// Register Above Class
 	RegisterClassEx(&wndclass);
