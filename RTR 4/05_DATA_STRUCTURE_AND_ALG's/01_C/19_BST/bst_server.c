@@ -1,10 +1,22 @@
-k #include<stdio.h>
+#include<stdio.h>
 #include <stdlib.h>
 #include "bst.h"
 
     /* Iterface */
-    bst_t *create_bst(void);
-status_t insert_bst(bst_t *p_bst, data_t new_data);
+bst_t *create_bst(void);
+{
+	bst_t* p_bst = NULL;
+	p_bst = (bst_t*)xmalloc(sizeof(bst_t));
+	p_bst->p_root_node = NULL;
+
+	return (p_root_node);
+}
+
+status_t insert_bst(bst_t *p_bst, data_t new_data)
+{
+
+}
+
 bool search_bst(bst_t *p_bst, data_t search_data);
 void inorder_r(bst_t *p_bst);
 void preorder_r(bst_t *p_bst);
@@ -20,8 +32,16 @@ ret_t remove_bst(bst_t *p_bst);
 ret_t destroy_bst(bst_t **p_bst);
 
 /* BST Helper Routines */
-bst_node_t *search_bst_node(bst_node_t *p_root_node, data_t search_data);
-bst_node_t *get_bst_node(data_t new_data);
+bst_node_t *search_bst_node(bst_node_t *p_root_node, data_t search_data)
+{
+
+}
+
+bst_node_t *get_bst_node(data_t new_data)
+{
+	
+}
+
 bst_node_t *inorder_successor_node(bst_node_t *p_bst_node);
 bst_node_t *inorder_predecessor_node(bst_node_t *p_bst_node);
 
