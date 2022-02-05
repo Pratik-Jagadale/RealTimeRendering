@@ -51,7 +51,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
 	HDC hdc;
 	PAINTSTRUCT Ps;
-	RECT rc;
+	static RECT rc;
 	TCHAR str[] = TEXT("Wake Up, Neo... \n The Matrix Has You...\n Follow The White Rabbit. \n\n Knock, knock, Neo. !!!");
 
 	switch(iMsg)
@@ -60,7 +60,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			break;		
 
 		case WM_PAINT:
-			GetClientRect(hwnd, &rc);
 			hdc = BeginPaint(hwnd, &Ps);
 			SetBkColor(hdc, RGB(0,0,0));
 			SetTextColor(hdc, RGB(0,255,0));
@@ -72,6 +71,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			PostQuitMessage(0);
 			break;
 
+		case WM_SIZE:
+			GetClientRect(hwnd, &rc);
+			break;
 		default:
 			break;
 	}

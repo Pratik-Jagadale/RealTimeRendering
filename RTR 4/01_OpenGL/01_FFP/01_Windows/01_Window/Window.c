@@ -44,7 +44,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 		hInstance,
 		NULL);
 
-
 	ShowWindow(hwnd, iCmdShow);
 	UpdateWindow(hwnd);
 

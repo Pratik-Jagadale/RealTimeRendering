@@ -31,7 +31,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	RegisterClassEx(&wndclass);
 
 	//create Window
-	hwnd = CreateWindow(szAppName, TEXT("Messages"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
+	hwnd = CreateWindow(szAppName, TEXT("Paint Two"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
 
 	// showWindow
 	ShowWindow(hwnd, iCmdShow);
@@ -50,22 +50,56 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
 	HDC hdc;
-	PAINTSTRUCT Ps;
 	RECT rc;
 	TCHAR str[] = TEXT("Wake Up, Neo... \n The Matrix Has You...\n Follow The White Rabbit. \n\n Knock, knock, Neo. !!!");
+	static int iColorFlag = 0;
 
 	switch(iMsg)
 	{
-		case WM_CREATE:	
-			break;		
+		case WM_KEYDOWN:
+			switch(wParam)
+			{
+				case 27:
+					DestroyWindow(hwnd);
+					break;
+				default:
+					break;
+			}
+			break;
 
-		case WM_PAINT:
+		case WM_CHAR:
+				switch(wParam)
+				{
+					case 'R':
+					case 'r':
+						iColorFlag = 1;
+						InvalidateRect(hwnd,NULL, TRUE);
+						break;
+
+					case 'G':
+					case 'g':
+						iColorFlag = 2;
+						InvalidateRect(hwnd,NULL, TRUE);
+						break;
+					
+					case 'B':
+					case 'b':
+						iColorFlag = 3;
+						InvalidateRect(hwnd,NULL, TRUE);
+						break;
+
+					default:
+						break;	
+				}
+			break;
+		
+		case WM_LBUTTONDOWN:
 			GetClientRect(hwnd, &rc);
-			hdc = BeginPaint(hwnd, &Ps);
+			hdc = GetDC(hwnd);
 			SetBkColor(hdc, RGB(0,0,0));
-			SetTextColor(hdc, RGB(0,255,0));
+			SetTextColor(hdc, RGB(255,255,255));
 			DrawText(hdc, str, -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-			EndPaint(hwnd,&Ps);
+			ReleaseDC(hwnd,hdc);
 			break;
 
 		case WM_DESTROY:
