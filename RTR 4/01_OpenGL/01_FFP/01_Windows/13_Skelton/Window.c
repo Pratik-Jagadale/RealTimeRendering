@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define WINWIDTH 800
+#define WINHEIGHT 600
+
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void ToggleFullScreen();
@@ -16,18 +19,23 @@ int iHeightOfWindow;
 int iWidthOfWindow;
 int iXMyWindow;
 int iYMyWindow;
-
-/* Global Variable declartions */
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 
 /* Entry Point Function */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
 {
+	/* function declartions */
+	int initialize(void);
+	void display(void);
+	void update(void);
+
+	/* variable declarations */
 	WNDCLASSEX wndclass;
 	HWND hwnd;
 	MSG msg;
 	TCHAR szAppName[] = TEXT("MyWindow");
 	BOOL bDone = FALSE;
+	int iRetVal = 0;
 
 	// Code
 	if (fopen_s(&gpFile, "Log.txt", "w") != 0) // fopen_s -> #include<stdio.h>
@@ -63,17 +71,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	iXMyWindow = (iWidthOfWindow) / 4;	// x coordinate for MyWindow
 	iYMyWindow = (iHeightOfWindow) / 4; // y coordinate for MyWindow
 
-	// create window
-	hwnd = CreateWindow(szAppName, TEXT("Pratik Jagadale"), WS_OVERLAPPEDWINDOW, iXMyWindow, iYMyWindow, (iWidthOfWindow) / 2, (iHeightOfWindow) / 2, NULL, NULL, hInstance, NULL);
-
 	/* Create Window */
 	hwnd = CreateWindow(szAppName,
 						TEXT("Pratik Rajendra Jagadale"),
 						WS_OVERLAPPEDWINDOW,
-						CW_USEDEFAULT,
-						CW_USEDEFAULT,
-						CW_USEDEFAULT,
-						CW_USEDEFAULT,
+						iXMyWindow,
+						iYMyWindow,
+						(iWidthOfWindow) / 2,
+						(iHeightOfWindow) / 2,
 						NULL,
 						NULL,
 						hInstance,
@@ -81,8 +86,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 
 	ghwnd = hwnd;
 
+	// initizalize
+	iRetVal = initialize();
+
 	ShowWindow(hwnd, iCmdShow);
-	UpdateWindow(hwnd);
+
+	/* fore grounding and focusing window */
+	SetForegroundWindow(hwnd);
+	SetFocus(hwnd);
 
 	/* Game Loop */
 	while (bDone == FALSE)
@@ -103,7 +114,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 		{
 			if (gbActiveWindow == TRUE)
 			{
-				// here game runs
+				/* Render the seen */
+				display();
+				// updatetheseen
+				update();
 			}
 		}
 	}
@@ -114,6 +128,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 /* CALLBACK Function */
 LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
+	/* fucntion declarations */
+	// void ToggleFullScreen();
+	void resize(int, int);
+	void uninitialize(void);
+
 	// code
 	switch (iMsg)
 	{
@@ -123,6 +142,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_KILLFOCUS:
 		gbActiveWindow = FALSE;
+		break;
+
+	case WM_ERASEBKGND:
 		break;
 
 	case WM_CHAR:
@@ -143,13 +165,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case WM_SIZE:
+		resize(LOWORD(lParam), HIWORD(lParam));
+		break;
+
+	case WM_CLOSE:
+
+		DestroyWindow(hwnd);
+		break;
+
 	case WM_DESTROY:
-		if (gpFile)
-		{
-			fprintf(gpFile, "Log File Successfully Closes");
-			fclose(gpFile);
-			gpFile = NULL;
-		}
+		uninitialize();
 		PostQuitMessage(0);
 		break;
 	default:
@@ -192,5 +218,55 @@ void ToggleFullScreen()
 
 		ShowCursor(TRUE);
 		bFullScreen = FALSE;
+	}
+}
+
+int initialize(void)
+{
+	/* fucntion delcations */
+
+	/* variable declartions */
+
+	/* code */
+
+	return (0);
+}
+
+void resize(int width, int height)
+{
+	/* code */
+	if (height == 0)
+		height = 1;
+}
+
+void display(void)
+{
+	/* Code */
+}
+
+void update(void)
+{
+	/* code */
+}
+
+void uninitialize(void)
+{
+	/* function declarations */
+	void ToggleFullScreen(void);
+
+	/* code */
+	if (bFullScreen)
+		ToggleFullScreen();
+
+	if (ghwnd)
+	{
+		DestroyWindow(ghwnd);
+	}
+
+	if (gpFile)
+	{
+		fprintf(gpFile, "Log File Successfully Closes");
+		fclose(gpFile);
+		gpFile = NULL;
 	}
 }
