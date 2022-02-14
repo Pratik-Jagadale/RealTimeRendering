@@ -31,7 +31,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	RegisterClassEx(&wndclass);
 
 	//create Window
-	hwnd = CreateWindow(szAppName, TEXT("Paint Two"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
+	hwnd = CreateWindow(szAppName, TEXT("Paint_Three_UsingGetDCo"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
 
 	// showWindow
 	ShowWindow(hwnd, iCmdShow);
@@ -50,12 +50,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
 	HDC hdc;
-	RECT rc;
+	static RECT rc;
 	TCHAR str[] = TEXT("Wake Up, Neo... \n The Matrix Has You...\n Follow The White Rabbit. \n\n Knock, knock, Neo. !!!");
 	static int iColorFlag = 0;
 
 	switch(iMsg)
 	{
+		case WM_CREATE:
+			GetClientRect(hwnd, &rc);
+			break;
 		case WM_KEYDOWN:
 			switch(wParam)
 			{
@@ -94,7 +97,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			break;
 		
 		case WM_LBUTTONDOWN:
-			GetClientRect(hwnd, &rc);
+			
 			hdc = GetDC(hwnd);
 			SetBkColor(hdc, RGB(0,0,0));
 			
