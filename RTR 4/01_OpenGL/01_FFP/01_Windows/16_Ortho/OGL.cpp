@@ -323,7 +323,7 @@ void resize(int width, int height)
 	}
 	else
 	{
-		glOrtho((100.0f * (GLfloat)width) / ((GLfloat)height), (-100.0f * (GLfloat)width) / ((GLfloat)height), -100.0f, 100.0f, -100.0f, 100.0f);
+		glOrtho((-100.0f * (GLfloat)width) / ((GLfloat)height), (100.0f * (GLfloat)width) / ((GLfloat)height), -100.0f, 100.0f, -100.0f, 100.0f);
 	}
 }
 
@@ -353,7 +353,7 @@ void update(void)
 
 void uninitialize(void)
 {
-	/* function declarations */
+	/* function declaations */
 	void ToggleFullScreen(void);
 
 	/* code */
