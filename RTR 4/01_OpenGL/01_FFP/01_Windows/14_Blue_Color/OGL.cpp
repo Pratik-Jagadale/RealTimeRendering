@@ -34,6 +34,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 {
 	/* function declartions */
 	int initialize(void);
+	void uninitialize(void);
 	void display(void);
 	void update(void);
 	void uninitialize(void);
@@ -156,6 +157,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 		}
 	}
 
+	uninitialize();
 	return ((int)msg.wParam);
 }
 
@@ -165,7 +167,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 	/* fucntion declarations */
 	// void ToggleFullScreen();
 	void resize(int, int);
-	void uninitialize(void);
 
 	// code
 	switch (iMsg)
@@ -179,7 +180,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_ERASEBKGND:
-		break;
+		return (0);
 
 	case WM_CHAR:
 		switch (wParam)
@@ -204,12 +205,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_CLOSE:
-
 		DestroyWindow(hwnd);
 		break;
 
 	case WM_DESTROY:
-		uninitialize();
 		PostQuitMessage(0);
 		break;
 	default:
@@ -265,7 +264,7 @@ int initialize(void)
 
 	/* code */
 	/* initialization of pixelformatdesciptor structure */
-	ZeroMemory(&pfd, sizeof(PIXELFORMATDESCRIPTOR));
+	ZeroMemory(&pfd, sizeof(PIXELFORMATDESCRIPTOR)); // memset((void*)&pfd , NULL, sizeof(OIXELFORAMTEDESCRIPTOR));
 	pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
 	pfd.nVersion = 1;
 	pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
@@ -289,7 +288,7 @@ int initialize(void)
 	if (SetPixelFormat(ghdc, iPixelFormatIndex, &pfd) == FALSE)
 		return -2;
 
-	/* briding API */
+	/* binding API */
 	/* Create OpenGL Rendering Context */
 
 	ghrc = wglCreateContext(ghdc);
@@ -310,7 +309,7 @@ int initialize(void)
 void resize(int width, int height)
 {
 	/* code */
-	if (height == 0)
+	if (height == 0) // to avoid devided by zero
 		height = 1;
 
 	glViewport(0, 0, width, height);

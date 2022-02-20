@@ -34,6 +34,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 {
 	/* function declartions */
 	int initialize(void);
+	void uninitialize(void);
 	void display(void);
 	void update(void);
 	void uninitialize(void);
@@ -156,6 +157,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 		}
 	}
 
+	uninitialize();
 	return ((int)msg.wParam);
 }
 
@@ -163,9 +165,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
 	/* fucntion declarations */
-	// void ToggleFullScreen();
 	void resize(int, int);
-	void uninitialize(void);
 
 	// code
 	switch (iMsg)
@@ -179,7 +179,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_ERASEBKGND:
-		break;
+		return (0);
 
 	case WM_CHAR:
 		switch (wParam)
@@ -209,7 +209,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_DESTROY:
-		uninitialize();
 		PostQuitMessage(0);
 		break;
 	default:
