@@ -17,7 +17,7 @@
 HWND ghwnd = NULL;
 HDC ghdc = NULL;
 HGLRC ghrc = NULL;
-BOOL bFullScreen = FALSE;
+BOOL gbFullScreen = FALSE;
 int iHeightOfWindow;
 int iWidthOfWindow;
 int iXMyWindow;
@@ -37,7 +37,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	void uninitialize(void);
 	void display(void);
 	void update(void);
-	void uninitialize(void);
 
 	/* variable declarations */
 	WNDCLASSEX wndclass;
@@ -201,7 +200,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_SIZE:
-		resize(LOWORD(lParam), HIWORD(lParam));
+		resize(WORD(lParam), HIWORD(lParam));
 		break;
 
 	case WM_CLOSE:
@@ -226,21 +225,24 @@ void ToggleFullScreen()
 
 	//	code
 	wp.length = sizeof(WINDOWPLACEMENT);
-	if (bFullScreen == FALSE)
+	if (gbFullScreen == FALSE)
 	{
 		dwStyle = GetWindowLong(ghwnd, GWL_STYLE);
+
 		if (dwStyle & WS_OVERLAPPEDWINDOW)
+		{
 			mi.cbSize = sizeof(MONITORINFO);
 
-		if (GetWindowPlacement(ghwnd, &wp) && GetMonitorInfo(MonitorFromWindow(ghwnd, MONITORINFOF_PRIMARY), &mi))
-		{
-			SetWindowLong(ghwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
+			if (GetWindowPlacement(ghwnd, &wp) && GetMonitorInfo(MonitorFromWindow(ghwnd, MONITORINFOF_PRIMARY), &mi))
+			{
+				SetWindowLong(ghwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
 
-			SetWindowPos(ghwnd, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top, SWP_NOZORDER | SWP_FRAMECHANGED); // nccalksize
+				SetWindowPos(ghwnd, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top, SWP_NOZORDER | SWP_FRAMECHANGED); // nccalksize
+			}
+
+			ShowCursor(FALSE);
+			gbFullScreen = TRUE;
 		}
-
-		ShowCursor(FALSE);
-		bFullScreen = TRUE;
 	}
 	else
 	{
@@ -250,7 +252,7 @@ void ToggleFullScreen()
 		SetWindowPos(ghwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_FRAMECHANGED);
 
 		ShowCursor(TRUE);
-		bFullScreen = FALSE;
+		gbFullScreen = FALSE;
 	}
 }
 
@@ -333,7 +335,7 @@ void uninitialize(void)
 	void ToggleFullScreen(void);
 
 	/* code */
-	if (bFullScreen)
+	if (gbFullScreen)
 		ToggleFullScreen();
 
 	/*  */
