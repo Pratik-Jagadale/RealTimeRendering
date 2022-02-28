@@ -193,6 +193,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 				gpFile = NULL;
 			}
 			PostQuitMessage(0);
+			break;
 		}
 		break;
 
