@@ -3,6 +3,7 @@
 #include "OGL.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 /* OpenGL Header files */
 #include <GL/gl.h>
@@ -193,6 +194,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 				gpFile = NULL;
 			}
 			PostQuitMessage(0);
+			break;
 		}
 		break;
 
@@ -324,6 +326,9 @@ void resize(int width, int height)
 
 void display(void)
 {
+	/* Function protype */
+	void drawAmogh(void);
+
 	/* Code */
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -331,7 +336,7 @@ void display(void)
 	glLoadIdentity();
 	glTranslatef(0.0f, 0.0f, -3.0f);
 
-	// code
+	drawAmogh();
 
 	SwapBuffers(ghdc);
 }
@@ -379,5 +384,416 @@ void uninitialize(void)
 		fprintf(gpFile, "Log File Successfully Closes");
 		fclose(gpFile);
 		gpFile = NULL;
+	}
+}
+
+/*
+////////////////changes for amogh collor toggle /////////////
+YELLOW, LAVENDER , PI macros
+*/
+#define YELLOW 0
+#define LAVENDER 1
+#define PI 3.1459265
+
+float yellow[] = {1.0f, 1.0f, 0.0f};
+float lavender[] = {0.5f, 0.5f, 1.0f};
+
+///////////////////
+void drawAmogh(void)
+{
+	/* function prototype */
+	void toggleCollor();
+	void drawShadowAmogh();
+
+	/* Code */
+	toggleCollor();
+	drawShadowAmogh();
+
+	glLineWidth(10);
+
+	glBegin(GL_QUADS);
+
+	glColor3f(0.0f, 0.0f, 0.0f);
+	glVertex3f(-0.7744f, 0.162f, 0.05f);   // top
+	glVertex3f(-0.8866f, -0.1832f, 0.05f); // bottom
+	glVertex3f(-0.839f, -0.1826f, 0.05f);  // bottom
+	glVertex3f(-0.7202f, 0.1616f, 0.05f);  // top
+	glEnd();
+
+	glBegin(GL_QUADS);
+
+	glColor3f(yellow[0], yellow[1], yellow[2]);
+	glVertex3f(-0.7744f, 0.162f, 0.0f); // top
+
+	glColor3f(lavender[0], lavender[1], lavender[2]);
+	glVertex3f(-0.8866f, -0.1832f, 0.0f); // bottom
+	glVertex3f(-0.839f, -0.1826f, 0.0f);  // bottom
+
+	glColor3f(yellow[0], yellow[1], yellow[2]);
+	glVertex3f(-0.7202f, 0.1616f, 0.0f); // top
+	glEnd();
+
+	// mid
+	glBegin(GL_QUADS);
+	glColor3f(yellow[0], yellow[1], yellow[2]);
+	glVertex3f(-0.8045f, -0.0769f, 0.0f);  // top
+	glVertex3f(-0.6941f, -0.0765f, 0.0f);  // top
+	glVertex3f(-0.79607f, -0.0361f, 0.0f); // top
+	glVertex3f(-0.70203f, -0.0369f, 0.0f); // top
+
+	glEnd();
+
+	// right
+
+	glBegin(GL_QUADS);
+	glColor3f(lavender[0], lavender[1], lavender[2]);
+	glVertex3f(-0.6594f, -0.1838f, 0.0f); // bottom
+	glVertex3f(-0.6103f, -0.1825f, 0.0f); // bottom
+
+	glColor3f(yellow[0], yellow[1], yellow[2]);
+	glVertex3f(-0.7202f, 0.1616f, 0.0f); // top
+	glVertex3f(-0.7744f, 0.162f, 0.0f);	 // top
+
+	glEnd();
+
+	/*   M  */
+	glBegin(GL_QUADS);
+
+	glColor3f(yellow[0], yellow[1], yellow[2]);
+	glVertex3f(-0.5513f, 0.1625f, 0.0f); // top
+
+	glColor3f(lavender[0], lavender[1], lavender[2]);
+	glVertex3f(-0.5509f, -0.1835f, 0.0f); // bottom
+
+	glColor3f(lavender[0], lavender[1], lavender[2]);
+	glVertex3f(-0.5065f, -0.1704f, 0.0f); // bottom
+
+	glColor3f(yellow[0], yellow[1], yellow[2]);
+	glVertex3f(-0.5065f, 0.1619f, 0.0f); // top
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glVertex3f(-0.5513f, 0.1625f, 0.0f); // top
+
+	glColor3f(lavender[0], lavender[1], lavender[2]);
+	glVertex3f(-0.4168f, -0.1842f, 0.0f); // bottom
+	glVertex3f(-0.3579f, -0.1832f, 0.0f); // bottom
+	glColor3f(yellow[0], yellow[1], yellow[2]);
+	glVertex3f(-0.47976f, 0.162f, 0.0f); // top
+	glEnd();
+
+	glBegin(GL_QUADS);
+
+	glColor3f(lavender[0], lavender[1], lavender[2]);
+	glVertex3f(-0.41697f, -0.18417f, 0.0f); // bottom
+	glVertex3f(-0.35967f, -0.18439f, 0.0f); // bottom
+
+	glColor3f(yellow[0], yellow[1], yellow[2]);
+	glVertex3f(-0.2199f, 0.16233f, 0.0f); // top;
+	glVertex3f(-0.2929f, 0.16233f, 0.0f); // top
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glColor3f(0.901f, 0.784f, 0.019f);
+	glVertex3f(-0.274f, 0.1621f, 0.0f); // top
+
+	glColor3f(lavender[0], lavender[1], lavender[2]);
+	glVertex3f(-0.274f, -0.1846f, 0.0f); // bottom
+	glColor3f(0.901f, 0.784f, 0.019f);
+	glVertex3f(-0.2192f, -0.18398f, 0.0f); // bottom
+
+	glColor3f(yellow[0], yellow[1], yellow[2]);
+	glVertex3f(-0.2192f, 0.1615f, 0.0f); // top
+
+	glEnd();
+
+	/* O */
+	glEnable(GL_SMOOTH);
+	glPointSize(11);
+	glBegin(GL_POINTS);
+	for (float angle = 0.0f; angle < PI * 2; angle = angle + 0.01f)
+	{
+		float x, y;
+		x = 0.12f * cos(angle);
+		y = 0.14f * sin(angle);
+		glVertex3f(x, y, 0.1f);
+	}
+	glEnd();
+
+	/* G */
+	glBegin(GL_POINTS);
+	for (float angle = 0.0f; angle < PI * 2; angle = angle + 0.01f)
+	{
+		if (angle < 0.785f || angle > 5.713)
+			continue;
+
+		float x, y;
+
+		x = (0.12f * cos(angle)) + 0.3348f;
+		y = 0.14f * sin(angle);
+		glVertex3f(x, y, 0.1f);
+	}
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glColor3f(yellow[0], yellow[1], yellow[2]);
+	glVertex3f(0.4241, -0.0479f, 0.0f);	 // top
+	glVertex3f(0.3355f, -0.047f, 0.0f);	 // top
+	glVertex3f(0.33515f, -0.006f, 0.0f); // top
+	glVertex3f(0.4703f, -0.006f, 0.0f);	 // top
+	glVertex3f(0.4714f, -0.0442f, 0.0f); // top
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glVertex3f(0.4242f, -0.0068f, 0.0f); // top
+	glColor3f(lavender[0], lavender[1], lavender[2]);
+	glVertex3f(0.4344f, -0.1864f, 0.0f); // bottom
+	glVertex3f(0.471f, -0.1861f, 0.0f);	 // bottom
+	glColor3f(yellow[0], yellow[1], yellow[2]);
+	glVertex3f(0.4703f, -0.006f, 0.0f); // top
+
+	glEnd();
+
+	/* H */
+	glBegin(GL_QUADS);
+	glVertex3f(0.6038f, 0.1624f, 0.0f); // top
+	glVertex3f(0.5561f, 0.1623f, 0.0f); // top
+	glColor3f(lavender[0], lavender[1], lavender[2]);
+	glVertex3f(0.5569f, -0.1837f, 0.0f); // bottom
+	glVertex3f(0.6043f, -0.1836f, 0.0f); // bottom
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glColor3f(yellow[0], yellow[1], yellow[2]);
+	glVertex3f(0.6028f, 0.0194f, 0.0f);	 // top
+	glVertex3f(0.6033f, -0.0246f, 0.0f); // top
+	glVertex3f(0.7625f, -0.0253f, 0.0f); // top
+	glVertex3f(0.76f, 0.0202f, 0.0f);	 // top
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glVertex3f(0.7594f, 0.1632f, 0.0f); // top
+	glVertex3f(0.81f, 0.1629f, 0.0f);	// top
+	glColor3f(lavender[0], lavender[1], lavender[2]);
+	glVertex3f(0.8102f, -0.1831f, 0.0f); // bottom
+	glVertex3f(0.759f, -0.1838f, 0.0f);	 // bottom
+	glEnd();
+}
+
+void drawShadowAmogh(void)
+{
+
+	glBegin(GL_QUADS);
+
+	glColor3f(0.0f, 0.0f, 0.0f);
+	glVertex3f(-0.7744f, 0.162f, 0.05f);   // top
+	glVertex3f(-0.8866f, -0.1832f, 0.05f); // bottom
+	glVertex3f(-0.839f, -0.1826f, 0.05f);  // bottom
+	glVertex3f(-0.7202f, 0.1616f, 0.05f);  // top
+	glEnd();
+
+	// mid
+	glColor3f(0.0f, 0.0f, 0.0f);
+	glBegin(GL_QUADS);
+	glVertex3f(-0.8045f, -0.0769f, 0.05f);	// top
+	glVertex3f(-0.6941f, -0.0765f, 0.05f);	// top
+	glVertex3f(-0.79607f, -0.0361f, 0.05f); // top
+	glVertex3f(-0.70203f, -0.0369f, 0.05f); // top
+
+	glEnd();
+
+	// right
+
+	glBegin(GL_QUADS);
+	glVertex3f(-0.6594f, -0.1838f, 0.05f); // bottom
+	glVertex3f(-0.6103f, -0.1825f, 0.05f); // bottom
+	glVertex3f(-0.7202f, 0.1616f, 0.05f);  // top
+	glVertex3f(-0.7744f, 0.162f, 0.05f);   // top
+
+	glEnd();
+
+	/*   M  */
+	glBegin(GL_QUADS);
+	glVertex3f(-0.5513f, 0.1625f, 0.05f);  // top
+	glVertex3f(-0.5509f, -0.1835f, 0.05f); // bottom
+	glVertex3f(-0.5065f, -0.1704f, 0.05f); // bottom
+	glVertex3f(-0.5065f, 0.1619f, 0.05f);  // top
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glVertex3f(-0.5513f, 0.1625f, 0.05f);  // top
+	glVertex3f(-0.4168f, -0.1842f, 0.05f); // bottom
+	glVertex3f(-0.3579f, -0.1832f, 0.05f); // bottom
+	glVertex3f(-0.47976f, 0.162f, 0.05f);  // top
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glVertex3f(-0.41697f, -0.18417f, 0.05f); // bottom
+	glVertex3f(-0.35967f, -0.18439f, 0.05f); // bottom
+	glVertex3f(-0.2199f, 0.16233f, 0.05f);	 // top;
+	glVertex3f(-0.2929f, 0.16233f, 0.05f);	 // top
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glVertex3f(-0.274f, 0.1621f, 0.05f);	// top
+	glVertex3f(-0.274f, -0.1846f, 0.05f);	// bottom
+	glVertex3f(-0.2192f, -0.18398f, 0.05f); // bottom
+	glVertex3f(-0.2192f, 0.1615f, 0.05f);	// top
+
+	glEnd();
+
+	/* O */
+	glEnable(GL_SMOOTH);
+	glPointSize(11);
+	glBegin(GL_POINTS);
+	for (float angle = 0.0f; angle < PI * 2; angle = angle + 0.01f)
+	{
+		float x, y;
+		x = (0.12f * cos(angle)) + 0.01;
+		y = 0.14f * sin(angle);
+		glVertex3f(x, y, 0.05f);
+	}
+	glEnd();
+
+	/* G */
+	glBegin(GL_POINTS);
+	for (float angle = 0.0f; angle < PI * 2; angle = angle + 0.01f)
+	{
+		if (angle < 0.785f || angle > 5.713)
+			continue;
+
+		float x, y;
+
+		x = (0.12f * cos(angle)) + 0.3500f;
+		y = 0.14f * sin(angle);
+		glVertex3f(x, y, 0.05f);
+	}
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glVertex3f(0.4241, -0.0479f, 0.05f);  // top
+	glVertex3f(0.3355f, -0.047f, 0.05f);  // top
+	glVertex3f(0.33515f, -0.006f, 0.05f); // top
+	glVertex3f(0.4703f, -0.006f, 0.05f);  // top
+	glVertex3f(0.4714f, -0.0442f, 0.05f); // top
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glVertex3f(0.4242f, -0.0068f, 0.05f); // top
+	glVertex3f(0.4344f, -0.1864f, 0.05f); // bottom
+	glVertex3f(0.471f, -0.1861f, 0.05f);  // bottom
+	glVertex3f(0.4703f, -0.006f, 0.05f);  // top
+
+	glEnd();
+
+	/* H */
+	glBegin(GL_QUADS);
+	glVertex3f(0.6038f, 0.1624f, 0.05f);  // top
+	glVertex3f(0.5561f, 0.1623f, 0.05f);  // top
+	glVertex3f(0.5569f, -0.1837f, 0.05f); // bottom
+	glVertex3f(0.6043f, -0.1836f, 0.05f); // bottom
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glVertex3f(0.6028f, 0.0194f, 0.05f);  // top
+	glVertex3f(0.6033f, -0.0246f, 0.05f); // top
+	glVertex3f(0.7625f, -0.0253f, 0.05f); // top
+	glVertex3f(0.76f, 0.0202f, 0.05f);	  // top
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glVertex3f(0.7594f, 0.1632f, 0.05f);  // top
+	glVertex3f(0.81f, 0.1629f, 0.05f);	  // top
+	glVertex3f(0.8102f, -0.1831f, 0.05f); // bottom
+	glVertex3f(0.759f, -0.1838f, 0.05f);  // bottom
+	glEnd();
+}
+
+void toggleCollor()
+{
+
+	static int iTop = 0;	// flag for inner vertex
+	static int iBottom = 0; // flag for outer vertex
+
+	// for Inner Vertex ->
+	if (iTop == YELLOW) // If Inner is Yellow Then Converting yellow[] array to Lavender
+	{
+		if (yellow[0] > 0.5f)
+		{
+			yellow[0] = yellow[0] - 0.01f;
+		}
+		if (yellow[1] > 0.5f)
+		{
+			yellow[1] = yellow[1] - 0.01f;
+		}
+		if (yellow[2] <= 1.0f)
+		{
+			yellow[2] = yellow[2] + 0.01f;
+
+			if (yellow[2] >= 1.0f)
+			{
+				iTop = LAVENDER; // we are changing the flag here...because this if  will interate longer than other two
+			}
+		}
+	}
+	else // If yellow[] array is Lavender... converting yellow to lavender
+	{
+		if (yellow[0] < 1.0f)
+		{
+			yellow[0] = yellow[0] + 0.01f;
+		}
+		if (yellow[1] < 1.0f)
+		{
+			yellow[1] = yellow[1] + 0.01f;
+		}
+		if (yellow[2] >= 0.0f)
+		{
+			yellow[2] = yellow[2] - 0.01f;
+			if (yellow[2] <= 0.0f)
+			{
+				iTop = YELLOW;
+			}
+		}
+	}
+
+	// for Outer Coordinate ->
+	if (iBottom == LAVENDER) // If outer is lavender then converting lavender[] array to Yellow
+	{
+		if (lavender[0] < 1.0f)
+		{
+			lavender[0] = lavender[0] + 0.01f;
+		}
+		if (lavender[1] < 1.0f)
+		{
+			lavender[1] = lavender[1] + 0.01f;
+		}
+		if (lavender[2] >= 0.0f)
+		{
+			lavender[2] = lavender[2] - 0.01f;
+			if (lavender[2] <= 0.0f)
+			{
+				iBottom = YELLOW;
+			}
+		}
+	}
+	else // if Outer is Yellow then converting Lavender[] array to -> lavender
+	{
+		if (lavender[0] > 0.5f)
+		{
+			lavender[0] = lavender[0] - 0.01f;
+		}
+		if (lavender[1] > 0.5f)
+		{
+			lavender[1] = lavender[1] - 0.01f;
+		}
+		if (lavender[2] <= 1.0f)
+		{
+			lavender[2] = lavender[2] + 0.01f;
+
+			if (lavender[2] >= 1.0f)
+			{
+				iBottom = LAVENDER;
+			}
+		}
 	}
 }
