@@ -31,7 +31,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	RegisterClassEx(&wndclass);
 
 	//create Window
-	hwnd = CreateWindow(szAppName, TEXT("Messages"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
+	hwnd = CreateWindow(szAppName, TEXT("WM_PAINT Get Cleint Rect In WM_CREATE"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
 
 	// showWindow
 	ShowWindow(hwnd, iCmdShow);
@@ -51,16 +51,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
 	HDC hdc;
 	PAINTSTRUCT Ps;
-	RECT rc;
+	static RECT rc;
 	TCHAR str[] = TEXT("Wake Up, Neo... \n The Matrix Has You...\n Follow The White Rabbit. \n\n Knock, knock, Neo. !!!");
 
 	switch(iMsg)
 	{
 		case WM_CREATE:	
+			GetClientRect(hwnd, &rc);	
 			break;		
 
 		case WM_PAINT:
-			GetClientRect(hwnd, &rc);
 			hdc = BeginPaint(hwnd, &Ps);
 			SetBkColor(hdc, RGB(0,0,0));
 			SetTextColor(hdc, RGB(0,255,0));
