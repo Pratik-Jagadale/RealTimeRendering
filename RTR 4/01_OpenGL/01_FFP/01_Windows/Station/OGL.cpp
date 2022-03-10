@@ -27,8 +27,6 @@ FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 
 int iShapeFlag = 0;
 
-#define PI 3.1459265
-
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void ToggleFullScreen();
@@ -85,7 +83,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 
     /* Create Window */
     hwnd = CreateWindowEx(WS_EX_APPWINDOW, szAppName,
-                          TEXT("2D Shape Assignment"),
+                          TEXT("Railway Station"),
                           WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE,
                           (iWidthOfWindow - WINWIDTH) / 2,
                           (iHeightOfWindow - WINHEIGHT) / 2,
@@ -198,65 +196,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
                 gpFile = NULL;
             }
             PostQuitMessage(0);
-            break;
-
-        case 'a':
-        case 'A':
-            iShapeFlag = 1;
-            break;
-
-        case 'b':
-        case 'B':
-            iShapeFlag = 2;
-            break;
-
-        case 'c':
-        case 'C':
-            iShapeFlag = 3;
-            break;
-
-        case 'd':
-        case 'D':
-            iShapeFlag = 4;
-            break;
-
-        case 'e':
-        case 'E':
-            iShapeFlag = 5;
-            break;
-
-        case 'g':
-        case 'G':
-            iShapeFlag = 6;
-            break;
-
-        case 'h':
-        case 'H':
-            iShapeFlag = 7;
-            break;
-
-        case 'i':
-        case 'I':
-            iShapeFlag = 8;
-            break;
-
-        case 'j':
-        case 'J':
-            iShapeFlag = 9;
-            break;
-
-        case 'k':
-        case 'K':
-            iShapeFlag = 10;
-            break;
-
-        case 'l':
-        case 'L':
-            iShapeFlag = 11;
-            break;
-
-        default:
-            iShapeFlag = 0;
             break;
         }
         break;
@@ -389,6 +328,10 @@ void resize(int width, int height)
 
 void display(void)
 {
+    /* Function declartiona */
+    void drawRailwayStation(void);
+    void drawStation(void);
+
     /* Code */
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -396,191 +339,8 @@ void display(void)
     glLoadIdentity();
     glTranslatef(0.0f, 0.0f, -3.0f);
 
-    /* LINE */
-
-    glLineWidth(7);
-    switch (iShapeFlag)
-    {
-    case 0:
-        glPointSize(15);
-        glEnable(GL_POINT_SMOOTH);
-        glBegin(GL_POINTS);
-        glColor3f(1.0f, 0.0f, 0.0f);
-        glVertex3f(0.0f, 0.0f, 0.0f);
-        glEnd();
-        break;
-    case 1:
-        /* LINE */
-        glBegin(GL_LINES);
-        glColor3f(0.0f, 1.0f, 0.0f);
-        glVertex3f(-0.5, 0.0f, 0.0f);
-        glVertex3f(0.5, 0.0f, 0.0f);
-        glEnd();
-        break;
-
-    case 2:
-        /* TRANGEL */
-        glBegin(GL_LINE_STRIP);
-        glColor3f(0.0f, 0.0f, 1.0f);
-        glVertex3f(-0.5f, 0.0f, 0.0f);
-        glVertex3f(0.5f, 0.0f, 0.0f);
-        glVertex3f(0.0f, 0.5f, 0.0f);
-        glVertex3f(-0.5f, 0.0f, 0.0f);
-        glEnd();
-        break;
-
-    case 3:
-        /* SQUARE */
-        glBegin(GL_LINE_STRIP);
-        glColor3f(1.0f, 1.0f, 0.0f);
-        glVertex3f(-0.4f, 0.4f, 0.0f);
-        glVertex3f(-0.4f, -0.4f, 0.0f);
-        glVertex3f(0.4f, -0.4f, 0.0f);
-        glVertex3f(0.4f, 0.4f, 0.0f);
-        glVertex3f(-0.4f, 0.4f, 0.0f);
-
-        glEnd();
-        break;
-
-    case 4:
-        /* Pentagon */
-        glBegin(GL_LINE_STRIP);
-        glColor3f(0.0f, 1.0f, 1.0f);
-        glVertex3f(-0.4f, 0.4f, 0.0f);
-        glVertex3f(-0.4f, -0.4f, 0.0f);
-        glVertex3f(0.4f, -0.4f, 0.0f);
-        glVertex3f(0.4f, 0.4f, 0.0f);
-        glVertex3f(0.0f, 0.8f, 0.0f);
-        glVertex3f(-0.4f, 0.4f, 0.0f);
-
-        glEnd();
-        break;
-
-    case 5:
-        /* hexagon */
-        glBegin(GL_LINE_STRIP);
-
-        glColor3f(1.0f, 0.0f, 1.0f);
-        glVertex3f(-0.4f, 0.4f, 0.0f);
-        glVertex3f(-0.4f, -0.4f, 0.0f);
-        glVertex3f(0.0f, -0.8f, 0.0f);
-        glVertex3f(0.4f, -0.4f, 0.0f);
-        glVertex3f(0.4f, 0.4f, 0.0f);
-        glVertex3f(0.4f, 0.4f, 0.0f);
-        glVertex3f(0.0f, 0.8f, 0.0f);
-        glVertex3f(-0.4f, 0.4f, 0.0f);
-
-        glEnd();
-        break;
-
-    case 6:
-        /* Heptagon */
-        glBegin(GL_LINE_STRIP);
-
-        glColor3f(1.0f, 1.0f, 0.0f);
-        glVertex3f(0.0f, 0.458f, 0.0f);
-        glVertex3f(-0.373f, 0.279f, 0.0f);
-        glVertex3f(-0.469f, -0.129f, 0.0f);
-        glVertex3f(-0.2084f, -0.456f, 0.0f);
-        glVertex3f(0.208f, -0.454f, 0.0f);
-        glVertex3f(0.468f, -0.125f, 0.0f);
-        glVertex3f(0.371f, 0.276f, 0.0f);
-        glVertex3f(0.0f, 0.458f, 0.0f);
-        glEnd();
-        break;
-
-    case 7:
-        /* Octagon */
-        glBegin(GL_LINE_STRIP);
-
-        glColor3f(0.5f, 0.5f, 1.0f);
-        glVertex3f(-0.203f, 0.463f, 0.0f);
-        glVertex3f(-0.471f, 0.197f, 0.0f);
-        glVertex3f(-0.471f, -0.1875f, 0.0f);
-        glVertex3f(-0.2f, -0.458f, 0.0f);
-        glVertex3f(0.17f, -0.459f, 0.0f);
-        glVertex3f(0.444f, -0.185f, 0.0f);
-        glVertex3f(0.442f, 0.191f, 0.0f);
-        glVertex3f(0.174, 0.46f, 0.0f);
-        glVertex3f(-0.203f, 0.463f, 0.0f);
-        glEnd();
-
-        break;
-
-    case 8:
-        // Nonagone
-        glBegin(GL_LINE_STRIP);
-
-        glColor3f(0.5f, 0.5f, 0.0f);
-        glVertex3f(-0.0055f, 0.466f, 0.0f);
-        glVertex3f(-0.308f, 0.353f, 0.0f);
-        glVertex3f(-0.474f, 0.074f, 0.0f);
-        glVertex3f(-0.417f, -0.252f, 0.0f);
-        glVertex3f(-0.164f, -0.462f, 0.0f);
-        glVertex3f(0.167f, -0.46f, 0.0f);
-        glVertex3f(0.416f, -0.251f, 0.0f);
-        glVertex3f(0.475f, 0.0675f, 0.0f);
-        glVertex3f(0.306f, 0.349f, 0.0f);
-        glVertex3f(-0.0055f, 0.466f, 0.0f);
-        glEnd();
-
-        break;
-
-    case 9:
-        // Decagon
-        glBegin(GL_LINE_STRIP);
-
-        glColor3f(0.5f, 0.5f, 5.0f);
-        glVertex3f(-0.149, 0.4555f, 0.0f);
-        glVertex3f(-0.39, 0.282f, 0.0f);
-        glVertex3f(-0.482, -0.001f, 0.0f);
-        glVertex3f(-0.388, -0.28f, 0.0f);
-        glVertex3f(-0.148, -0.452f, 0.0f);
-        glVertex3f(0.145, -0.453f, 0.0f);
-        glVertex3f(0.384, -0.28f, 0.0f);
-        glVertex3f(0.478, 0.0f, 0.0f);
-        glVertex3f(0.384, 0.2815f, 0.0f);
-        glVertex3f(0.148, 0.455f, 0.0f);
-        glVertex3f(-0.149, 0.4555f, 0.0f);
-        glEnd();
-        break;
-
-    case 10:
-        // circle
-        glBegin(GL_LINES);
-        for (float angle = 0.0f; angle < PI * 2; angle = angle + 0.001f)
-        {
-            glVertex3f(0.0f, 0.0f, 0.0f);
-            float x, y;
-            x = 0.4544f * cos(angle);
-            y = 0.4544f * sin(angle);
-            glVertex3f(x, y, 0.50f);
-        }
-        glEnd();
-
-        break;
-
-    case 11:
-        // Ellipse
-        glBegin(GL_LINES);
-        for (float angle = 0.0f; angle < PI * 2; angle = angle + 0.001f)
-        {
-            glVertex3f(0.0f, 0.0f, 0.0f);
-            float x, y;
-            x = (0.4544f + 0.3f) * cos(angle);
-            y = (0.4544f * sin(angle));
-            glVertex3f(x, y, 0.50f);
-        }
-        glEnd();
-
-    default:
-        glPointSize(10);
-        glEnable(GL_POINT_SMOOTH);
-        glBegin(GL_POINTS);
-        glVertex3f(0.0f, 0.0f, 0.0f);
-        glEnd();
-        break;
-    }
+    // drawRailwayStation();
+    drawStation();
 
     SwapBuffers(ghdc);
 }
@@ -629,4 +389,255 @@ void uninitialize(void)
         fclose(gpFile);
         gpFile = NULL;
     }
+}
+
+/*
+    Draw Railway Station
+*/
+#define PI 3.1459265
+
+const float r1 = 0.42f;
+const float r2 = 0.39f;
+const float r3 = 0.37f;
+
+const float clockTime = -(3.1459265 / 5) / 6;
+SYSTEMTIME st;
+
+void drawRailwayStation(void)
+{
+    /* Function Prototyoes */
+    void drawStation(void);
+
+    /* Variable Declarations */
+    drawStation();
+}
+
+void drawStation(void)
+{
+    // fucntion prototype
+    void drawClock(void);
+    drawClock();
+    // Center Vertical
+
+    /* Center sqaur main */
+    glBegin(GL_QUADS);
+    glColor3f(1.0f, 1.0f, 0.0f);
+
+    glVertex3f(-1.4025f, 0.132f, 0.50f);
+    glVertex3f(-1.4f, -0.800f, 0.50f);
+    glVertex3f(1.399f, -0.800f, 0.50f);
+    glVertex3f(1.3925, 0.1445f, 0.50f);
+
+    /* Center  swaur terece */
+    glBegin(GL_QUADS);
+    glColor3f(1.0f, 0.0f, 0.0f);
+
+    glVertex3f(-1.226f, 0.4325f, 0.50f);
+    glVertex3f(-1.4025, 0.132f, 0.50f);
+    glVertex3f(1.3925, 0.132f, 0.50f);
+    glVertex3f(1.2195, 0.4325f, 0.50f);
+
+    glEnd();
+
+    // front middle wall
+    glBegin(GL_QUADS);
+    glColor3f(0.0f, 1.0f, 0.0f);
+
+    glVertex3f(-0.759f, 0.4357f, 0.50f);
+    glVertex3f(-0.7566f, -0.800f, 0.50f);
+    glVertex3f(0.7495f, -0.800f, 0.50f);
+    glVertex3f(0.745f, 0.4357f, 0.50f);
+
+    glEnd();
+
+    // circle - top
+    glColor3f(0.0f, 1.0f, 1.0f);
+
+    glBegin(GL_LINES);
+    for (float angle = 0.0f; angle < PI; angle = angle + 0.001f)
+    {
+        glVertex3f(0.0f, 0.422f, 0.50f);
+        float x, y;
+        x = 0.4544f * cos(angle);
+        y = (0.4544f * sin(angle)) + 0.4357;
+        glVertex3f(x, y, 0.50f);
+    }
+    glEnd();
+
+    // DRAW CLOCK
+
+    // glScalef(0.5f, 0.5f, 0.0f);
+}
+
+//
+//
+//
+//
+//
+//
+//
+// CLOCK
+void drawClock(void)
+{
+    // function prototypes
+    void DrawCircle(void);
+    void DrawInnerBackgroundCircle(void);
+    void DrawPoints(void);
+    void DrawHrHand(void);
+    void DrawMinutrHand(void);
+    void DrawSecondHand(void);
+    void DrawSubLines(void);
+    void DrawCenter(void);
+
+    /* code */
+    GetSystemTime(&st);
+
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    DrawCircle();
+    DrawInnerBackgroundCircle();
+    DrawPoints();
+    DrawHrHand();
+    DrawMinutrHand();
+    DrawSecondHand();
+    DrawSubLines();
+    DrawCenter();
+}
+
+/* DRAW FUCNTIONS */
+void DrawCircle(void)
+{
+    // Outer Color
+    glBegin(GL_POINTS);
+    for (float angle = 0.0f; angle < 360.0f; angle = angle + 0.01f)
+    {
+        float x, y;
+        x = r1 * cos(angle);
+        y = r1 * sin(angle);
+        glColor3f(0.894117647058823529f, 0.87058823529f, 0.8235294117647f);
+        glVertex3f(x, y, 1.0f);
+    }
+    glEnd();
+}
+
+void DrawInnerBackgroundCircle(void)
+{
+    // Inner Back Ground Circle
+    glBegin(GL_LINES);
+    for (float angle = 0.0f; angle < 360.0f; angle = angle + 0.01f)
+    {
+
+        glColor3f(0.894117647058823529f, 0.87058823529f, 0.8235294117647f);
+        glVertex3f(0.0f, 0.0f, -0.60f);
+        float x, y;
+        x = r2 * cos(angle);
+        y = r2 * sin(angle);
+        glColor3f(0.184313725490196f, 0.2705882352f, 0.3803921568627f);
+        glVertex3f(x, y, -0.60f);
+    }
+    glEnd();
+}
+// Points
+
+void DrawPoints(void)
+{
+    glPointSize(10);
+    glBegin(GL_POINTS);
+    for (float angle = 0.0f; angle < PI * 2; angle = angle + (PI / 2))
+    {
+        float x, y;
+        x = r3 * cos(angle);
+        y = r3 * sin(angle);
+        glColor3f(0.894117647058823529f, 0.87058823529f, 0.8235294117647f);
+        glVertex3f(x, y, 0.50f);
+    }
+    glEnd();
+}
+
+void DrawHrHand(void)
+{
+    glLineWidth(5);
+    glBegin(GL_LINES);
+    glColor3f(0.4f, 0.33725f, 0.494117f);
+    glVertex3f(0.0f, 0.0f, 0.50f);
+    float x = 0.0, y = 0.0;
+    x = 0.17 * cos(clockTime * st.wHour);
+    y = 0.17 * sin(clockTime * st.wHour);
+    glColor3f(0.4f, 0.33725f, 0.494117f);
+    glVertex3f(x, y, 0.50f);
+    glEnd();
+}
+
+void DrawMinutrHand(void)
+{
+    // Minute Hand
+    glLineWidth(3);
+    glBegin(GL_LINES);
+    glColor3f(0.4f, 0.33725f, 0.494117f);
+    glVertex3f(0.0f, 0.0f, 0.50f);
+    float x = 0.0, y = 0.0;
+    x = 0.24 * cos(clockTime * st.wMinute);
+    y = 0.24 * sin(clockTime * st.wMinute);
+    glColor3f(0.4f, 0.33725f, 0.494117f);
+    glVertex3f(x, y, 0.50f);
+
+    glEnd();
+}
+void DrawSecondHand(void)
+{
+    // Second Hand
+    glLineWidth(1);
+    glBegin(GL_LINES);
+    glColor3f(0.894117647058823529f, 0.87058823529f, 0.8235294117647f);
+    glVertex3f(0.0f, 0.0f, 0.50f);
+    float x = 0.0, y = 0.0;
+    x = 0.25 * cos(clockTime * st.wSecond);
+    y = 0.25 * sin(clockTime * st.wSecond);
+    glColor3f(1.0f, 0.0f, 0.1f);
+    glVertex3f(x, y, 0.50f);
+    glEnd();
+}
+
+void DrawSubLines(void)
+{
+    // SubPoins
+    glPointSize(1);
+    glBegin(GL_LINES);
+    for (float angle = 0.0f; angle < PI * 2; angle = angle + (PI / 6.0f))
+    {
+        float x, y;
+        x = r3 * cos(angle);
+        y = r3 * sin(angle);
+        glColor3f(0.894117647058823529f, 0.87058823529f, 0.8235294117647f);
+        glVertex3f(x, y, 0.50f);
+
+        glColor3f(0.894117647058823529f, 0.87058823529f, 0.8235294117647f);
+        if (x > 0 && y > 0)
+        {
+            glVertex3f(x - 0.0001, y - 0.0001, 0.50f);
+        }
+        else if (x > 0 && y < 0)
+        {
+            glVertex3f(x - 0.0001, y + 0.0001, 0.50f);
+        }
+        else if (x < 0 && y < 0)
+        {
+            glVertex3f(x + 0.0001, y + 0.0001, 0.50f);
+        }
+        else if (x < 0 && y > 0)
+        {
+            glVertex3f(x + 0.0001, y - 0.0001, 0.50f);
+        }
+    }
+    glEnd();
+}
+
+void DrawCenter(void)
+{
+    // Center
+    glPointSize(8);
+    glBegin(GL_POINTS);
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glVertex3f(0.0f, 0.0f, 1.50f);
+    glEnd();
 }

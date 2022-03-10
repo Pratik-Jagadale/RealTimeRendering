@@ -196,55 +196,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             }
             PostQuitMessage(0);
             break;
-
-        case 'a':
-        case 'A':
-            iShapeFlag = 1;
-            break;
-
-        case 'b':
-        case 'B':
-            iShapeFlag = 2;
-            break;
-
-        case 'c':
-        case 'C':
-            iShapeFlag = 3;
-            break;
-
-        case 'd':
-        case 'D':
-            iShapeFlag = 4;
-            break;
-
-        case 'e':
-        case 'E':
-            iShapeFlag = 5;
-            break;
-
-        case 'g':
-        case 'G':
-            iShapeFlag = 6;
-            break;
-
-        case 'h':
-        case 'H':
-            iShapeFlag = 7;
-            break;
-
-        case 'i':
-        case 'I':
-            iShapeFlag = 8;
-            break;
-
-        case 'j':
-        case 'J':
-            iShapeFlag = 9;
-            break;
-
-        default:
-            iShapeFlag = 0;
-            break;
         }
         break;
 
@@ -378,6 +329,7 @@ void display(void)
 {
     /* Function declartiona */
     void drawRailwayStation(void);
+    void drawTrain(void);
 
     /* Code */
     glClear(GL_COLOR_BUFFER_BIT);
@@ -386,7 +338,8 @@ void display(void)
     glLoadIdentity();
     glTranslatef(0.0f, 0.0f, -3.0f);
 
-    drawRailwayStation();
+    // drawRailwayStation();
+    drawTrain();
 
     SwapBuffers(ghdc);
 }
@@ -449,15 +402,55 @@ void drawRailwayStation(void)
     drawPlatForm();
 }
 
+void drawTrain(void)
+{
+    glBegin(GL_QUADS);
+
+    // WHITE
+
+    // bottom rectangel
+
+    /* Center red main */
+    glBegin(GL_QUADS);
+    glColor3f(1.0f, 1.0f, 0.0f);
+
+    glVertex3f(-2.000f, 0.5113f, 1.0f);
+    glVertex3f(-2.0008f, -0.569f, 1.0f);
+    glVertex3f(1.9963f, -0.5687f, 1.0f);
+    glVertex3f(1.99814f, 0.5122f, 1.0f);
+
+    glEnd();
+
+    // Bottom black strip
+    glBegin(GL_QUADS);
+    glColor3f(0.0f, 1.0f, 0.0f);
+
+    glVertex3f(-2.0f, 0.348, 0.5f);
+    glVertex3f(-2.0f, -0.5f, 0.5f);
+    glVertex3f(2.0f, -0.5f, 0.5f);
+    glVertex3f(2.0f, 0.345f, 0.5f);
+    glEnd();
+
+    // bttom gray stip
+    glBegin(GL_QUADS);
+    glColor3f(0.0f, 0.0f, 1.0f);
+
+    glVertex3f(1.999f, -0.507f, 0.5f);
+    glVertex3f(-2.0008f, -0.569f, 0.5f);
+    glVertex3f(1.9963f, -0.5687f, 0.5f);
+    glVertex3f(1.9972f, -0.4116f, 0.5f);
+    glEnd();
+}
+
 void drawPlatForm(void)
 {
     /* Variable declartions */
-    glBegin(GL_QUADS);
-    glColor3f(0.3960f, 0.3960f, 0.3960f);
+    /* glBegin(GL_QUADS);
+     glColor3f(0.3960f, 0.3960f, 0.3960f);
 
-    glVertex3f(-1.5, -0.5486f, 0.5f);
-    glVertex3f(-1.0f, -1.0f, 1.5f);
-    glVertex3f(1.0f, -1.0f, 1.5f);
-    glVertex3f(1.5f, -0.5486f, 0.5f);
-    glEnd();
+     glVertex3f(-2.0f, -0.5486f, 0.5f);
+     glVertex3f(-1.9995f, -0.9946f, 1.5f);
+     glVertex3f(1.996f, -0.995f, 1.5f);
+     glVertex3f(2.0f, -0.5486f, 0.5f);
+     glEnd();*/
 }
