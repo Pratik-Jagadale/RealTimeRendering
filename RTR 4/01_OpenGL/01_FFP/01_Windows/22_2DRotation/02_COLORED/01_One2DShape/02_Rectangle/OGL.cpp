@@ -24,6 +24,8 @@ int iHeightOfWindow;
 int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 
+float AngleRectangle = 0.0f;
+
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void ToggleFullScreen();
@@ -80,7 +82,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 
 	/* Create Window */
 	hwnd = CreateWindowEx(WS_EX_APPWINDOW, szAppName,
-						  TEXT("OpenGL Window - Perspective View Rectangle - COLORED"),
+						  TEXT("OpenGL Window - Pratik Jagadale"),
 						  WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE,
 						  (iWidthOfWindow - WINWIDTH) / 2,
 						  (iHeightOfWindow - WINHEIGHT) / 2,
@@ -325,68 +327,39 @@ void resize(int width, int height)
 
 void display(void)
 {
-	/* Function prototype */
-	void drawColoredTrangle(void);
-	void drawWhiteTrangle(void);
-	void drawWhiteRectangle(void);
-
 	/* Code */
 	glClear(GL_COLOR_BUFFER_BIT);
+
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+	glTranslatef(0.0f, 0.0f, -6.0f);
 
-	glTranslatef(0.0f, 0.0f, -9.0f);
-	drawColoredTrangle();
-
-	glTranslatef(2.50f, 0.0f, 0.0f);
-	drawWhiteTrangle();
-
-	glTranslatef(0.0f, 2.0f, 0.0f);
-	drawWhiteRectangle();
 	
-	SwapBuffers(ghdc);
-}
+    glRotatef(AngleRectangle,0.0f,1.0f,0.0f); // Spinning
 
-void drawColoredTrangle(void)
-{
-	//code
-	glBegin(GL_TRIANGLES);
+    glBegin(GL_QUADS);
+	glColor3f(1.0f, 0.0f, 1.0f);
+	glVertex3f(1.0f, 1.0f, 0.0f);
+
 	glColor3f(1.0f, 0.0f, 0.0f);
-	glVertex3f(0.0f, 1.0f, 0.0f);
+	glVertex3f(-1.0f, 1.0f, 0.0f);
+	
 	glColor3f(0.0f, 1.0f, 0.0f);
 	glVertex3f(-1.0f, -1.0f, 0.0f);
+	
 	glColor3f(0.0f, 0.0f, 1.0f);
 	glVertex3f(1.0f, -1.0f, 0.0f);
 	glEnd();
+
+	SwapBuffers(ghdc);
 }
 
-
-void drawWhiteTrangle(void)
-{
-	//code
-	glBegin(GL_TRIANGLES);
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glVertex3f(0.0f, 1.0f, 0.0f);
-	glVertex3f(-1.0f, -1.0f, 0.0f);
-	glVertex3f(1.0f, -1.0f, 0.0f);
-	glEnd();	
-}
-
-void drawWhiteRectangle(void)
-{
-	// code
-	glBegin(GL_QUADS);
-
-	glVertex3f(1.0f, 1.0f, 0.0f);
-	glVertex3f(-1.0f, 1.0f, 0.0f);
-	glVertex3f(-1.0f, -1.0f, 0.0f);
-	glVertex3f(1.0f, -1.0f, 0.0f);
-	glEnd();
-	
-}
 void update(void)
 {
 	/* code */
+    AngleRectangle = AngleRectangle + 0.05f;
+    if(AngleRectangle >= 360.0f)
+        AngleRectangle = -360.0f;
 }
 
 void uninitialize(void)
