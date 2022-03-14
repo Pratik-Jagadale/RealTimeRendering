@@ -10,6 +10,7 @@ typedef int data_t;
 typedef int status_t;
 typedef int lent_t;
 typedef int Bool;
+typedef int len_t;
 
 typedef struct node node_t;
 typedef struct list list_t;
@@ -30,6 +31,32 @@ list_t *create_list(void);
 
 status_t inset_start(list_t *p_list, data_t new_data);
 status_t insrt_end(list_t *p_list, data_t new_data);
+status_t insert_after(list_t* p_list, data_t e_data, data_t new_data);
+status_t insert_before(list_t* p_list, data_t e_data, data_t new_data);
+
+status_t get_start(list_t* p_list, data_t p_start_data);
+status_t get_end(list_t* p_list, data_t* p_end_data);
+status_t pop_start(list_t* p_list, data_t* p_start_data);
+status_t pop_end(list_t* p_list, data_t* p_end_data);
+
+status_t remove_start(list_t* p_list);
+status_t remove_end(list_t* p_list);
+status_t remove_data(list_t* p_list);
+
+len_t get_length(list_t* p_list);
+bool is_empty(list_t* p_list);
+bool is_member(list_t* p_list, data_t s_data);
+void show(list_t* p_list, data_t r_data);
+
+list_t* concate(list_t* p_list_1, list_t* p_list_2);
+list_t* merge(list_t* p_list_1, list_t* p_list_2);
+list_t* get_reversed_list(list_t* p_list);
+
+status_t append(list_t* p_list_1, list_t* p_list_2);
+status_t to_list(data_t* p_array, size_t size);
+
+status_t ddestroy(list_t** pp_list);
+
 
 /* auxillary routines */
 static void generic_insert(node_t *p_beg, node_t *p_mid, node_t *p_end);
