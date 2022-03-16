@@ -11,9 +11,13 @@ typedef int status_t;
 typedef int lent_t;
 typedef int Bool;
 typedef int len_t;
-
 typedef struct node node_t;
 typedef struct list list_t;
+
+enum{
+    true,
+    false
+};
 
 struct node
 {
@@ -29,12 +33,12 @@ struct list
 /* Helper Routines */
 list_t *create_list(void);
 
-status_t inset_start(list_t *p_list, data_t new_data);
-status_t insrt_end(list_t *p_list, data_t new_data);
+status_t insert_start(list_t *p_list, data_t new_data);
+status_t insert_end(list_t *p_list, data_t new_data);
 status_t insert_after(list_t* p_list, data_t e_data, data_t new_data);
 status_t insert_before(list_t* p_list, data_t e_data, data_t new_data);
 
-status_t get_start(list_t* p_list, data_t p_start_data);
+status_t get_start(list_t* p_list, data_t* p_start_data);
 status_t get_end(list_t* p_list, data_t* p_end_data);
 status_t pop_start(list_t* p_list, data_t* p_start_data);
 status_t pop_end(list_t* p_list, data_t* p_end_data);
