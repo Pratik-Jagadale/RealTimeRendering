@@ -45,12 +45,12 @@ status_t pop_end(list_t* p_list, data_t* p_end_data);
 
 status_t remove_start(list_t* p_list);
 status_t remove_end(list_t* p_list);
-status_t remove_data(list_t* p_list);
+status_t remove_data(list_t* p_list, data_t r_data);
 
 len_t get_length(list_t* p_list);
 bool is_empty(list_t* p_list);
 bool is_member(list_t* p_list, data_t s_data);
-void show(list_t* p_list, data_t r_data);
+void show(list_t* p_list);
 
 list_t* concate(list_t* p_list_1, list_t* p_list_2);
 list_t* merge(list_t* p_list_1, list_t* p_list_2);
@@ -59,7 +59,7 @@ list_t* get_reversed_list(list_t* p_list);
 status_t append(list_t* p_list_1, list_t* p_list_2);
 status_t to_list(data_t* p_array, size_t size);
 
-status_t ddestroy(list_t** pp_list);
+status_t destroy(list_t** pp_list);
 
 
 /* auxillary routines */

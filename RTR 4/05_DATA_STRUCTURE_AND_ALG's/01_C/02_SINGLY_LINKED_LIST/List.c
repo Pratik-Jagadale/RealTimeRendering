@@ -26,7 +26,7 @@ status_t insert_end(list_t *p_list, data_t new_data)
 {
 
     node_t* p_last_node = NULL;
-    get_last_node(p_list ,p_last_node);
+    get_last_node(p_list ,&p_last_node);
 
     generic_insert(p_last_node, get_node(new_data), NULL);
     return (SUCCESS);
@@ -46,15 +46,15 @@ status_t insert_after(list_t* p_list, data_t e_data, data_t new_data)
 
 status_t insert_before(list_t* p_list, data_t e_data, data_t new_data)
 {
-    node_t* p_e_data = NULL;
+    node_t* p_e_node = NULL;
     node_t* p_prev_node = NULL;
 
-    get_last_node_and_prev(p_list, p_e_data, p_prev_node);
+    get_node_and_prev(p_list, e_data, &p_e_node, &p_prev_node);
 
-    if(p_e_data == NULL)
+    if(p_e_node == NULL)
         return (LIST_DATA_NOT_FOUND);
 
-    generic_insert(p_prev_node, get_node(new_data), p_e_data->next);
+    generic_insert(p_prev_node, get_node(new_data), p_e_node);
 
     return (SUCCESS);
 }
@@ -71,7 +71,7 @@ status_t get_end(list_t* p_list, data_t* p_end_data)
 {
     node_t* p_end_node = NULL;
 
-    get_last_node(p_list, p_end_node);
+    get_last_node(p_list, &p_end_node);
 
     p_end_data = p_end_node->data;
 
@@ -88,32 +88,96 @@ status_t pop_start(list_t* p_list, data_t* p_start_data)
 
     return (SUCCESS);
 }
-/*
+
 status_t pop_end(list_t* p_list, data_t* p_end_data)
 {
     
     node_t* p_remove_node = NULL;
 
-    get_last_node(p_list, p_remove_node);
-    p_end_data = p_remove_node->data;
+    get_last_node(p_list, &p_remove_node);
+    p_end_data = p_remove_node->data; 
+    generic_delete(p_remove_node, NULL);
 
-    generic_delete();
-
-    p_remove_node =  p_list->p_head_node;
-    p_list->p_head_node = p_remove_node->next;
-    free(p_remove_node);
-    p_remove_node = NULL;
     return (SUCCESS);
 }
-*/
-status_t remove_start(list_t* p_list);
-status_t remove_end(list_t* p_list);
-status_t remove_data(list_t* p_list);
 
-len_t get_length(list_t* p_list);
-bool is_empty(list_t* p_list);
-bool is_member(list_t* p_list, data_t s_data);
-void show(list_t* p_list, data_t r_data);
+
+status_t remove_start(list_t* p_list)
+{
+    node_t* p_remove_node = NULL;
+    p_remove_node = p_list->p_head_node->next;
+    generic_delete(p_list->p_head_node,p_remove_node);
+
+    return (SUCCESS);
+
+}
+
+status_t remove_end(list_t* p_list)
+{
+    node_t* p_remove_node = NULL;
+
+    get_last_node(p_list, &p_remove_node);
+    generic_delete(p_remove_node, NULL);
+
+    return (SUCCESS);
+
+}
+
+status_t remove_data(list_t* p_list, data_t r_data)
+{
+    node_t* p_remove_node = NULL;
+    node_t* p_prev_r_node = NULL;
+    get_last_node_and_prev(p_list->p_head_node, r_data, &p_remove_node, &p_prev_r_node);   
+    if(p_remove_node != NULL)
+        return (LIST_DATA_NOT_FOUND);
+    generic_delete(p_prev_r_node, p_remove_node);
+    return (SUCCESS);
+}
+
+len_t get_length(list_t* p_list)
+{
+    node_t* p_run = NULL;
+
+    p_run = p_list->p_head_node->next;
+    len_t len = 0;
+
+    while(p_run != NULL)
+    {
+        len++;
+    }
+    return (len);
+}
+
+bool is_empty(list_t* p_list)
+{
+    len_t len = 0;
+    len = get_length(p_list);
+    if(len == 0)
+        return (false);
+    return (true);
+}
+
+bool is_member(list_t* p_list, data_t s_data)
+{
+    node_t* p_node = NULL;
+    p_node = search_node(p_list, s_data);
+    if(p_node != NULL)
+        return true;
+    return false;   
+}
+
+void show(list_t* p_list)
+{
+    node_t* p_run = NULL;
+    p_run = p_list->p_head_node->next;
+    
+    printf("[START]<->");
+    while(p_run != NULL)
+    {
+        printf("[ %d ]<->",p_run->data);
+    }
+    printf("[END]<->");
+}
 
 list_t* concate(list_t* p_list_1, list_t* p_list_2);
 list_t* merge(list_t* p_list_1, list_t* p_list_2);
@@ -122,7 +186,20 @@ list_t* get_reversed_list(list_t* p_list);
 status_t append(list_t* p_list_1, list_t* p_list_2);
 status_t to_list(data_t* p_array, size_t size);
 
-status_t ddestroy(list_t** pp_list);
+status_t destroy(list_t** pp_list)
+{
+    node_t* p_run = NULL;
+    node_t* p_run_next = NULL;
+    p_run = (*pp_list)->p_head_node;
+    while(p_run != NULL)
+    {
+        p_run_next = p_run->next;
+        free(p_run);
+    }
+    free(pp_list);
+    pp_list = NULL;
+    return (SUCCESS);
+}
 
 
 /* auxillary routines */
@@ -137,7 +214,7 @@ static void generic_delete(node_t *p_prev_node, node_t *p_delete_node)
     p_prev_node->next = p_delete_node->next;
     free(p_delete_node);
     p_delete_node = NULL;
-}
+} 
 
 static node_t *search_node(list_t *p_list, data_t s_data)
 {
@@ -220,4 +297,3 @@ static void *xmalloc(size_t nr_bytes)
     }
     return (p);
 }
-
