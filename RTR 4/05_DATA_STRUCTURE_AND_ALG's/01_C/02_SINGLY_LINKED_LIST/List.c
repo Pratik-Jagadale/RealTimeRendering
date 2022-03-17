@@ -201,7 +201,6 @@ status_t destroy(list_t** pp_list)
     return (SUCCESS);
 }
 
-
 /* auxillary routines */
 static void generic_insert(node_t *p_beg, node_t *p_mid, node_t *p_end)
 {    

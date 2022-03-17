@@ -61,7 +61,6 @@ status_t to_list(data_t* p_array, size_t size);
 
 status_t destroy(list_t** pp_list);
 
-
 /* auxillary routines */
 static void generic_insert(node_t *p_beg, node_t *p_mid, node_t *p_end);
 static void generic_delete(node_t *p_prev_node, node_t *p_delete_node);
