@@ -48,9 +48,9 @@ status_t remove_end(list_t* p_list);
 status_t remove_data(list_t* p_list, data_t r_data);
 
 len_t get_length(list_t* p_list);
-bool is_empty(list_t* p_list);
-bool is_member(list_t* p_list, data_t s_data);
-void show(list_t* p_list);
+Bool is_empty(list_t* p_list);
+Bool is_member(list_t* p_list, data_t s_data);
+void show(list_t* p_list,char* msg);
 
 list_t* concate(list_t* p_list_1, list_t* p_list_2);
 list_t* merge(list_t* p_list_1, list_t* p_list_2);
@@ -67,7 +67,7 @@ static void generic_delete(node_t *p_prev_node, node_t *p_delete_node);
 static node_t *search_node(list_t *p_list, data_t s_data);
 static void get_node_and_prev(list_t *p_list, data_t s_data, node_t **pp_node, node_t **pp_prev_node);
 static void get_last_node(list_t *p_list, node_t **pp_last_node);
-static void get_last_node_and_prev(list_t *p_list, node_t **pp_node, node_t **pp_prev_node);
+static void get_last_node_and_prev(node_t* p_head, node_t **pp_node, node_t **pp_prev_node);
 static node_t *get_node(data_t new_data);
 
 static void *xmalloc(size_t nr_bytes);
