@@ -1,0 +1,12 @@
+BRWON
+glColor3f(0.349f,0.211f,0.180f);
+
+light brow
+glColor3f(0.741f,0.556f,0.470f);
+
+glass
+dark
+glColor3f(0.015f,0.850f,0.850f);
+
+light
+glColor3f(0.835f,0.898f,0.949f);
