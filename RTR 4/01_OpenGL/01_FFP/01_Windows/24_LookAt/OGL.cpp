@@ -3,6 +3,7 @@
 #include "OGL.h"
 #include <stdio.h>
 #include <stdlib.h>
+#define _USE_MATH_DEFINES 1
 #include <math.h>
 
 /* OpenGL Header files */
@@ -25,7 +26,7 @@ int iHeightOfWindow;
 int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 
-float AnglePyramid = 0.0f;
+GLfloat radius = 12.0f;
 float AngleCube = 0.0f;
 
 /* Global Function Declartion */
@@ -339,8 +340,6 @@ void resize(int width, int height)
     gluPerspective(45.0f, (GLfloat)width / (GLfloat)height, 0.1f, 100.0f);
 }
 
-GLfloat radius = 12.0f;
-
 void display(void)
 {
     /* Code */
@@ -350,7 +349,6 @@ void display(void)
     // Trangle *****
     glLoadIdentity();
     glTranslatef(0.0f, 0.0f, -12.0f);
-
     glRotatef(45.0f, 0.0f, 1.0f, 0.0f);
 
     glBegin(GL_TRIANGLES);
@@ -396,13 +394,17 @@ void display(void)
 
     glEnd();
 
+    float angle = (AngleCube * M_PI) / 180.0f;
+
     // CUBE ***************************
+
     glLoadIdentity();
-    glTranslatef(1.5f, 0.0f, -5.0f);
 
-    glScalef(0.75f, 0.75f, 0.75f);
+    gluLookAt(radius * cos(angle), 0.0f, radius * sin(angle), 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
-    glRotatef(AngleCube, 1.0f, 1.0f, 1.0f); // Rolling
+    glTranslatef(0.0f, 0.0f, -5.0f);
+
+    glScalef(0.25f, 0.25f, 0.25f);
 
     glBegin(GL_QUADS);
 
@@ -430,7 +432,7 @@ void display(void)
     // LEFT FACE
     glColor3f(0.0f, 1.0f, 1.0f);
     glVertex3f(-1.0f, 1.0f, 1.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f); // y = -1
+    glVertex3f(-1.0f, 1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
 
@@ -456,11 +458,7 @@ void display(void)
 void update(void)
 {
     /* code */
-    AnglePyramid = AnglePyramid + 0.05f;
-    if (AnglePyramid >= 360.0f)
-        AnglePyramid = -360.0f;
-
-    AngleCube = AngleCube + 0.05f;
+    AngleCube = AngleCube + 0.1f;
     if (AngleCube >= 360.0f)
         AngleCube = -360.0f;
 }
