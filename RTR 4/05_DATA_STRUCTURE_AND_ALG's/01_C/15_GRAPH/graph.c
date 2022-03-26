@@ -31,7 +31,33 @@ status_t add_vertex(graph_t *g, vertex_t new_vertex)
 
 status_t remove_vertex(graph_t *g, vertex_t r_vertex)
 {
-    
+    vnode_t *pv_delete = NULL;
+    vnode_t *pv_h_in_vlist = NULL;
+
+    hnode_t *ph_delete_node_in_adj_list = NULL;
+    hnode_t *ph_run = NULL;
+    hnode_t *ph_run_next = NULL;
+
+    pv_delete = v_search_node(g->pv_head_node, r_vertex);
+    if (pv_delete == NULL)
+        return (G_INVALID_VERTEX);
+
+    while (ph_run != pv_delete->ph_head_node)
+    {
+        ph_run_next = ph_run->h_next;
+        pv_h_in_vlist = v_search_node(g->pv_head_node, ph_run->v);
+        ph_delete_node_in_adj_list = h_search_node(pv_h_in_vlist->ph_head_node, r_vertex);
+        h_generic_delete(ph_delete_node_in_adj_list);
+        free(ph_run);
+        g->nr_edges -= 1;
+        ph_run = ph_run_next;
+    }
+
+    free(pv_delete->ph_head_node);
+    v_generic_delete(pv_delete);
+    g->nr_vertices -= 1;
+
+    return (SUCCESS);
 }
 
 status_t add_edge(graph_t *g, vertex_t v_start, vertex_t v_end);
