@@ -414,28 +414,32 @@ void uninitialize(void)
 
 void drawConcentricSquare()
 {
+    void setColor(float r, float g, float b);
+
     glLineWidth(3);
 
-    for (float j = 0.8f; j >= -0.6f; j = j - 0.2f)
+    for (float j = 1.0f; j >= -0.8f; j = j - 0.2f)
     {
-        if (j == 0.8f)
+        if (j >= 1.0f)
             glColor3f(1.0f, 0.0f, 0.0f);
-        else if (j == 0.6f)
+        else if (j >= 0.8f)
             glColor3f(0.0f, 1.0f, 0.0f);
-        else if (j == 0.4f)
+        else if (j >= 0.6f)
             glColor3f(0.0f, 0.0f, 1.0f);
-        else if (j == 0.2f)
-            glColor3f(1.0f, 1.0f, 0.0f);
-        else if (j == 0.0f)
-            glColor3f(0.0f, 1.0f, 1.0f);
-        else if (j == -0.2f)
-            glColor3f(1.0f, 0.0f, 0.0f);
-        else if (j == -0.4f)
-            glColor3f(1.0f, 1.0f, 0.0f);
-        else if (j == -0.6f)
-            glColor3f(1.0f, 1.0f, 0.0f);
+        else if (j >= 0.4f)
+            setColor(0.0f, 255.0f, 255.0f);
+        else if (j >= 0.2f)
+            setColor(255.0f, 0.0f, 255.0f);
+        else if (j >= 0.0f)
+            setColor(255.0f, 255.0f, 0.0f);
+        else if (j >= -0.2f)
+            setColor(255.0f, 255.0f, 255.0f);
+        else if (j >= -0.4f)
+            setColor(128.0f, 128.0f, 128.0f);
+        else if (j >= -0.6f)
+            setColor(255.0f, 165.0f, 0.0f);
         else
-            glColor3f(1.0f, 1.0f, 1.0f);
+            setColor(128.0f, 0.0f, 128.0f);
 
         glBegin(GL_LINE_LOOP);
         glVertex3f(1.0f + j, 1.0f + j, 0.0f);
@@ -444,4 +448,9 @@ void drawConcentricSquare()
         glVertex3f(1.0f + j, -1.0f - j, 0.0f);
         glEnd();
     }
+}
+
+void setColor(float r, float g, float b)
+{
+    glColor3f(r / 255.0f, g / 255.0f, b / 255.0f);
 }
