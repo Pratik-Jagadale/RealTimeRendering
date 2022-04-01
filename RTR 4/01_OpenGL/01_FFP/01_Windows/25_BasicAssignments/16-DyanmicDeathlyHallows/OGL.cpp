@@ -37,6 +37,10 @@ float c[2] = {2.0f, -1.0f};  // Rigth bottom
 float SIDE = 0.0f;
 float height = 0.0f;
 float center[2] = {0.0f, 0.0f};
+float TraingleVertex = -9.0f;
+float verCircle[2] = {9.0f, -9.0f};
+float LineVertex = 6.0f;
+float angleTrangle = 0.0f;
 
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -356,11 +360,6 @@ void resize(int width, int height)
 
     gluPerspective(45.0f, (GLfloat)width / (GLfloat)height, 0.1f, 100.0f);
 }
-
-float TraingleVertex = -9.0f;
-float verCircle[2] = {9.0f, -9.0f};
-float LineVertex = 6.0f;
-float angleTrangle = 0.0f;
 
 void display(void)
 {
