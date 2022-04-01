@@ -1,4 +1,3 @@
-
 /* Header Files */
 #include <windows.h>
 #include "OGL.h"
@@ -207,6 +206,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             else
                 bTraingleShow = TRUE;
             break;
+
         case 27:
             if (gpFile)
             {
@@ -357,6 +357,11 @@ void resize(int width, int height)
     gluPerspective(45.0f, (GLfloat)width / (GLfloat)height, 0.1f, 100.0f);
 }
 
+float TraingleVertex = -9.0f;
+float verCircle[2] = {9.0f, -9.0f};
+float LineVertex = 6.0f;
+float angleTrangle = 0.0f;
+
 void display(void)
 {
     // function prototype
@@ -369,23 +374,15 @@ void display(void)
 
     glMatrixMode(GL_MODELVIEW);
 
+    // Trangle
     glLoadIdentity();
-    glTranslatef(0.0f, 0.0f, -12.0f);
-
+    glTranslatef(0.0f + TraingleVertex, 0.0f + TraingleVertex, -12.0f);
+    glRotatef(angleTrangle, 0.0f, 1.0f, 0.0f);
     drawTriangle();
-
-    drawLine();
 
     SIDE = sqrt(pow((b[0] - c[0]), 2) + pow((b[1] - c[1]), 2));
     height = (sqrt(3) / 2) * SIDE;
     r = (sqrt(3) / 6) * SIDE;
-
-    /*
-        SIDE = sqrt(pow((b[0] - c[0]), 2) + pow((b[1] - c[1]), 2));
-        height = (sqrt(3) / 2) * SIDE;
-        r = height / 3;
-        // r = (sqrt(3) / 6) * SIDE;
-    */
 
     a[1] = b[1] + height; // apex y position
 
@@ -393,8 +390,16 @@ void display(void)
     center[0] = (a[0] + b[0] + c[0]) / 3;
     center[1] = (a[1] + b[1] + c[1]) / 3;
 
-    glTranslatef(center[0], center[1], 0.0f);
+    // Circle
+    glLoadIdentity();
+    glTranslatef(center[0] + verCircle[0], center[1] + verCircle[1], -12.0f);
+    glRotatef(angleTrangle, 0.0f, 1.0f, 0.0f);
     drawCircle();
+
+    // Line
+    glLoadIdentity();
+    glTranslatef(0.0f, 0.0f + LineVertex, -12.0f);
+    drawLine();
 
     SwapBuffers(ghdc);
 }
@@ -402,6 +407,19 @@ void display(void)
 void update(void)
 {
     /* code */
+    if (TraingleVertex < 0)
+        TraingleVertex = TraingleVertex + 0.01f;
+    else if (verCircle[0] > 0 && verCircle[1] < 0)
+    {
+        verCircle[0] = verCircle[0] - 0.01f;
+        verCircle[1] = verCircle[1] + 0.01f;
+    }
+    else if (LineVertex > 0)
+        LineVertex = LineVertex - 0.01f;
+
+    angleTrangle = angleTrangle + 1.0f;
+    if (angleTrangle >= 360.0f)
+        angleTrangle = -360.0f;
 }
 
 void uninitialize(void)
