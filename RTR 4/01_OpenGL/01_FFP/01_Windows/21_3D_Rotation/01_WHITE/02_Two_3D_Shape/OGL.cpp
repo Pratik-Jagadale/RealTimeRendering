@@ -28,7 +28,6 @@ FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 float AnglePyramid = 0.0f;
 float AngleCube = 0.0f;
 
-
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void ToggleFullScreen();
@@ -283,7 +282,7 @@ int initialize(void)
     pfd.cGreenBits = 8;
     pfd.cBlueBits = 8;
     pfd.cAlphaBits = 8;
-    pfd.cDepthBits = 32; //24 also can done
+    pfd.cDepthBits = 32; // 24 also can done
 
     /* GetDC */
     ghdc = GetDC(ghwnd);
@@ -313,7 +312,7 @@ int initialize(void)
     /* Clear the  screen using black color */
     glClearColor(0.0f, 0.0f, 1.0f, 0.0f);
 
-    //Depth related changes
+    // Depth related changes
     glClearDepth(1.0f);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -346,93 +345,89 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_MODELVIEW);
-    //Trangle *****
+    // Trangle *****
     glLoadIdentity();
     glTranslatef(-1.5f, 0.0f, -6.0f);
 
-    glRotatef(AnglePyramid,0.0f,1.0f,0.0f); // Spinning
-    
-	glBegin(GL_TRIANGLES);
+    glRotatef(AnglePyramid, 0.0f, 1.0f, 0.0f); // Spinning
 
-    //FRONT FACE
-    
+    glBegin(GL_TRIANGLES);
+
+    // FRONT FACE
+
     glColor3f(1.0f, 1.0f, 1.0f);
 
-	glVertex3f(0.0f, 1.0f, 0.0f);
-	glVertex3f(-1.0f, -1.0f, 1.0f);
-	glVertex3f(1.0f, -1.0f, 1.0f);
-    
-    
-    //RIGHT FACE
+    glVertex3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f, 1.0f);
+    glVertex3f(1.0f, -1.0f, 1.0f);
+
+    // RIGHT FACE
     glVertex3f(0.0f, 1.0f, 0.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
-    
-    //BACK FACE
+
+    // BACK FACE
     glVertex3f(0.0f, 1.0f, 0.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
 
-
-
-    //LEFT FACE
+    // LEFT FACE
     glVertex3f(0.0f, 1.0f, 0.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
-    
+
     glEnd();
 
     //
 
-
     // CUBE ***************************
-	glLoadIdentity();
-	glTranslatef(1.5f, 0.0f, -6.0f);
+    glLoadIdentity();
+    glTranslatef(1.5f, 0.0f, -6.0f);
 
-    glScalef(0.75f,0.75f,0.75f);
+    glScalef(0.75f, 0.75f, 0.75f);
 
-    glRotatef(AngleCube,1.0f,1.0f,1.0f); //Rolling
+    glRotatef(AngleCube, 1.0f, 1.0f, 1.0f); // Rolling
 
     glBegin(GL_QUADS);
 
-    //FRONT FACE
-	glVertex3f(1.0f, 1.0f, 1.0f);
-	glVertex3f(-1.0f, 1.0f, 1.0f);
-	glVertex3f(-1.0f, -1.0f, 1.0f);
-	glVertex3f(1.0f, -1.0f, 1.0f);
+    // FRONT FACE
+    glVertex3f(1.0f, 1.0f, 1.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+    glVertex3f(-1.0f, -1.0f, 1.0f);
+    glVertex3f(1.0f, -1.0f, 1.0f);
 
-    //RIGHT FACE
+    // RIGHT FACE
     glVertex3f(1.0f, 1.0f, -1.0f);
     glVertex3f(1.0f, 1.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
 
-    //BACK FACE
+    // BACK FACE
     glVertex3f(-1.0f, 1.0f, -1.0f);
     glVertex3f(1.0f, 1.0f, -1.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
 
-    //LEFT FACE
+    // LEFT FACE
     glVertex3f(-1.0f, 1.0f, 1.0f);
     glVertex3f(-1.0f, 1.0f, -1.0f); // y = -1
     glVertex3f(-1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
 
-    //TOP FACE
+    // TOP FACE
     glVertex3f(1.0f, 1.0f, 1.0f);
     glVertex3f(1.0f, 1.0f, -1.0f);
     glVertex3f(-1.0f, 1.0f, -1.0f);
     glVertex3f(-1.0f, 1.0f, 1.0f);
 
-    //BOTTOM FACE
+    // BOTTOM FACE
     glVertex3f(1.0f, -1.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
 
-	glEnd();
-   
+    glEnd();
+
     SwapBuffers(ghdc);
 }
 
@@ -440,12 +435,12 @@ void update(void)
 {
     /* code */
     AnglePyramid = AnglePyramid + 0.05f;
-    if(AnglePyramid >= 360.0f )
-        AnglePyramid = -360.0f;
-    
+    if (AnglePyramid >= 360.0f)
+        AnglePyramid = 0.0f;
+
     AngleCube = AngleCube + 0.05f;
-    if(AngleCube >= 360.0f)
-        AngleCube = -360.0f;
+    if (AngleCube >= 360.0f)
+        AngleCube = 0.0f;
 }
 
 void uninitialize(void)

@@ -349,6 +349,7 @@ void display(void)
     glLoadIdentity();
     glTranslatef(0.0f, 0.0f, -6.0f);
 
+    // draw horizontal Lines
     glLineWidth(1);
     glBegin(GL_LINES);
     glColor3f(0.0f, 0.0f, 1.0f);
@@ -364,10 +365,9 @@ void display(void)
     glLoadIdentity();
     glTranslatef(0.0f, 0.0f, -6.0f);
 
+    // draw Center Red Line
     glLineWidth(3);
-
     glBegin(GL_LINES);
-
     glColor3f(1.0f, 0.0f, 0.0f);
     glVertex3f(-2.1f, 0.0f, 0.0f);
 

@@ -27,7 +27,6 @@ FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 
 float AnglePyramid = 0.0f;
 
-
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void ToggleFullScreen();
@@ -282,7 +281,7 @@ int initialize(void)
     pfd.cGreenBits = 8;
     pfd.cBlueBits = 8;
     pfd.cAlphaBits = 8;
-    pfd.cDepthBits = 32; //24 also can done
+    pfd.cDepthBits = 32; // 24 also can done
 
     /* GetDC */
     ghdc = GetDC(ghwnd);
@@ -312,7 +311,7 @@ int initialize(void)
     /* Clear the  screen using black color */
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-    //Depth related changes
+    // Depth related changes
     glClearDepth(1.0f);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -345,28 +344,25 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_MODELVIEW);
-    //Trangle *****
+    // Trangle *****
     glLoadIdentity();
     glTranslatef(0.0f, 0.0f, -6.0f);
 
-    glRotatef(AnglePyramid,0.0f,1.0f,0.0f); // Spinning
+    glRotatef(AnglePyramid, 0.0f, 1.0f, 0.0f); // Spinning
 
+    glBegin(GL_TRIANGLES);
 
-    
-	glBegin(GL_TRIANGLES);
-
-    //FRONT FACE
+    // FRONT FACE
     glColor3f(1.0f, 0.0f, 0.0f);
 
-	glVertex3f(0.0f, 1.0f, 0.0f);
-	glColor3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(0.0f, 1.0f, 0.0f);
+    glColor3f(0.0f, 1.0f, 0.0f);
 
-	glVertex3f(-1.0f, -1.0f, 1.0f);
-	glColor3f(0.0f, 0.0f, 1.0f);
-	glVertex3f(1.0f, -1.0f, 1.0f);
-    
-    
-    //RIGHT FACE
+    glVertex3f(-1.0f, -1.0f, 1.0f);
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(1.0f, -1.0f, 1.0f);
+
+    // RIGHT FACE
     glColor3f(1.0f, 0.0f, 0.0f);
     glVertex3f(0.0f, 1.0f, 0.0f);
 
@@ -374,8 +370,8 @@ void display(void)
     glVertex3f(1.0f, -1.0f, 1.0f);
     glColor3f(0.0f, 1.0f, 0.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
-    
-    //BACK FACE
+
+    // BACK FACE
     glColor3f(1.0f, 0.0f, 0.0f);
 
     glVertex3f(0.0f, 1.0f, 0.0f);
@@ -385,9 +381,7 @@ void display(void)
     glColor3f(0.0f, 0.0f, 1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
 
-
-
-    //LEFT FACE
+    // LEFT FACE
     glColor3f(1.0f, 0.0f, 0.0f);
     glVertex3f(0.0f, 1.0f, 0.0f);
 
@@ -395,7 +389,7 @@ void display(void)
     glVertex3f(-1.0f, -1.0f, -1.0f);
     glColor3f(0.0f, 1.0f, 0.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
-    
+
     glEnd();
 
     SwapBuffers(ghdc);
@@ -405,9 +399,8 @@ void update(void)
 {
     /* code */
     AnglePyramid = AnglePyramid + 0.05f;
-    if(AnglePyramid >= 360.0f )
-        AnglePyramid = -360.0f;
-    
+    if (AnglePyramid >= 360.0f)
+        AnglePyramid = 0.0f;
 }
 
 void uninitialize(void)

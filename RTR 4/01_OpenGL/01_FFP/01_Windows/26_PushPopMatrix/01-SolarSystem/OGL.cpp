@@ -24,7 +24,9 @@ BOOL gbFullScreen = FALSE;
 int iHeightOfWindow;
 int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
-float AngleCube = 0.0f;
+int day = 0;
+int year = 0;
+GLUquadric *quadric = NULL;
 
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -187,6 +189,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         case 'F':
             ToggleFullScreen();
             break;
+
+        case 'd':
+            day = (day + 6) % 360;
+            break;
+
+        case 'D':
+            day = (day - 6) % 360;
+            break;
+
+        case 'y':
+            year = (year + 3) % 360;
+            break;
+
+        case 'Y':
+            year = (year + 3) % 360;
+            break;
         case 27:
             if (gpFile)
             {
@@ -343,58 +361,59 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_MODELVIEW);
-    // Trangle *****
+
     glLoadIdentity();
-    glTranslatef(0.0f, 0.0f, -6.0f);
 
-    glScalef(0.75f, 0.75f, 0.75f);
-    glRotatef(AngleCube, 1.0f, 1.0f, 1.0f); // Rolling
+    // vievw Tranformation (Camera Tranformation)
+    gluLookAt(0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
-    glBegin(GL_QUADS);
+    // SAVE Camera Matrix (Push)
+    glPushMatrix();
 
-    // FRONT FACE
-    glColor3f(1.0f, 0.0f, 0.0f);
-    glVertex3f(1.0f, 1.0f, 1.0f);
-    glVertex3f(-1.0f, 1.0f, 1.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
+    // beutification - 1
+    glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
 
-    // RIGHT FACE
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(1.0f, 1.0f, -1.0f);
-    glVertex3f(1.0f, 1.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
+    // beutification - 2
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    // BACK FACE
-    glColor3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f);
-    glVertex3f(1.0f, 1.0f, -1.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
+    // create quadric
+    quadric = gluNewQuadric();
 
-    // LEFT FACE
-    glColor3f(0.0f, 1.0f, 1.0f);
-    glVertex3f(-1.0f, 1.0f, 1.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f); // y = -1
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-
-    // TOP FACE
+    // beutification - 3
     glColor3f(1.0f, 1.0f, 0.0f);
-    glVertex3f(1.0f, 1.0f, 1.0f);
-    glVertex3f(1.0f, 1.0f, -1.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f);
-    glVertex3f(-1.0f, 1.0f, 1.0f);
 
-    // BOTTOM FACE
-    glColor3f(1.0f, 1.0f, 0.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
+    // Draw Sphere
+    gluSphere(quadric, 0.75f, 30, 30);
 
-    glEnd();
+    // Restore the saved camera matrix (pop)
+    glPopMatrix();
+
+    // Save the current camera Matrix
+    glPushMatrix();
+
+    // rotation around sun
+    glRotatef((GLfloat)year, 0.0f, 1.0f, 0.0f);
+
+    /// To translation for earth
+    glTranslatef(1.5f, 0.0f, 0.0f);
+
+    // beutification - 4
+    glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+
+    // self rotation (Spinning of earth)
+    glRotatef((GLfloat)day, 0.0f, 0.0f, 1.0f);
+
+    // draw earth
+    //  beutification - 5
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    quadric = gluNewQuadric();
+
+    glColor3f(0.4f, 0.9f, 1.0f);
+
+    gluSphere(quadric, 0.2f, 20, 20);
+
+    glPopMatrix();
 
     SwapBuffers(ghdc);
 }
@@ -402,10 +421,6 @@ void display(void)
 void update(void)
 {
     /* code */
-
-    AngleCube = AngleCube + 0.05f;
-    if (AngleCube >= 360.0f)
-        AngleCube = 0.0f;
 }
 
 void uninitialize(void)

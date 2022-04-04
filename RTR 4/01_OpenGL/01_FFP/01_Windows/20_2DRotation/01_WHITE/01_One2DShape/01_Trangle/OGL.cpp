@@ -334,11 +334,11 @@ void display(void)
 	glLoadIdentity();
 	glTranslatef(0.0f, 0.0f, -6.0f);
 
-	
-    glRotatef(AngleTangle,0.0f,1.0f,0.0f); // Spinning
+	glRotatef(AngleTangle, 0.0f, 1.0f, 0.0f); // Spinning
+
+	glBegin(GL_TRIANGLES);
 
 	glColor3f(1.0f, 1.0f, 1.0f);
-	glBegin(GL_TRIANGLES);
 	glVertex3f(0.0f, 1.0f, 0.0f);
 	glVertex3f(-1.0f, -1.0f, 0.0f);
 
@@ -351,10 +351,9 @@ void display(void)
 void update(void)
 {
 	/* code */
-	 AngleTangle = AngleTangle + 0.05f;
-    if(AngleTangle >= 360.0f )
-        AngleTangle = -360.0f;
-
+	AngleTangle = AngleTangle + 0.05f;
+	if (AngleTangle >= 360.0f)
+		AngleTangle = -360.0f;
 }
 
 void uninitialize(void)
