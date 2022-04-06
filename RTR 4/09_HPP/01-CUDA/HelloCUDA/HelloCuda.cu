@@ -169,19 +169,19 @@ void cleanup(void)
 
     if (hostOutput)
     {
-        cudaFree(hostOutput);
+        free(hostOutput);
         hostOutput = NULL;
     }
 
     if (hostInput2)
     {
-        cudaFree(hostInput2);
+        free(hostInput2);
         hostInput2 = NULL;
     }
 
     if (hostInput1)
     {
-        cudaFree(hostInput1);
+        free(hostInput1);
         hostInput1 = NULL;
     }
 }

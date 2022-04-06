@@ -9,27 +9,27 @@
 #define BLOCK_WIDTH 32
 
 // global variables
-float *hostA = NULL;
-float *hostB = NULL;
-float *hostC = NULL;
-float *gold = NULL;
+int *hostA = NULL;
+int *hostB = NULL;
+int *hostC = NULL;
+int *gold = NULL;
 
-float *deviceA = NULL;
-float *deviceB = NULL;
-float *deviceC = NULL;
+int *deviceA = NULL;
+int *deviceB = NULL;
+int *deviceC = NULL;
 
 float timeOnGPU = 0.0f;
 float timeOnCPU = 0.0f;
 
 // cude kernel
-__global__ void matMulGPU(float *A, float *B, float *C, int numARows, int numAColumns, int numBColumns, int numCColumns)
+__global__ void matMulGPU(int *A, int *B, int *C, int numARows, int numAColumns, int numBColumns, int numCColumns)
 {
     // code
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int column = blockIdx.x * blockDim.x + threadIdx.x;
 
     // code
-    if (row < numARows && column < numBColumns)
+    if ((row < numARows) && (column < numBColumns))
     {
         int value = 0.0f;
         for (int k = 0.0f; k < numAColumns; k++)
@@ -46,10 +46,9 @@ __global__ void matMulGPU(float *A, float *B, float *C, int numARows, int numACo
 int main(void)
 {
     // function prototype
-
-    void InitA(int *data, int);
-    void InitB(int *data, int);
-    void matMulCPU(int *, int *, int, int, int, int);
+    void InitA(int *, int, int);
+    void InitB(int *, int, int);
+    void matMulCPU(int *, int *, int *, int, int, int, int);
     void cleanup(void);
 
     // variable declartions
@@ -57,44 +56,48 @@ int main(void)
     int numAColumns = BLOCK_WIDTH;
     int numBRows = BLOCK_WIDTH;
     int numBColumns = BLOCK_WIDTH;
+
     int numCRows = numARows;
     int numCColumns = numBColumns;
 
-    int numGoldRows = numaRows;
+    int numGoldRows = numARows;
     int numGoldColumns = numBColumns;
 
     int sizeA = numARows * numAColumns * sizeof(int);
     int sizeB = numBRows * numBColumns * sizeof(int);
-    int sizeC = numCRows *numGoldColumns int size = iNumberOfArrayElements * sizeof(float);
+    int sizeC = numCRows * numCColumns * sizeof(int);
+
+    int sizeGold = numGoldRows * numBColumns * sizeof(int);
+
     cudaError_t result = cudaSuccess;
 
     // code
     //  host memory allocation
-    hostInput1 = (float *)malloc(size);
-    if (hostInput1 == NULL)
+    hostA = (int *)malloc(sizeA);
+    if (hostA == NULL)
     {
-        printf("Host Memory Allocation is Failed for hostInput1 array. \n");
+        printf("Host Memory Allocation is Failed for hostA array. \n");
         cleanup();
         exit(EXIT_FAILURE);
     }
 
-    hostInput2 = (float *)malloc(size);
-    if (hostInput2 == NULL)
+    hostB = (int *)malloc(sizeB);
+    if (hostB == NULL)
     {
-        printf("Host Memory Allocation is Failed for hostInput2 array. \n");
+        printf("Host Memory Allocation is Failed for hostB array. \n");
         cleanup();
         exit(EXIT_FAILURE);
     }
 
-    hostOutput = (float *)malloc(size);
-    if (hostOutput == NULL)
+    hostC = (int *)malloc(sizeC);
+    if (hostC == NULL)
     {
-        printf("Host Memory Allocation is Failed for hostOutput array. \n");
+        printf("Host Memory Allocation is Failed for hostC array. \n");
         cleanup();
         exit(EXIT_FAILURE);
     }
 
-    gold = (float *)malloc(size);
+    gold = (int *)malloc(sizeGold);
     if (gold == NULL)
     {
         printf("Host Memory Allocation is Failed for gold array. \n");
@@ -102,88 +105,105 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    // filling values into host arrays
-    fillFloatArrayRandomNumber(hostInput1, iNumberOfArrayElements);
-    fillFloatArrayRandomNumber(hostInput2, iNumberOfArrayElements);
+    // printing matrix dimension and sizes
+    printf("The Dimension Of Matrix 'hostA' Are : %d x %d\n", numARows, numAColumns);
+    printf("The Dimension Of Matrix 'hostB' Are : %d x %d\n", numBRows, numBColumns);
+    printf("The Dimension Of Matrix 'hostC' Are : %d x %d\n", numCRows, numCColumns);
+
+    printf("The Dimension Of Matrix 'gold' Are : %d x %d\n", numGoldRows, numGoldColumns);
+
+    printf("Size Of Matrix hostA = %d\n", sizeA);
+    printf("Size Of Matrix hostB = %d\n", sizeB);
+    printf("Size Of Matrix hostC = %d\n", sizeC);
+
+    printf("Size Of Matrix Gold = %d\n", sizeGold);
+
+    // fill source matrices
+    InitA(hostA, numARows, numAColumns);
+    InitB(hostB, numBRows, numBColumns);
 
     // device memory allocation
-    result = cudaMalloc((void **)&deviceInput1, size);
+
+    // device memory allocation
+    result = cudaMalloc((void **)&deviceA, sizeA);
     if (result != cudaSuccess)
     {
-        printf("Device memory allocation is failed for deviceInput1 array.\n");
+        printf("Device memory allocation is failed for deviceA matrix.\n");
         cleanup();
         exit(EXIT_FAILURE);
     }
 
-    result = cudaMalloc((void **)&deviceInput2, size);
+    result = cudaMalloc((void **)&deviceB, sizeB);
     if (result != cudaSuccess)
     {
-        printf("Device memory allocation is failed for deviceInput1 array.\n");
+        printf("Device memory allocation is failed for deviceB matrix.\n");
         cleanup();
         exit(EXIT_FAILURE);
     }
 
-    result = cudaMalloc((void **)&deviceOutput, size);
+    result = cudaMalloc((void **)&deviceC, sizeC);
     if (result != cudaSuccess)
     {
-        printf("Device memory allocation is failed for deviceOutput array.\n");
+        printf("Device memory allocation is failed for deviceC array.\n");
         cleanup();
         exit(EXIT_FAILURE);
     }
 
     // copy data from host arrays into device arrays
-    result = cudaMemcpy(deviceInput1, hostInput1, size, cudaMemcpyHostToDevice);
+    result = cudaMemcpy(deviceA, hostA, sizeA, cudaMemcpyHostToDevice);
     if (result != cudaSuccess)
     {
-        printf("Host to Device Data is failed for deviceInput1 array.\n");
+        printf("Host to Device Data is failed for deviceA matrix.\n");
         cleanup();
         exit(EXIT_FAILURE);
     }
 
-    result = cudaMemcpy(deviceInput2, hostInput2, size, cudaMemcpyHostToDevice);
+    result = cudaMemcpy(deviceB, hostB, sizeB, cudaMemcpyHostToDevice);
     if (result != cudaSuccess)
     {
-        printf("Host to Device Data is failed for deviceInput2 array.\n");
+        printf("Host to Device Data is failed for deviceA array.\n");
         cleanup();
         exit(EXIT_FAILURE);
     }
 
-    dim3 dimGrid = dim3((int)ceil((float)iNumberOfArrayElements / 255.0f), 1, 1);
-    dim3 dimBlock = dim3(256, 1, 1);
+    // cuda kernel  configuration
+    dim3 dimGrid = dim3(ceil((int)numBColumns / (int)BLOCK_WIDTH), ceil((int)numARows / (int)BLOCK_WIDTH), 1);
+    dim3 dimBlock = dim3(BLOCK_WIDTH, BLOCK_WIDTH, 1);
 
-    // CUDA Kernel for vector Additio
+    // CUDA Kernel for vector Multiplication
     StopWatchInterface *timer = NULL;
     sdkCreateTimer(&timer);
     sdkStartTimer(&timer);
 
-    vecAddGPU<<<dimGrid, dimBlock>>>(deviceInput1, deviceInput2, deviceOutput, iNumberOfArrayElements);
+    matMulGPU<<<dimGrid, dimBlock>>>(deviceA, deviceB, deviceC, numARows, numAColumns, numBColumns, numCColumns);
 
     sdkStopTimer(&timer);
     timeOnGPU = sdkGetTimerValue(&timer);
     sdkDeleteTimer(&timer);
     timer = NULL;
 
-    // copy data from device array intp host array
-    result = cudaMemcpy(hostOutput, deviceOutput, size, cudaMemcpyDeviceToHost);
+    // copy data from device array into host array
+    result = cudaMemcpy(hostC, deviceC, sizeC, cudaMemcpyDeviceToHost);
     if (result != cudaSuccess)
     {
-        printf("Device to host Dta copy is failed for hostOutput array.\n");
+        printf("Device to host Dta copy is failed for hostC array.\n");
         cleanup();
         exit(EXIT_FAILURE);
     }
 
     // vector addition on host
-    vecAddCPU(hostInput1, hostInput2, gold, iNumberOfArrayElements);
+    matMulCPU(hostA, hostB, gold, numARows, numAColumns, numBColumns, numCColumns);
 
     // comparison
     const float epsilon = 0.0000001f;
 
     int breakValue = -1;
     bool bAccuracy = true;
-    for (int i = 0; i < iNumberOfArrayElements; i++)
+    for (int i = 0; i < numCRows * numCColumns; i++)
     {
         float val1 = gold[i];
-        float val2 = hostOutput[i];
+        float val2 = hostC[i];
+
         if (fabs(val1 - val2) > epsilon)
         {
             bAccuracy = false;
@@ -192,23 +212,15 @@ int main(void)
         }
     }
 
-    char str[256];
+    char str[128];
     if (bAccuracy == false)
-        sprintf(str, "Comparison of CPU and GPU Vector  Addition is not within accuracy of 0.000001 at array index %d", breakValue);
+        sprintf(str, "Comparison of CPU and GPU Matrix Multiplication is not within accuracy of 0.000001 at array index %d", breakValue);
     else
-        sprintf(str, "Comparison of CPU and GPU Vector  Addition is within accuracy of 0.000001");
+        sprintf(str, "Comparison of CPU and GPU Matrix Multiplication is within accuracy of 0.000001");
 
     // Output
-    printf("Array1 begins from 0th index %.6f to %dth index %.6f\n", hostInput1[0], iNumberOfArrayElements - 1, hostInput1[iNumberOfArrayElements - 1]);
-
-    printf("Array2 begins from 0th index %.6f to %dth index %.6f\n", hostInput2[0], iNumberOfArrayElements - 1, hostInput2[iNumberOfArrayElements - 1]);
-
-    printf("CUDA kernel Grid dimension = %d, %d,%d and Block dimension = %d, %d,%d\n", dimGrid.x, dimGrid.y, dimGrid.z, dimBlock.x, dimBlock.y, dimBlock.z);
-
-    printf("Output Array begins from 0th index %.6f to %dth index %.6f\n", hostOutput[0], iNumberOfArrayElements - 1, hostOutput[iNumberOfArrayElements - 1]);
-
-    printf("Time taken for Vector Addition On CPU = %.6f\n", timeOnCPU);
-    printf("Time taken for Vector Addition On GPU = %.6f\n", timeOnGPU);
+    printf("Time taken for Matrix  Multiplication On CPU = %.6f\n", timeOnCPU);
+    printf("Time taken for Matrix  Multiplication On GPU = %.6f\n", timeOnGPU);
     printf("%s\n", str);
 
     // cleanupp
@@ -227,16 +239,54 @@ void fillFloatArrayRandomNumber(float *arr, int len)
     }
 }
 
-void vecAddCPU(const float *arr1, const float *arr2, float *out, int len)
+void InitA(int *data, int row, int col)
+{
+    int num = 1;
+    // code
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            *(data + i * col + j) = num;
+            num++;
+        }
+    }
+}
+
+void InitB(int *data, int row, int col)
+{
+    int num = BLOCK_WIDTH;
+    // code
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            *(data + i * col + j) = num;
+            num--;
+        }
+    }
+}
+
+void matMulCPU(int *A, int *B, int *C, int numARows, int numAColumns, int numBColumns, int numCColumns)
 {
     // code
     StopWatchInterface *timer = NULL;
     sdkCreateTimer(&timer);
     sdkStartTimer(&timer);
 
-    for (int i = 0; i < len; i++)
+    for (int i = 0; i < numARows; i++)
     {
-        out[i] = arr1[i] + arr2[i];
+        for (int j = 0; j < numBColumns; j++)
+        {
+            int value = 0.0f;
+            for (int k = 0; k < numAColumns; k++)
+            {
+                int a = A[i * numAColumns + k];
+                int b = B[k * numBColumns + j];
+                value += a * b;
+            }
+            C[i * numCColumns + j] = value;
+        }
     }
 
     sdkStopTimer(&timer);
@@ -248,22 +298,22 @@ void vecAddCPU(const float *arr1, const float *arr2, float *out, int len)
 void cleanup(void)
 {
     // code
-    if (deviceOutput)
+    if (deviceC)
     {
-        cudaFree(deviceOutput);
-        deviceOutput = NULL;
+        cudaFree(deviceC);
+        deviceC = NULL;
     }
 
-    if (deviceInput2)
+    if (deviceB)
     {
-        cudaFree(deviceInput2);
-        deviceInput2 = NULL;
+        cudaFree(deviceB);
+        deviceB = NULL;
     }
 
-    if (deviceInput1)
+    if (deviceA)
     {
-        cudaFree(deviceInput1);
-        deviceInput1 = NULL;
+        cudaFree(deviceA);
+        deviceA = NULL;
     }
 
     if (gold)
@@ -272,21 +322,21 @@ void cleanup(void)
         gold = NULL;
     }
 
-    if (hostOutput)
+    if (hostC)
     {
-        cudaFree(hostOutput);
-        hostOutput = NULL;
+        free(hostC);
+        hostC = NULL;
     }
 
-    if (hostInput2)
+    if (hostB)
     {
-        cudaFree(hostInput2);
-        hostInput2 = NULL;
+        free(hostB);
+        hostB = NULL;
     }
 
-    if (hostInput1)
+    if (hostA)
     {
-        cudaFree(hostInput1);
-        hostInput1 = NULL;
+        free(hostA);
+        hostA = NULL;
     }
 }
