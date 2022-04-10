@@ -3,6 +3,7 @@
 #include "OGL.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 /* OpenGL Header files */
 #include <GL/gl.h>
@@ -23,8 +24,9 @@ BOOL gbFullScreen = FALSE;
 int iHeightOfWindow;
 int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
-
-int iShapeFlag = 0;
+int shoulder = 0;
+int elbow = 0;
+GLUquadric *quadric = NULL;
 
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -82,7 +84,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 
     /* Create Window */
     hwnd = CreateWindowEx(WS_EX_APPWINDOW, szAppName,
-                          TEXT("Railway Station"),
+                          TEXT("OpenGL - Pratik Jagadale"),
                           WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE,
                           (iWidthOfWindow - WINWIDTH) / 2,
                           (iHeightOfWindow - WINHEIGHT) / 2,
@@ -187,6 +189,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         case 'F':
             ToggleFullScreen();
             break;
+
+        case 'S':
+            shoulder = (shoulder + 3) % 360;
+            break;
+
+        case 's':
+            shoulder = (shoulder - 3) % 360;
+            break;
+
+        case 'E':
+            elbow = (elbow + 3) % 360;
+            break;
+
+        case 'e':
+            elbow = (elbow - 3) % 360;
+            break;
         case 27:
             if (gpFile)
             {
@@ -195,6 +213,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
                 gpFile = NULL;
             }
             PostQuitMessage(0);
+            break;
+
+        default:
             break;
         }
         break;
@@ -277,6 +298,7 @@ int initialize(void)
     pfd.cGreenBits = 8;
     pfd.cBlueBits = 8;
     pfd.cAlphaBits = 8;
+    pfd.cDepthBits = 32; // 24 also can done
 
     /* GetDC */
     ghdc = GetDC(ghwnd);
@@ -304,7 +326,15 @@ int initialize(void)
 
     /* Here start OpeGL Code */
     /* Clear the  screen using black color */
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+    // Depth related changes
+    glClearDepth(1.0f);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+
+    glShadeModel(GL_SMOOTH);
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
     resize(WINWIDTH, WINHEIGHT); // WARMUP RESIZE CALL
 
@@ -327,19 +357,57 @@ void resize(int width, int height)
 
 void display(void)
 {
-    /* Function declartiona */
-    void drawRailwayStation(void);
-    void drawTrain(void);
-
     /* Code */
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glTranslatef(0.0f, 0.0f, -3.0f);
 
-    // drawRailwayStation();
-    drawTrain();
+    glLoadIdentity();
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    glTranslatef(0.0f, 0.0f, -12.0f);
+
+    glPushMatrix();
+
+    glRotatef((GLfloat)shoulder, 0.0f, 0.0f, 1.0f);
+
+    glTranslatef(1.0f, 0.0f, 0.0f);
+
+    glPushMatrix();
+
+    glScalef(2.0f, 0.5f, 1.0f);
+
+    // Draw Arm
+    quadric = gluNewQuadric();
+
+    glColor3f(0.5f, 0.35f, 0.05f);
+
+    // we are drawing sphere but we are scalling which will look like ellipse
+    gluSphere(quadric, 0.5f, 10, 10);
+
+    glPopMatrix();
+
+    // Fore Arm
+    glTranslatef(1.0f, 0.0f, 0.0f);
+
+    glRotatef((GLfloat)elbow, 0.0f, 0.0f, 1.0f);
+
+    glTranslatef(1.0f, 0.0f, 0.0f);
+
+    glPushMatrix();
+
+    glScalef(2.0f, 0.5f, 1.0f);
+
+    quadric = gluNewQuadric();
+
+    glColor3f(0.5f, 0.35f, 0.05f);
+
+    gluSphere(quadric, 0.5f, 10, 10);
+
+    glPopMatrix();
+
+    glPopMatrix();
 
     SwapBuffers(ghdc);
 }
@@ -388,69 +456,4 @@ void uninitialize(void)
         fclose(gpFile);
         gpFile = NULL;
     }
-}
-
-/*
-    Draw Railway Station
-*/
-void drawRailwayStation(void)
-{
-    /* Function Prototyoes */
-    void drawPlatForm(void);
-
-    /* Variable Declarations */
-    drawPlatForm();
-}
-
-void drawTrain(void)
-{
-    glBegin(GL_QUADS);
-
-    // WHITE
-
-    // bottom rectangel
-
-    /* Center red main */
-    glBegin(GL_QUADS);
-    glColor3f(1.0f, 1.0f, 0.0f);
-
-    glVertex3f(-2.000f, 0.5113f, 1.0f);
-    glVertex3f(-2.0008f, -0.569f, 1.0f);
-    glVertex3f(1.9963f, -0.5687f, 1.0f);
-    glVertex3f(1.99814f, 0.5122f, 1.0f);
-
-    glEnd();
-
-    // Bottom black strip
-    glBegin(GL_QUADS);
-    glColor3f(0.0f, 1.0f, 0.0f);
-
-    glVertex3f(-2.0f, 0.348, 0.5f);
-    glVertex3f(-2.0f, -0.5f, 0.5f);
-    glVertex3f(2.0f, -0.5f, 0.5f);
-    glVertex3f(2.0f, 0.345f, 0.5f);
-    glEnd();
-
-    // bttom gray stip
-    glBegin(GL_QUADS);
-    glColor3f(0.0f, 0.0f, 1.0f);
-
-    glVertex3f(1.999f, -0.507f, 0.5f);
-    glVertex3f(-2.0008f, -0.569f, 0.5f);
-    glVertex3f(1.9963f, -0.5687f, 0.5f);
-    glVertex3f(1.9972f, -0.4116f, 0.5f);
-    glEnd();
-}
-
-void drawPlatForm(void)
-{
-    /* Variable declartions */
-    /* glBegin(GL_QUADS);
-     glColor3f(0.3960f, 0.3960f, 0.3960f);
-
-     glVertex3f(-2.0f, -0.5486f, 0.5f);
-     glVertex3f(-1.9995f, -0.9946f, 1.5f);
-     glVertex3f(1.996f, -0.995f, 1.5f);
-     glVertex3f(2.0f, -0.5486f, 0.5f);
-     glEnd();*/
 }

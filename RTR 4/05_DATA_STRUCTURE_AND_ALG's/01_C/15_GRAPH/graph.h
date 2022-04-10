@@ -67,7 +67,7 @@ vnode_t *v_get_list_node(vertex_t new_vertex);
 
 /* Graph helper routines -> Horizontal List Management -> Horizontal Interfcae routines */
 hlist_t *h_create_list(void);
-status_t *h_insert_end(hlist_t *ph_list, vertex_t new_vertex);
+status_t h_insert_end(hlist_t *ph_list, vertex_t new_vertex);
 
 /* Graph helper routines -> Horizontal List Management -> Vertical Interfcae routines */
 void h_generic_insert(hnode_t *ph_beg, hnode_t *ph_mid, hnode_t *ph_end);

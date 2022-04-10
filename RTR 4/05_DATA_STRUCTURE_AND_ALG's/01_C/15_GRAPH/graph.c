@@ -4,10 +4,10 @@
 #include "graph.h"
 
 /* graph interface routines */
-
 graph_t *create_graph(void)
 {
     graph_t *g = NULL;
+    g = (graph_t *)xmalloc(sizeof(graph_t));
     g->nr_vertices = 0;
     g->nr_edges = 0;
     g->pv_head_node = v_create_list();
@@ -60,11 +60,118 @@ status_t remove_vertex(graph_t *g, vertex_t r_vertex)
     return (SUCCESS);
 }
 
-status_t add_edge(graph_t *g, vertex_t v_start, vertex_t v_end);
-status_t remove_edge(graph_t *g, vertex_t v_start, vertex_t v_end);
+status_t add_edge(graph_t *g, vertex_t v_start, vertex_t v_end)
+{
+    vnode_t *pv_start = NULL;
+    vnode_t *pv_end = NULL;
+    hnode_t *ph_start_in_end = NULL;
+    hnode_t *ph_end_in_start = NULL;
+    status_t status;
 
-void show_graph(graph_t *g, const char *msg);
-status_t destroy_graph(graph_t **pp_g);
+    pv_start = v_search_node(g->pv_head_node, v_start);
+    if (pv_start == NULL)
+        return (G_INVALID_VERTEX);
+    pv_end = v_search_node(g->pv_head_node, v_end);
+    if (pv_end == NULL)
+        return (G_INVALID_VERTEX);
+
+    ph_start_in_end = h_search_node(pv_end->ph_head_node, v_start);
+    if (ph_start_in_end != NULL)
+        return (G_EDGE_EXITS);
+
+    ph_end_in_start = h_search_node(pv_start->ph_head_node, v_end);
+    if (ph_end_in_start != NULL)
+        return (G_EDGE_EXITS);
+
+    status = h_insert_end(pv_start->ph_head_node, v_end);
+    assert(status == SUCCESS);
+    status = h_insert_end(pv_end->ph_head_node, v_start);
+    assert(status == SUCCESS);
+
+    g->nr_edges += 1;
+
+    return (SUCCESS);
+}
+
+status_t remove_edge(graph_t *g, vertex_t v_start, vertex_t v_end)
+{
+    vnode_t *pv_start = NULL;
+    vnode_t *pv_end = NULL;
+    hnode_t *ph_start_in_end = NULL;
+    hnode_t *ph_end_int_start = NULL;
+
+    pv_start = v_search_node(g->pv_head_node, v_start);
+    if (pv_start == NULL)
+        return (G_INVALID_VERTEX);
+    pv_end = v_search_node(g->pv_head_node, v_end);
+    if (pv_end == NULL)
+        return (G_INVALID_VERTEX);
+
+    ph_start_in_end = h_search_node(pv_end->ph_head_node, v_start);
+    if (ph_start_in_end = NULL)
+        return (G_EDGE_EXITS);
+
+    ph_start_in_end = h_search_node(pv_start->ph_head_node, v_end);
+    if (ph_end_int_start = NULL)
+        return (G_EDGE_EXITS);
+
+    h_generic_delete(ph_end_int_start);
+    h_generic_delete(ph_start_in_end);
+
+    g->nr_edges -= 1;
+
+    return (SUCCESS);
+}
+
+void show_graph(graph_t *g, const char *msg)
+{
+    vnode_t *pv_run = NULL;
+    hnode_t *ph_run = NULL;
+
+    if (msg)
+        puts(msg);
+
+    for (pv_run = g->pv_head_node->v_next; pv_run != g->pv_head_node; pv_run = pv_run->v_next)
+    {
+        printf("[%d]\t<->\t", pv_run->v);
+        for (ph_run = pv_run->ph_head_node->h_next; ph_run != pv_run->ph_head_node; ph_run = ph_run->h_next)
+        {
+            printf("[%d]<->", ph_run->v);
+        }
+        puts("[END]");
+    }
+    puts("\n-----------------------------------------------------------------------");
+}
+
+status_t destroy_graph(graph_t **pp_g)
+{
+    vnode_t *pv_run = NULL;
+    vnode_t *pv_run_next = NULL;
+
+    hnode_t *ph_run = NULL;
+    hnode_t *ph_run_next = NULL;
+
+    graph_t *g = *pp_g;
+
+    for (pv_run = g->pv_head_node->v_next; pv_run != g->pv_head_node; pv_run = pv_run_next)
+    {
+        pv_run_next = pv_run->v_next;
+        for (ph_run = pv_run->ph_head_node->h_next; ph_run != pv_run->ph_head_node; ph_run = ph_run_next)
+        {
+            ph_run_next = ph_run->h_next;
+            free(ph_run);
+        }
+        free(pv_run->ph_head_node);
+        free(pv_run);
+    }
+
+    free(g->pv_head_node);
+    free(g);
+
+    *pp_g = NULL;
+
+    return (SUCCESS);
+}
 
 /* Graph helper routines -> Vertical List Management -> vertical list Interface routines */
 
@@ -140,7 +247,7 @@ hlist_t *h_create_list(void)
     return (ph_list);
 }
 
-status_t *h_insert_end(hlist_t *ph_list, vertex_t new_vertex)
+status_t h_insert_end(hlist_t *ph_list, vertex_t new_vertex)
 {
     h_generic_insert(ph_list->h_prev, h_get_list_node(new_vertex), ph_list);
     return (SUCCESS);
@@ -151,8 +258,8 @@ void h_generic_insert(hnode_t *ph_beg, hnode_t *ph_mid, hnode_t *ph_end)
 {
     ph_mid->h_next = ph_end;
     ph_mid->h_prev = ph_beg;
-    ph_beg->h_prev = ph_mid;
-    ph_end->h_next = ph_mid;
+    ph_beg->h_next = ph_mid;
+    ph_end->h_prev = ph_mid;
 }
 
 void h_generic_delete(hnode_t *ph_delete_node)
@@ -177,7 +284,7 @@ hnode_t *h_search_node(hlist_t *ph_list, vertex_t search_vertex)
 
 hnode_t *h_get_list_node(vertex_t new_vertex)
 {
-    hnode_t *p_hnode;
+    hnode_t *p_hnode = NULL;
     p_hnode = (hnode_t *)xmalloc(sizeof(hnode_t));
     p_hnode->v = new_vertex;
     p_hnode->h_next = NULL;

@@ -1,0 +1,5 @@
+Compile ->
+cl.exe /c /EHsc /I"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\include" MatMul.cpp
+
+linke ->
+link.exe MatMul.obj OpenCL.lib /LIBPATH:"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.6\lib\x64" /SUBSYSTEM:CONSOLE
