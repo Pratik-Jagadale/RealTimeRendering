@@ -1,0 +1,110 @@
+glVertex3f(4.394f, 0.014f, 0.0f);
+glVertex3f(3.618f, 0.224f, 0.0f);
+glVertex3f(2.962f, 0.331f, 0.0f);
+glVertex3f(2.175f, 0.5325f, 0.0f);
+glVertex3f(1.512f, 0.746f, 0.0f);
+glVertex3f(1.285f, 0.779f, 0.0f);
+glVertex3f(0.587f, 1.581f, 0.0f);
+glVertex3f(0.543f, 1.614f, 0.0f);
+glVertex3f(0.248f, 1.615f, 0.0f);
+glVertex3f(0.428f, 1.002f, 0.0f);
+glVertex3f(-0.256f, 1.155f, 0.0f);
+glVertex3f(-2.242f, 3.127f, 0.0f);
+glVertex3f(-2.279f, 3.1546f, 0.0f);
+glVertex3f(-3.194f, 3.183f, 0.0f);
+glVertex3f(-3.351f, 0.93f, 0.0f);
+glVertex3f(-3.7883f, 0.9295f, 0.0f);
+glVertex3f(-3.7955f, 0.7366f, 0.0f);
+glVertex3f(-4.1017f, 0.672f, 0.0f);
+glVertex3f(-4.098f, 0.2597f, 0.0f);
+glVertex3f(-3.808f, 0.211f, 0.0f);
+glVertex3f(-4.091f, 0.193f, 0.0f);
+glVertex3f(-4.093f, 0.141f, 0.0f);
+glVertex3f(-4.248f, 0.1155f, 0.0f);
+glVertex3f(-4.258f, 0.078f, 0.0f);
+glVertex3f(-4.732f, 0.0725f, 0.0f);
+glVertex3f(-4.74f, -0.026f, 0.0f);
+glVertex3f(-4.267f, -0.0294f, 0.0f);
+glVertex3f(-4.2404f, -0.0754f, 0.0f);
+glVertex3f(-4.0995f, -0.092f, 0.0f);
+glVertex3f(-4.0966f, -0.1646f, 0.0f);
+glVertex3f(-3.8896f, -0.1804f, 0.0f);
+glVertex3f(-4.096f, -0.229f, 0.0f);
+glVertex3f(-4.0976f, -0.642f, 0.0f);
+glVertex3f(-3.798f, -0.6916f, 0.0f);
+glVertex3f(-3.7935f, -0.884f, 0.0f);
+glVertex3f(-3.348f, -0.887f, 0.0f);
+glVertex3f(-3.189f, -3.0945f, 0.0f);
+glVertex3f(-2.2505f, -3.109f, 0.0f);
+glVertex3f(-0.256f, -1.113f, 0.0f);
+glVertex3f(0.371f, -0.967f, 0.0f);
+glVertex3f(0.493f, -0.905f, 0.0f);
+glVertex3f(0.553f, -0.836f, 0.0f);
+glVertex3f(0.579f, -0.768f, 0.0f);
+glVertex3f(1.138f, -0.756f, 0.0f);
+glVertex3f(1.437f, -0.722f, 0.0f);
+glVertex3f(1.726f, -0.658f, 0.0f);
+glVertex3f(2.423f, -0.404f, 0.0f);
+glVertex3f(2.823f, -0.312f, 0.0f);
+glVertex3f(3.513f, -0.206f, 0.0f);
+glVertex3f(3.931f, -0.125f, 0.0f);
+glVertex3f(4.39f, 0.008f, 0.0f);
+
+
+
+
+glVertex3f(1.223f, 0.861f, 0.0f);
+glVertex3f(0.6f, 1.597f, 0.0f);
+glVertex3f(0.24f, 1.613f, 0.0f);
+glVertex3f(0.56f, 0.818f, 0.0f);
+
+
+
+
+
+glVertex3f(4.394, 0.014, 0.0f);
+glVertex3f(3.618, 0.224, 0.0f);
+glVertex3f(2.962, 0.331, 0.0f);
+glVertex3f(2.175, 0.5325, 0.0f);
+glVertex3f(1.512, 0.746, 0.0f);
+glVertex3f(1.285, 0.779, 0.0f);
+glVertex3f(1.138, -0.756, 0.0f);
+glVertex3f(1.437, -0.722, 0.0f);
+glVertex3f(1.726, -0.658, 0.0f);
+glVertex3f(2.423, -0.404, 0.0f);
+glVertex3f(2.823, -0.312, 0.0f);
+glVertex3f(3.513, -0.206, 0.0f);
+glVertex3f(3.931, -0.125, 0.0f);
+glVertex3f(4.39, 0.008000, 0.0f);
+
+
+
+glvertexf(-0.256, 1.155, 0.0f);
+glvertexf(-2.242, 3.127, 0.0f);
+glvertexf(-2.279, 3.1546, 0.0f);
+glvertexf(-3.194, 3.183, 0.0f);
+glvertexf(-3.351, 0.93, 0.0f);
+glvertexf(-3.7883, 0.9295, 0.0f);
+glvertexf(-3.7955, 0.7366, 0.0f);
+glvertexf(-4.1017, 0.672, 0.0f);
+glvertexf(-4.098, 0.2597, 0.0f);
+glvertexf(-3.808, 0.211, 0.0f);
+glvertexf(-4.091, 0.193, 0.0f);
+glvertexf(-4.093, 0.141, 0.0f);
+glvertexf(-4.248, 0.1155, 0.0f);
+glvertexf(-4.258, 0.078, 0.0f);
+glvertexf(-4.732, 0.0725, 0.0f);
+glvertexf(-4.74, -0.026, 0.0f);
+glvertexf(-4.267, -0.0294, 0.0f);
+glvertexf(-4.2404, -0.0754, 0.0f);
+glvertexf(-4.0995, -0.092, 0.0f);
+glvertexf(-4.0966, -0.1646, 0.0f);
+glvertexf(-3.8896, -0.1804, 0.0f);
+glvertexf(-4.096, -0.229, 0.0f);
+glvertexf(-4.0976, -0.642, 0.0f);
+glvertexf(-3.798, -0.6916, 0.0f);
+glvertexf(-3.7935, -0.884, 0.0f);
+glvertexf(-3.348, -0.887, 0.0f);
+glvertexf(-3.189, -3.0945, 0.0f);
+glvertexf(-2.2505, -3.109, 0.0f);
+glvertexf(-0.256, -1.11300, 0.0f);

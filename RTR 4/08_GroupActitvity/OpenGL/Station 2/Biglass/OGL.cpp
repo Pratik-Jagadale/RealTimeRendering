@@ -397,46 +397,48 @@ void uninitialize(void)
 
 void drawGlass(void)
 {
-    // function declarations
-
     // code
     float x, y;
 
-    // border
+    //
     glEnable(GL_POINT_SMOOTH);
-    glPointSize(10);
-    glBegin(GL_POINTS);
-    glColor3f(0.349f, 0.211f, 0.180f);
-    for (float angle = 0.0f; angle <= M_PI; angle = angle + 0.0001f)
-    {
-        x = 2.01f * cos(angle);
-        y = 2.01f * sin(angle);
-        glVertex3f(x, y, 0.0f);
-    }
-    glEnd();
-
-    glEnable(GL_POINT_SMOOTH);
-    glPointSize(5);
+    glPointSize(12);
     glBegin(GL_POINTS);
     glColor3f(0.741f, 0.556f, 0.470f);
-    for (float k = 2.05f; k < 2.4f; k = k + 0.001f)
+    for (float k = 2.05f; k < 2.4f; k = k + 0.04f)
     {
-        for (float angle = 0.0f; angle <= M_PI; angle = angle + 0.01f)
+        for (float angle = 0.0f; angle <= 180.0f; angle = angle + 0.01f)
         {
-            x = k * cos(angle);
-            y = k * sin(angle);
+            float rangle = (angle * M_PI) / 180.0f;
+            x = k * cos(rangle);
+            y = k * sin(rangle);
             glVertex3f(x, y, -0.01f);
         }
     }
     glEnd();
 
+    // border
+    glEnable(GL_POINT_SMOOTH);
+    glPointSize(15);
+    glBegin(GL_POINTS);
+    glColor3f(0.349f, 0.211f, 0.180f);
+    for (float angle = 0.0f; angle <= 180.0; angle = angle + 0.1f)
+    {
+        float rangle = (angle * M_PI) / 180.0f;
+        x = 2.01f * cos(rangle);
+        y = 2.01f * sin(rangle);
+        glVertex3f(x, y, 0.0f);
+    }
+    glEnd();
     // glass
     glBegin(GL_LINES);
 
-    for (float angle = 0.0f; angle <= M_PI; angle = angle + 0.008f)
+    for (float angle = 0.0f; angle <= 180.0f; angle = angle + 0.008f)
     {
-        x = 2.0f * cos(angle);
-        y = 2.0f * sin(angle);
+
+        float rangle = (angle * M_PI) / 180.0f;
+        x = 2.0f * cos(rangle);
+        y = 2.0f * sin(rangle);
         glColor3f(0.015f, 0.850f, 0.850f);
         glVertex3f(0.0f, 0.0f, 0.0f);
 
@@ -446,18 +448,19 @@ void drawGlass(void)
     glEnd();
 
     // vertical lines
-    glLineWidth(5.0f);
-    glBegin(GL_LINES);
-    glColor3f(0.349f, 0.211f, 0.180f);
-    for (float angle = 0.0f; angle <= M_PI; angle = angle + 0.1f)
-    {
-        x = 2.0f * cos(angle);
-        y = 2.0f * sin(angle);
-        glVertex3f(x, 0.0f, 0.0f);
-        glVertex3f(x, y, 0.0f);
-    }
-    glEnd();
-
+    /*    glLineWidth(5.0f);
+        glBegin(GL_LINES);
+        glColor3f(0.349f, 0.211f, 0.180f);
+        for (float angle = 0.0f; angle <= M_PI; angle = angle + 0.1f)
+        {
+            float rangle = (angle * M_PI) / 180.0f;
+            x = 2.0f * cos(rangle);
+            y = 2.0f * sin(rangle);
+            glVertex3f(x, 0.0f, 0.0f);
+            glVertex3f(x, y, 0.0f);
+        }
+        glEnd();
+    */
     // horizontal lines
     glBegin(GL_LINES);
     glColor3f(0.349f, 0.211f, 0.180f);
