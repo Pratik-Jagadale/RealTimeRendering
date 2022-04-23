@@ -28,6 +28,33 @@ int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 BOOL gbActiveWindow = FALSE;
 
+// for lettres movements
+float pos_I_ONE = -5.0f;
+float pos_N = 9.0f;
+float pos_D = 0.0f;
+float pos_I_TWO = -9.0f;
+float pos_A = 7.0f;
+
+// for A "-" blend effect
+float horizontalLine_A = 0.0f;
+
+// for jet movements
+float arpl_A = -10.5f;
+float arpl_B = -10.5f;
+float arpl_C = -10.5f;
+float arpl_A_Y = 5.0f;
+float arpl_C_Y = -5.0f;
+float jetAngleA = 270.0f;
+float jetAngleC = 90.0f;
+
+// for jet booster
+float y = 0.67f;
+float y_one = 0.67f;
+float y_TWO = 0.300f;
+
+// for Z coordinate of all letters
+float zCord = 0.0f;
+
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void ToggleFullScreen();
@@ -326,33 +353,6 @@ int initialize(void)
 
 	return (0);
 }
-
-// for lettres movements
-float pos_I_ONE = -5.0f;
-float pos_N = 9.0f;
-float pos_D = 0.0f;
-float pos_I_TWO = -9.0f;
-float pos_A = 7.0f;
-
-// for A "-" blend effect
-float horizontalLine_A = 0.0f;
-
-// for jet movements
-float arpl_A = -10.5f;
-float arpl_B = -10.5f;
-float arpl_C = -10.5f;
-float arpl_A_Y = 5.0f;
-float arpl_C_Y = -5.0f;
-float jetAngleA = 270.0f;
-float jetAngleC = 90.0f;
-
-// for jet booster
-float y = 0.67f;
-float y_one = 0.67f;
-float y_TWO = 0.300f;
-
-// for Z coordinate of all letters
-float zCord = 0.0f;
 
 void resize(int width, int height)
 {
