@@ -123,6 +123,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
         fprintf(gpFile, "Making OpenGL as current Context Failed...\n");
         uninitialize();
     }
+    else if (iRetVal == -5)
+    {
+        fprintf(gpFile, " loadGLTexture Failed for texture_stone ...\n");
+        uninitialize();
+    }
+    else if (iRetVal == -6)
+    {
+        fprintf(gpFile, "loadGLTexture Failed for texture kundali ...\n");
+        uninitialize();
+    }
     else
     {
         fprintf(gpFile, "Initialize Successfull...\n");
@@ -325,10 +335,10 @@ int initialize(void)
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
     if (LoadGLTexture(&texture_stone, MAKEINTRESOURCE(IDBITMAP_STONE)) == FALSE)
-        return -6; // writr log in wndproc
+        return -6; // write log in wndproc
 
     if (LoadGLTexture(&texture_kundali, MAKEINTRESOURCE(IDBITMAP_KUNDALI)) == FALSE)
-        return -7; // writr log in wndproc
+        return -7; // write log in wndproc
 
     // Enabaling the texture
     glEnable(GL_TEXTURE_2D);
