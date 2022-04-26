@@ -423,8 +423,6 @@ void display(void)
 
     glEnd();
 
-    //
-
     // CUBE ***************************
     glLoadIdentity();
     glTranslatef(1.5f, 0.0f, -6.0f);

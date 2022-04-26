@@ -26,6 +26,7 @@ int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 int day = 0;
 int year = 0;
+int moon = 0;
 GLUquadric *quadric = NULL;
 
 /* Global Function Declartion */
@@ -192,18 +193,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
         case 'd':
             day = (day + 6) % 360;
+            moon = (moon + 9) % 360;
             break;
 
         case 'D':
             day = (day - 6) % 360;
+            moon = (moon - 9) % 360;
             break;
 
         case 'y':
+            day = (day + 6) % 360;
             year = (year + 3) % 360;
             break;
 
         case 'Y':
-            year = (year + 3) % 360;
+            day = (day - 6) % 360;
+            year = (year - 3) % 360;
             break;
         case 27:
             if (gpFile)
@@ -336,6 +341,10 @@ int initialize(void)
     glShadeModel(GL_SMOOTH);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
+    // quadric intialliza
+    // create quadric
+    quadric = gluNewQuadric();
+
     resize(WINWIDTH, WINHEIGHT); // WARMUP RESIZE CALL
 
     return (0);
@@ -357,6 +366,9 @@ void resize(int width, int height)
 
 void display(void)
 {
+    // function prototype
+    void colorSetcolor(int r, int g, int b);
+
     /* Code */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -364,8 +376,8 @@ void display(void)
 
     glLoadIdentity();
 
-    // vievw Tranformation (Camera Tranformation)
-    gluLookAt(0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+    // view Tranformation (Camera Tranformation)
+    gluLookAt(0.0f, 0.0f, 10.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
     // SAVE Camera Matrix (Push)
     glPushMatrix();
@@ -375,9 +387,6 @@ void display(void)
 
     // beutification - 2
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    // create quadric
-    quadric = gluNewQuadric();
 
     // beutification - 3
     glColor3f(1.0f, 1.0f, 0.0f);
@@ -395,7 +404,11 @@ void display(void)
     glRotatef((GLfloat)year, 0.0f, 1.0f, 0.0f);
 
     /// To translation for earth
-    glTranslatef(1.5f, 0.0f, 0.0f);
+    glTranslatef(2.5f, 0.0f, 0.0f);
+
+    // save earth current camera matrix
+    glPushMatrix();
+    glPushMatrix();
 
     // beutification - 4
     glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
@@ -407,11 +420,30 @@ void display(void)
     //  beutification - 5
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    quadric = gluNewQuadric();
-
     glColor3f(0.4f, 0.9f, 1.0f);
 
-    gluSphere(quadric, 0.2f, 20, 20);
+    gluSphere(quadric, 0.4f, 20, 20);
+
+    // moon
+    glPopMatrix(); // retrive earth current camera matrix
+
+    // rotation around sun
+    glRotatef((GLfloat)year, 0.0f, 1.0f, 0.0f);
+    glTranslatef(1.0f, 0.0f, 0.0f);
+
+    glPopMatrix(); //  retrive earth current camera matrix
+
+    // self rotation with rotation  around earth
+    glRotatef((GLfloat)day, 0.0f, 1.0f, 0.0f);
+    glTranslatef(1.0f, 0.0f, 0.0f);
+
+    // beutification - 6
+    glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+
+    // beutification - 7
+    colorSetcolor(255, 255, 255);
+
+    gluSphere(quadric, 0.2f, 15, 15);
 
     glPopMatrix();
 
@@ -462,4 +494,9 @@ void uninitialize(void)
         fclose(gpFile);
         gpFile = NULL;
     }
+}
+
+void colorSetcolor(int r, int g, int b)
+{
+    glColor3f(r / 255, g / 255, b / 255);
 }

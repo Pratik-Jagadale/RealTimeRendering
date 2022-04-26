@@ -26,17 +26,6 @@ int iHeightOfScreen;
 int iWidthOfscreen;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 
-float AngleTangle = 0.0f;
-float x, y;
-
-float loacationCameraX = 0.0f;
-float loacationCameraY = 0.0f;
-float loacationCameraZ = 0.0f;
-
-float directionOfCameraX = 0.0f;
-float directionOfCameraY = 0.0f;
-float directionOfCameraZ = 0.0f;
-
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void ToggleFullScreen();
@@ -200,11 +189,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             ToggleFullScreen();
             break;
 
-        case 'w':
-            loacationCameraZ = loacationCameraZ - 0.1f;
-            // directionOfCameraZ = directionOfCameraZ - 0.1f;
-            break;
-
         case 27:
             if (gpFile)
             {
@@ -345,15 +329,7 @@ void resize(int width, int height)
 
 void display(void)
 {
-    float SCALERATION = -0.25f;
-
-    void drawPiller(void);
-    void drawWall(void);
-    void drawBigDoor(void);
-    void drawRAILWAYSTATION(void);
-    void drawBigGlass(void);
-    void Garden(void);
-    void drawCompund(void);
+    void drawStation(void);
 
     /* Code */
     glClear(GL_COLOR_BUFFER_BIT);
@@ -364,6 +340,74 @@ void display(void)
 
     glLoadIdentity();
     glTranslatef(0.0f, 0.0f, -12.0f);
+
+    drawStation();
+
+    SwapBuffers(ghdc);
+}
+
+void update(void)
+{
+    /* code */
+}
+
+void uninitialize(void)
+{
+    /* function declarations */
+    void ToggleFullScreen(void);
+
+    /* code */
+    if (gbFullScreen)
+        ToggleFullScreen();
+
+    /*  */
+    if (wglGetCurrentContext() == ghrc)
+    {
+        wglMakeCurrent(NULL, NULL);
+    }
+
+    if (ghrc)
+    {
+        wglDeleteContext(ghrc);
+        ghrc = NULL;
+    }
+
+    if (ghdc)
+    {
+        ReleaseDC(ghwnd, ghdc);
+        ghwnd = NULL;
+        ghdc = NULL;
+    }
+
+    if (ghwnd)
+    {
+        DestroyWindow(ghwnd);
+    }
+
+    if (gpFile)
+    {
+        fprintf(gpFile, "Log File Successfully Closes");
+        fclose(gpFile);
+        gpFile = NULL;
+    }
+}
+
+// STATION CODE ROUTINES
+
+void drawStation(void)
+{
+    // variable declarations
+    float SCALERATION = -0.25f;
+
+    void drawPiller(void);
+    void drawWall(void);
+    void drawBigDoor(void);
+    void drawRAILWAYSTATION(void);
+    void drawBigGlass(void);
+    void Garden(void);
+    void drawCompund(void);
+
+    // code
 
     glBegin(GL_POLYGON);
     setColor(211, 211, 211);
@@ -441,56 +485,6 @@ void display(void)
     glScalef(0.45f, 0.45f, 0.0f);
 
     drawCompund();
-
-    // gluLookAt(loacationCameraX, loacationCameraY, loacationCameraZ, directionOfCameraX, directionOfCameraY, directionOfCameraZ, 0.0f, 0.0f, 1.0f);
-
-    SwapBuffers(ghdc);
-}
-
-void update(void)
-{
-    /* code */
-}
-
-void uninitialize(void)
-{
-    /* function declarations */
-    void ToggleFullScreen(void);
-
-    /* code */
-    if (gbFullScreen)
-        ToggleFullScreen();
-
-    /*  */
-    if (wglGetCurrentContext() == ghrc)
-    {
-        wglMakeCurrent(NULL, NULL);
-    }
-
-    if (ghrc)
-    {
-        wglDeleteContext(ghrc);
-        ghrc = NULL;
-    }
-
-    if (ghdc)
-    {
-        ReleaseDC(ghwnd, ghdc);
-        ghwnd = NULL;
-        ghdc = NULL;
-    }
-
-    if (ghwnd)
-    {
-        DestroyWindow(ghwnd);
-    }
-
-    if (gpFile)
-    {
-        fprintf(gpFile, "Log File Successfully Closes");
-        fclose(gpFile);
-        gpFile = NULL;
-    }
 }
 
 void drawBigDoor(void)
@@ -1032,23 +1026,6 @@ void drawBigGlass(void)
     // code
     float x, y;
 
-    //
-    glEnable(GL_POINT_SMOOTH);
-    /*  glPointSize(12);
-      glBegin(GL_POINTS);
-      glColor3f(0.741f, 0.556f, 0.470f);
-      for (float k = 2.05f; k < 2.4f; k = k + 0.04f)
-      {
-          for (float angle = 0.0f; angle <= 180.0f; angle = angle + 0.01f)
-          {
-              float rangle = (angle * M_PI) / 180.0f;
-              x = k * cos(rangle);
-              y = k * sin(rangle);
-              glVertex3f(x, y, -0.01f);
-          }
-      }
-      glEnd();
-  */
     // border
     glEnable(GL_POINT_SMOOTH);
     glPointSize(15);
@@ -1079,20 +1056,6 @@ void drawBigGlass(void)
     }
     glEnd();
 
-    // vertical lines
-    /*    glLineWidth(5.0f);
-        glBegin(GL_LINES);
-        glColor3f(0.349f, 0.211f, 0.180f);
-        for (float angle = 0.0f; angle <= M_PI; angle = angle + 0.1f)
-        {
-            float rangle = (angle * M_PI) / 180.0f;
-            x = 2.0f * cos(rangle);
-            y = 2.0f * sin(rangle);
-            glVertex3f(x, 0.0f, 0.0f);
-            glVertex3f(x, y, 0.0f);
-        }
-        glEnd();
-    */
     // horizontal lines
     glLineWidth(2);
     glBegin(GL_LINES);
@@ -1118,6 +1081,7 @@ void drawBigGlass(void)
 
 void grass1(void)
 {
+    // grass types 1
     glBegin(GL_POLYGON);
     glColor3f(0.0f, 1.0f, 0.0f);
     glVertex3f(-1.6989f, -0.9219f, 0.0f);
@@ -1165,6 +1129,7 @@ void grass1(void)
 
 void grass2(void)
 {
+    // grass type 2
     glBegin(GL_POLYGON);
     glColor3f(0.0f, 1.0f, 0.0f);
     glVertex3f(-1.6989f, -0.9219f, 0.0f);
@@ -1430,13 +1395,3 @@ void setColor(float r, float g, float b)
 {
     glColor3f(r / 255.0f, g / 255.0f, b / 255.0f);
 }
-
-/*
-dark dark brown - 51 , 29 , 12
-dark brown      - 77 43 17
-brown           - 102 58 23
-light brown     - 128 72 28
-light brown     - 153 87 34
-
-DarkSlateGray   - 47, 79, 79
-*/
