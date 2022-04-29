@@ -394,7 +394,7 @@ void display(void)
     // Draw Sphere
     gluSphere(quadric, 0.75f, 30, 30);
 
-    // Restore the saved camera matrix (pop)
+    // Restore the saved camera matrix of Sun (pop)
     glPopMatrix();
 
     // Save the current camera Matrix
@@ -493,6 +493,12 @@ void uninitialize(void)
         fprintf(gpFile, "Log File Successfully Closes");
         fclose(gpFile);
         gpFile = NULL;
+    }
+
+    if (quadric)
+    {
+        gluDeleteQuadric(quadric);
+        quadric = NULL;
     }
 }
 

@@ -26,6 +26,7 @@ int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 int shoulder = 0;
 int elbow = 0;
+int wrist = 0;
 GLUquadric *quadric = NULL;
 
 /* Global Function Declartion */
@@ -205,6 +206,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         case 'e':
             elbow = (elbow - 3) % 360;
             break;
+
+        case 'w':
+            if (wrist < 72 || wrist >= 270)
+                wrist = (wrist + 3) % 360;
+
+            if (wrist > 360)
+                wrist = 0;
+
+            break;
+
+        case 'W':
+            if (wrist > 270 || wrist <= 72)
+                wrist = (wrist - 3) % 360;
+
+            if (wrist < 0)
+                wrist = 360;
+
+            break;
+
         case 27:
             if (gpFile)
             {
@@ -336,6 +356,8 @@ int initialize(void)
     glShadeModel(GL_SMOOTH);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
+    quadric = gluNewQuadric();
+
     resize(WINWIDTH, WINHEIGHT); // WARMUP RESIZE CALL
 
     return (0);
@@ -379,7 +401,6 @@ void display(void)
     glScalef(2.0f, 0.5f, 1.0f);
 
     // Draw Arm
-    quadric = gluNewQuadric();
 
     glColor3f(0.5f, 0.35f, 0.05f);
 
@@ -399,14 +420,98 @@ void display(void)
 
     glScalef(2.0f, 0.5f, 1.0f);
 
-    quadric = gluNewQuadric();
-
     glColor3f(0.5f, 0.35f, 0.05f);
 
     gluSphere(quadric, 0.5f, 10, 10);
 
     glPopMatrix();
 
+    glPushMatrix();
+
+    // fore arm
+    glTranslatef(1.0f, 0.0f, 0.0f);
+
+    glRotatef((GLfloat)wrist, 0.0f, 0.0f, 1.0f);
+
+    glTranslatef(0.4f, 0.0f, 0.0f);
+
+    glPushMatrix();
+
+    glScalef(0.8f, 0.43f, 0.8f);
+
+    glColor3f(0.4f, 0.35f, 0.05f);
+
+    gluSphere(quadric, 0.5f, 10, 10);
+
+    glPopMatrix();
+
+    // FINGERS
+    // 1
+    glTranslatef(0.6f, 0.2f, 0.0f);
+
+    glPushMatrix();
+
+    glScalef(0.3f, 0.1f, 0.2f);
+
+    glColor3f(0.4f, 0.2f, 0.05f);
+
+    gluSphere(quadric, 0.5f, 10, 10);
+
+    // 2
+    glPopMatrix();
+    glTranslatef(0.1f, -0.12f, 0.0f);
+
+    glPushMatrix();
+
+    glScalef(0.4f, 0.09f, 0.2f);
+
+    glColor3f(0.4f, 0.2f, 0.05f);
+
+    gluSphere(quadric, 0.5f, 5, 5);
+
+    // 3
+    glPopMatrix();
+    glTranslatef(0.0f, -0.1f, 0.0f);
+
+    glPushMatrix();
+
+    glScalef(0.4f, 0.09f, 0.2f);
+
+    quadric = gluNewQuadric();
+
+    glColor3f(0.4f, 0.2f, 0.05f);
+
+    gluSphere(quadric, 0.5f, 5, 5);
+
+    // 4
+    glPopMatrix();
+    glTranslatef(0.0f, -0.09f, 0.0f);
+
+    glPushMatrix();
+
+    glScalef(0.4f, 0.09f, 0.2f);
+
+    glColor3f(0.4f, 0.2f, 0.05f);
+
+    gluSphere(quadric, 0.5f, 5, 5);
+
+    // 5
+    glPopMatrix();
+    glTranslatef(-0.1f, -0.1f, 0.0f);
+
+    glPushMatrix();
+
+    glScalef(0.25f, 0.09f, 0.2f);
+
+    glColor3f(0.45f, 0.2f, 0.06f);
+
+    gluSphere(quadric, 0.5f, 5, 5);
+
+    // pop Fore Arm Matrix
+    // Pop arm matrix
+    // Pop Shoulder matrix
+    glPopMatrix();
+    glPopMatrix();
     glPopMatrix();
 
     SwapBuffers(ghdc);
@@ -455,5 +560,11 @@ void uninitialize(void)
         fprintf(gpFile, "Log File Successfully Closes");
         fclose(gpFile);
         gpFile = NULL;
+    }
+
+    if (quadric)
+    {
+        gluDeleteQuadric(quadric);
+        quadric = NULL;
     }
 }
