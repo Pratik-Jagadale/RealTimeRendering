@@ -7,7 +7,6 @@
 
 #define BST_DATA_NOT_FOUND 2
 #define BST_NO_SUCCESSOR 3
-#define BST_NO_PREDECESSOR 4
 #define BST_EMPTY 5
 
 struct bst_node;
@@ -42,13 +41,9 @@ bool search_bst(bst_t *p_bst, data_t search_data);
 void inorder_r(bst_t *p_bst);
 void preorder_r(bst_t *p_bst);
 void postorder_r(bst_t *p_bst);
-void inorder_nrc(bst_t *p_bst);
-void preorder_nrc(bst_t *p_bst);
-void postorder_nrc(bst_t *p_bst);
 ret_t maximum_bst(bst_t *p_bst, data_t *p_max_data);
 ret_t minimum_bst(bst_t *p_bst, data_t *p_min_data);
 ret_t inorder_successor(bst_t *p_bst, data_t e_data, data_t *p_succ_data);
-ret_t inorder_predecessor(bst_t *p_bst, data_t e_data, data_t *p_pred_data);
 ret_t remove_bst(bst_t *p_bst, data_t d_data);
 ret_t destroy_bst(bst_t **pp_bst);
 

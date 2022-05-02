@@ -1,0 +1,10 @@
+#include "OGL.h"
+
+MYICON ICON p_logo.ico
+
+IDBITMAP_SUN_TEXTRURE BITMAP images\sun.bmp
+IDBITMAP_EARTH_TEXTRURE BITMAP images\earth.bmp
+IDBITMAP_MOON_TEXTRURE BITMAP images\moon.bmp
+IDBITMAP_STARS_TEXTRURE BITMAP images\stars.bmp
+
+
