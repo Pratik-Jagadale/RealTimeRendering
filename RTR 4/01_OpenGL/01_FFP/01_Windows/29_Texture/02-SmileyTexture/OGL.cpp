@@ -278,6 +278,7 @@ int initialize(void)
 	pfd.cGreenBits = 8;
 	pfd.cBlueBits = 8;
 	pfd.cAlphaBits = 8;
+	pfd.cDepthBits = 32; // 24 also can done
 
 	/* GetDC */
 	ghdc = GetDC(ghwnd);
@@ -310,6 +311,14 @@ int initialize(void)
 	if (LoadGLTexture(&texture_Smiley, MAKEINTRESOURCE(IDBITMAP_SMILEY)) == FALSE)
 		return -6; // write log in wndproc
 
+	// Depth related changes
+	glClearDepth(1.0f);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+
+	glShadeModel(GL_SMOOTH);
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
 	// Enabaling the texture
 	glEnable(GL_TEXTURE_2D);
 
@@ -335,7 +344,7 @@ void resize(int width, int height)
 void display(void)
 {
 	/* Code */
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();

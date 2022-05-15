@@ -1,0 +1,37 @@
+sort(arr,  p , r)
+{
+int q;
+if(p<r)
+{
+	q = partition(arr, p ,r);
+	sort(arr, p , q + 1);
+	sort(arr,q+1, r);
+}
+
+}
+
+int partition(int* arr, int p , int r)
+{
+
+int pivot = r;
+int i = p;
+int j = p;
+ 
+while(j < r)
+{
+	if(arr[j] <= arr[pivot])
+	{
+		swap(&arr[j] , &arr[i[4]);
+		i++;
+		j++;	
+	}
+	else
+	{
+		j++;
+	}	
+} 
+
+swap(arr[pivot],  arr[i +1]);
+
+
+

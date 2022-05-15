@@ -1,0 +1,6 @@
+#include "OGL.h"
+
+MYICON ICON p_logo.ico
+
+
+
