@@ -24,23 +24,12 @@ BOOL gbFullScreen = FALSE;
 int iHeightOfWindow;
 int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
+float AngleCube = 0.0f;
 
-float AnglePyramid = 0.0f;
-BOOL bLight = FALSE;
-GLfloat lightAmbinatZero[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightDefuseZero[] = {1.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightSpecularZero[] = {1.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightPositionZero[] = {-2.0f, 0.0f, 0.0f, 1.0f};
-
-GLfloat lightAmbinatOne[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightDefuseOne[] = {0.0f, 0.0f, 1.0f, 1.0f};
-GLfloat lightSpecularOne[] = {0.0f, 0.0f, 1.0f, 1.0f};
-GLfloat lightPositionOne[] = {2.0f, 0.0f, 0.0f, 1.0f};
-
-GLfloat materialAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat materialDefuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat materialSpecular[] = {1.0f, 1.f, 1.0f, 1.0f};
-GLfloat materialShininess = 50.0f;
+GLfloat gfLightAmbiant[] = {0.5f, 0.5f, 0.5f, 1.0f};
+GLfloat gfLightDiffuse[] = {1.0f, 0.0f, 0.0f, 1.0f};
+GLfloat gfLightPositions[] = {0.0f, 0.0f, 2.0f, 1.0f};
+BOOL gbLight = FALSE;
 
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -203,21 +192,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         case 'F':
             ToggleFullScreen();
             break;
-
         case 'L':
         case 'l':
-            if (bLight == FALSE)
+            if (gbLight == FALSE)
             {
                 glEnable(GL_LIGHTING);
-                bLight = TRUE;
+                gbLight = TRUE;
             }
             else
             {
                 glDisable(GL_LIGHTING);
-                bLight = FALSE;
+                gbLight = FALSE;
             }
 
             break;
+
         case 27:
             if (gpFile)
             {
@@ -294,6 +283,7 @@ int initialize(void)
 {
     /* fucntion delcations */
     void resize(int, int);
+    BOOL LoadGLTexture(GLuint *, TCHAR[]);
 
     /* variable declartions */
     PIXELFORMATDESCRIPTOR pfd;
@@ -338,6 +328,9 @@ int initialize(void)
         return -4;
 
     /* Here start OpeGL Code */
+    /* Clear the  screen using black color */
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
     // Depth related changes
     glClearDepth(1.0f);
     glEnable(GL_DEPTH_TEST);
@@ -346,27 +339,12 @@ int initialize(void)
     glShadeModel(GL_SMOOTH);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbinatZero);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDefuseZero);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecularZero);
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPositionZero);
-
-    glEnable(GL_LIGHT0);
-
-    glLightfv(GL_LIGHT1, GL_AMBIENT, lightAmbinatOne);
-    glLightfv(GL_LIGHT1, GL_DIFFUSE, lightDefuseOne);
-    glLightfv(GL_LIGHT1, GL_SPECULAR, lightSpecularOne);
-    glLightfv(GL_LIGHT1, GL_POSITION, lightPositionOne);
+    // Ligth related Changes
+    glLightfv(GL_LIGHT1, GL_AMBIENT, gfLightAmbiant);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, gfLightDiffuse);
+    glLightfv(GL_LIGHT1, GL_POSITION, gfLightPositions);
 
     glEnable(GL_LIGHT1);
-
-    glMaterialfv(GL_FRONT, GL_AMBIENT, materialAmbiant);
-    glMaterialfv(GL_FRONT, GL_DIFFUSE, materialDefuse);
-    glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpecular);
-    glMaterialf(GL_FRONT, GL_SHININESS, materialShininess);
-
-    /* Clear the  screen using black color */
-    glClearColor(0.0f, 0.0f, 1.0f, 0.0f);
 
     resize(WINWIDTH, WINHEIGHT); // WARMUP RESIZE CALL
 
@@ -393,35 +371,52 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_MODELVIEW);
-    // Trangle *****
+
     glLoadIdentity();
+
     glTranslatef(0.0f, 0.0f, -6.0f);
+    glRotatef(AngleCube, 1.0f, 1.0f, 0.0f);
 
-    glRotatef(AnglePyramid, 0.0f, 1.0f, 0.0f); // Spinning
-
-    glBegin(GL_TRIANGLES);
-
+    glBegin(GL_QUADS);
     // FRONT FACE
-    glNormal3f(0.0f, 0.447214f, 0.894428f);
-    glVertex3f(0.0f, 1.0f, 0.0f);
+    glNormal3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(1.0f, 1.0f, 1.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
 
     // RIGHT FACE
-    glNormal3f(0.894428f, 0.447214f, 0.0f);
-    glVertex3f(0.0f, 1.0f, 0.0f);
+    glNormal3f(1.0f, 0.0f, 0.0f);
+    glVertex3f(1.0f, 1.0f, -1.0f);
+    glVertex3f(1.0f, 1.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
 
     // BACK FACE
-    glNormal3f(0.0f, 0.447214f, -0.894428f);
-    glVertex3f(0.0f, 1.0f, 0.0f);
+    glNormal3f(0.0f, 0.0f, -1.0f);
+    glVertex3f(-1.0f, 1.0f, -1.0f);
+    glVertex3f(1.0f, 1.0f, -1.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
 
     // LEFT FACE
-    glNormal3f(-0.894428f, 0.447214f, 0.0f);
-    glVertex3f(0.0f, 1.0f, 0.0f);
+    glNormal3f(-1.0f, 0.0f, 0.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+    glVertex3f(-1.0f, 1.0f, -1.0f);
+    glVertex3f(-1.0f, -1.0f, -1.0f);
+    glVertex3f(-1.0f, -1.0f, 1.0f);
+
+    // TOP FACE
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(1.0f, 1.0f, 1.0f);
+    glVertex3f(1.0f, 1.0f, -1.0f);
+    glVertex3f(-1.0f, 1.0f, -1.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+
+    // BOTTOM FACE
+    glNormal3f(0.0f, -1.0f, 0.0f);
+    glVertex3f(1.0f, -1.0f, 1.0f);
+    glVertex3f(1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, -1.0f);
     glVertex3f(-1.0f, -1.0f, 1.0f);
 
@@ -433,9 +428,9 @@ void display(void)
 void update(void)
 {
     /* code */
-    AnglePyramid = AnglePyramid + 0.05f;
-    if (AnglePyramid >= 360.0f)
-        AnglePyramid = 0.0f;
+    AngleCube = AngleCube + 0.05f;
+    if (AngleCube >= 360.0f)
+        AngleCube = 0.0f;
 }
 
 void uninitialize(void)

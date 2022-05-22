@@ -24,23 +24,32 @@ BOOL gbFullScreen = FALSE;
 int iHeightOfWindow;
 int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
+GLUquadric *quadric = NULL;
 
-float AnglePyramid = 0.0f;
 BOOL bLight = FALSE;
 GLfloat lightAmbinatZero[] = {0.0f, 0.0f, 0.0f, 1.0f};
 GLfloat lightDefuseZero[] = {1.0f, 0.0f, 0.0f, 1.0f};
 GLfloat lightSpecularZero[] = {1.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightPositionZero[] = {-2.0f, 0.0f, 0.0f, 1.0f};
+GLfloat lightPositionZero[] = {0.0f, 0.0f, 0.0f, 1.0f};
 
 GLfloat lightAmbinatOne[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightDefuseOne[] = {0.0f, 0.0f, 1.0f, 1.0f};
-GLfloat lightSpecularOne[] = {0.0f, 0.0f, 1.0f, 1.0f};
-GLfloat lightPositionOne[] = {2.0f, 0.0f, 0.0f, 1.0f};
+GLfloat lightDefuseOne[] = {0.0f, 1.0f, 0.0f, 1.0f};
+GLfloat lightSpecularOne[] = {0.0f, 1.0f, 0.0f, 1.0f};
+GLfloat lightPositionOne[] = {0.0f, 0.0f, 0.0f, 1.0f};
+
+GLfloat lightAmbinatTwo[] = {0.0f, 0.0f, 0.0f, 1.0f};
+GLfloat lightDefuseTwo[] = {0.0f, 0.0f, 1.0f, 1.0f};
+GLfloat lightSpecularTwo[] = {0.0f, 0.0f, 1.0f, 1.0f};
+GLfloat lightPositionTwo[] = {0.0f, 0.0f, 0.0f, 1.0f};
 
 GLfloat materialAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
 GLfloat materialDefuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
 GLfloat materialSpecular[] = {1.0f, 1.f, 1.0f, 1.0f};
 GLfloat materialShininess = 50.0f;
+
+GLfloat lightAngleOne = 0.0f;
+GLfloat lightAngleTwo = 0.0f;
+GLfloat lightAngleZero = 0.0f;
 
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -218,6 +227,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
             }
 
             break;
+
         case 27:
             if (gpFile)
             {
@@ -338,13 +348,6 @@ int initialize(void)
         return -4;
 
     /* Here start OpeGL Code */
-    // Depth related changes
-    glClearDepth(1.0f);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-
-    glShadeModel(GL_SMOOTH);
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
     glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbinatZero);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDefuseZero);
@@ -360,13 +363,32 @@ int initialize(void)
 
     glEnable(GL_LIGHT1);
 
+    glLightfv(GL_LIGHT2, GL_AMBIENT, lightAmbinatTwo);
+    glLightfv(GL_LIGHT2, GL_DIFFUSE, lightDefuseTwo);
+    glLightfv(GL_LIGHT2, GL_SPECULAR, lightSpecularTwo);
+    glLightfv(GL_LIGHT2, GL_POSITION, lightPositionTwo);
+
+    glEnable(GL_LIGHT2);
+
     glMaterialfv(GL_FRONT, GL_AMBIENT, materialAmbiant);
     glMaterialfv(GL_FRONT, GL_DIFFUSE, materialDefuse);
     glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpecular);
     glMaterialf(GL_FRONT, GL_SHININESS, materialShininess);
 
+    // Depth related changes
+    glClearDepth(1.0f);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+
+    glShadeModel(GL_SMOOTH);
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
     /* Clear the  screen using black color */
-    glClearColor(0.0f, 0.0f, 1.0f, 0.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+    // quadric intialliza
+    // create quadric.
+    quadric = gluNewQuadric();
 
     resize(WINWIDTH, WINHEIGHT); // WARMUP RESIZE CALL
 
@@ -389,43 +411,47 @@ void resize(int width, int height)
 
 void display(void)
 {
+    // function prototype
+    void colorSetcolor(int r, int g, int b);
+
     /* Code */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_MODELVIEW);
-    // Trangle *****
     glLoadIdentity();
-    glTranslatef(0.0f, 0.0f, -6.0f);
 
-    glRotatef(AnglePyramid, 0.0f, 1.0f, 0.0f); // Spinning
+    // rotating zero life
+    glRotatef(lightAngleZero, 1.0f, 0.0f, 0.0f);
+    lightPositionZero[2] = lightAngleZero;
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPositionZero);
 
-    glBegin(GL_TRIANGLES);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
-    // FRONT FACE
-    glNormal3f(0.0f, 0.447214f, 0.894428f);
-    glVertex3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
+    // rotating One Light
+    glRotatef(lightAngleOne, 0.0f, 1.0f, 0.0f);
+    lightPositionOne[0] = lightAngleOne;
+    glLightfv(GL_LIGHT1, GL_POSITION, lightPositionZero);
 
-    // RIGHT FACE
-    glNormal3f(0.894428f, 0.447214f, 0.0f);
-    glVertex3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
-    // BACK FACE
-    glNormal3f(0.0f, 0.447214f, -0.894428f);
-    glVertex3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
+    // rotating Two Light
+    glRotatef(lightAngleTwo, 0.0f, 0.0f, 1.0f);
+    lightPositionTwo[1] = lightAngleTwo;
+    glLightfv(GL_LIGHT1, GL_POSITION, lightPositionTwo);
 
-    // LEFT FACE
-    glNormal3f(-0.894428f, 0.447214f, 0.0f);
-    glVertex3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
-    glEnd();
+    glTranslatef(0.0f, 0.0f, -4.0f);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    glColor3f(1.0f, 1.0f, 1.0f);
+
+    // Draw Sphere
+    gluSphere(quadric, 0.75f, 50, 50);
 
     SwapBuffers(ghdc);
 }
@@ -433,9 +459,17 @@ void display(void)
 void update(void)
 {
     /* code */
-    AnglePyramid = AnglePyramid + 0.05f;
-    if (AnglePyramid >= 360.0f)
-        AnglePyramid = 0.0f;
+    lightAngleZero = lightAngleZero + 0.1f;
+    if (lightAngleZero > 360.0f)
+        lightAngleZero = 0.0f;
+
+    lightAngleOne = lightAngleOne + 0.1f;
+    if (lightAngleOne > 360.0f)
+        lightAngleOne = 0.0f;
+
+    lightAngleTwo = lightAngleTwo + 0.1f;
+    if (lightAngleTwo > 360.0f)
+        lightAngleTwo = 0.0f;
 }
 
 void uninitialize(void)
@@ -477,4 +511,15 @@ void uninitialize(void)
         fclose(gpFile);
         gpFile = NULL;
     }
+
+    if (quadric)
+    {
+        gluDeleteQuadric(quadric);
+        quadric = NULL;
+    }
+}
+
+void colorSetcolor(int r, int g, int b)
+{
+    glColor3f(r / 255, g / 255, b / 255);
 }

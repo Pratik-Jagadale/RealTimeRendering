@@ -24,11 +24,18 @@ BOOL gbFullScreen = FALSE;
 int iHeightOfWindow;
 int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
+GLUquadric *quadric = NULL;
 float AngleCube = 0.0f;
 
-GLfloat gfLightAmbiant[] = {0.5f, 0.5f, 0.5f, 1.0f};
+GLfloat gfLightAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
 GLfloat gfLightDeffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat gfLightPositions[] = {0.0f, 0.0f, 2.0f, 1.0f};
+GLfloat gfLightSpicular[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat gfLightPositions[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat gfMaterialAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
+GLfloat gfMeterialDeffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat gfMateralSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat gfMaterialShineeness = 50.0f;
+
 BOOL gbLight = FALSE;
 
 /* Global Function Declartion */
@@ -331,6 +338,20 @@ int initialize(void)
     /* Clear the  screen using black color */
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
+    // Ligth related Changes
+    glLightfv(GL_LIGHT0, GL_AMBIENT, gfLightAmbiant);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, gfLightDeffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, gfLightSpicular);
+    glLightfv(GL_LIGHT0, GL_POSITION, gfLightPositions);
+    glEnable(GL_LIGHT0);
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT, gfMaterialAmbiant);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, gfMeterialDeffuse);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, gfMateralSpecular);
+    glMaterialf(GL_FRONT, GL_SHININESS, gfMaterialShineeness);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     // Depth related changes
     glClearDepth(1.0f);
     glEnable(GL_DEPTH_TEST);
@@ -339,12 +360,9 @@ int initialize(void)
     glShadeModel(GL_SMOOTH);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-    // Ligth related Changes
-    glLightfv(GL_LIGHT1, GL_AMBIENT, gfLightAmbiant);
-    glLightfv(GL_LIGHT1, GL_DIFFUSE, gfLightDeffuse);
-    glLightfv(GL_LIGHT1, GL_POSITION, gfLightPositions);
-
-    glEnable(GL_LIGHT1);
+    // quadric intialliza
+    // create quadric
+    quadric = gluNewQuadric();
 
     resize(WINWIDTH, WINHEIGHT); // WARMUP RESIZE CALL
 
@@ -372,58 +390,16 @@ void display(void)
 
     /* Code */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     glMatrixMode(GL_MODELVIEW);
 
     glLoadIdentity();
+    glTranslatef(0.0f, 0.0f, -4.0f);
 
-    glTranslatef(0.0f, 0.0f, -6.0f);
-    glRotatef(AngleCube, 1.0f, 1.0f, 0.0f);
+    //    glRotatef(AngleCube, 1.0f, 1.0f, 0.0f);
 
-    glBegin(GL_QUADS);
-    // FRONT FACE
-    glNormal3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(1.0f, 1.0f, 1.0f);
-    glVertex3f(-1.0f, 1.0f, 1.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
+    gluSphere(quadric, 1.0f, 50, 50);
 
-    // RIGHT FACE
-    glNormal3f(1.0f, 0.0f, 0.0f);
-    glVertex3f(1.0f, 1.0f, -1.0f);
-    glVertex3f(1.0f, 1.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
-
-    // BACK FACE
-    glNormal3f(0.0f, 0.0f, -1.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f);
-    glVertex3f(1.0f, 1.0f, -1.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-
-    // LEFT FACE
-    glNormal3f(-1.0f, 0.0f, 0.0f);
-    glVertex3f(-1.0f, 1.0f, 1.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-
-    // TOP FACE
-    glNormal3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(1.0f, 1.0f, 1.0f);
-    glVertex3f(1.0f, 1.0f, -1.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f);
-    glVertex3f(-1.0f, 1.0f, 1.0f);
-
-    // BOTTOM FACE
-    glNormal3f(0.0f, -1.0f, 0.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-
-    glEnd();
+    glColor3f(1.0f, 1.0f, 1.0f);
 
     SwapBuffers(ghdc);
 }
@@ -431,7 +407,7 @@ void display(void)
 void update(void)
 {
     /* code */
-    AngleCube = AngleCube + 0.05f;
+    // AngleCube = AngleCube + 0.05f;
     if (AngleCube >= 360.0f)
         AngleCube = 0.0f;
 }
@@ -475,4 +451,51 @@ void uninitialize(void)
         fclose(gpFile);
         gpFile = NULL;
     }
+
+    if (quadric)
+    {
+        gluDeleteQuadric(quadric);
+        quadric = NULL;
+    }
+}
+
+void colorSetcolor(int r, int g, int b)
+{
+    glColor3f(r / 255, g / 255, b / 255);
+}
+
+BOOL LoadGLTexture(GLuint *texture, TCHAR ImageResourceID[])
+{
+    // variable declartions
+    HBITMAP hBitmap = NULL;
+    BITMAP bmp;
+    BOOL bResult = FALSE;
+
+    // code
+    hBitmap = (HBITMAP)LoadImage(GetModuleHandle(NULL), ImageResourceID, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+
+    if (hBitmap)
+    {
+        bResult = TRUE;
+        GetObject(hBitmap, sizeof(BITMAP), &bmp);
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+        glGenTextures(1, texture);
+
+        glBindTexture(GL_TEXTURE_2D, *texture);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+        // create the texture
+        gluBuild2DMipmaps(GL_TEXTURE_2D, 3, bmp.bmWidth, bmp.bmHeight, GL_BGR_EXT, GL_UNSIGNED_BYTE, bmp.bmBits);
+
+        glBindTexture(GL_TEXTURE_2D, 0); // unbind texture
+
+        // DELETE Object
+        DeleteObject(hBitmap);
+    }
+    return bResult;
 }
