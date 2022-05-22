@@ -26,9 +26,7 @@ int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 
 float AnglePyramid = 0.0f;
-float AngleCube = 0.0f;
 
-GLuint texture_kundali;
 GLuint texture_stone;
 
 /* Global Function Declartion */
@@ -335,10 +333,7 @@ int initialize(void)
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
     if (LoadGLTexture(&texture_stone, MAKEINTRESOURCE(IDBITMAP_STONE)) == FALSE)
-        return -6;
-
-    if (LoadGLTexture(&texture_kundali, MAKEINTRESOURCE(IDBITMAP_KUNDALI)) == FALSE)
-        return -6;
+        return -6; // write log in wndproc
 
     // Enabaling the texture
     glEnable(GL_TEXTURE_2D);
@@ -370,7 +365,7 @@ void display(void)
     glMatrixMode(GL_MODELVIEW);
     // Trangle *****
     glLoadIdentity();
-    glTranslatef(-1.5f, 0.0f, -6.0f);
+    glTranslatef(0.0f, 0.0f, -6.0f);
 
     glRotatef(AnglePyramid, 0.0f, 1.0f, 0.0f); // Spinning
 
@@ -423,100 +418,6 @@ void display(void)
 
     glEnd();
 
-    // CUBE ***************************
-    glLoadIdentity();
-    glTranslatef(1.5f, 0.0f, -6.0f);
-
-    glScalef(0.75f, 0.75f, 0.75f);
-
-    glRotatef(AngleCube, 1.0f, 1.0f, 1.0f); // Rolling
-
-    glBindTexture(GL_TEXTURE_2D, texture_kundali);
-
-    glBegin(GL_QUADS);
-
-    // FRONT FACE
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(1.0f, 1.0f, 1.0f);
-
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(-1.0f, 1.0f, 1.0f);
-
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
-
-    // RIGHT FACE
-    glTexCoord2f(1.0f, 0.0f);
-
-    glVertex3f(1.0f, 1.0f, -1.0f);
-
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(1.0f, 1.0f, 1.0f);
-
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
-
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
-
-    // BACK FACE
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f);
-
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(1.0f, 1.0f, -1.0f);
-
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
-
-    glTexCoord2f(0.0f, 0.0f);
-
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-
-    // LEFT FACE
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(-1.0f, 1.0f, 1.0f);
-
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f); // y = -1
-
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-
-    // TOP
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex3f(1.0f, 1.0f, 1.0f);
-
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(1.0f, 1.0f, -1.0f);
-
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(-1.0f, 1.0f, -1.0f);
-
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(-1.0f, 1.0f, 1.0f);
-
-    // BOTTOM FACE
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
-
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
-
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-
-    glEnd();
-
     SwapBuffers(ghdc);
 }
 
@@ -526,10 +427,6 @@ void update(void)
     AnglePyramid = AnglePyramid + 0.05f;
     if (AnglePyramid >= 360.0f)
         AnglePyramid = 0.0f;
-
-    AngleCube = AngleCube + 0.05f;
-    if (AngleCube >= 360.0f)
-        AngleCube = 0.0f;
 }
 
 void uninitialize(void)
@@ -576,12 +473,6 @@ void uninitialize(void)
     {
         glDeleteTextures(1, &texture_stone);
         texture_stone = NULL;
-    }
-
-    if (texture_kundali)
-    {
-        glDeleteTextures(1, &texture_kundali);
-        texture_kundali = NULL;
     }
 }
 
