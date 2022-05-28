@@ -3,6 +3,7 @@
 #include "OGL.h"
 #include <stdio.h>
 #include <stdlib.h>
+#define _USE_MATH_DEFINES
 #include <math.h>
 
 /* OpenGL Header files */
@@ -45,7 +46,7 @@ GLfloat lightPositionTwo[] = {0.0f, 0.0f, 0.0f, 1.0f};
 GLfloat materialAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
 GLfloat materialDefuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
 GLfloat materialSpecular[] = {1.0f, 1.f, 1.0f, 1.0f};
-GLfloat materialShininess = 50.0f;
+GLfloat materialShininess = 120.0f;
 
 GLfloat lightAngleOne = 0.0f;
 GLfloat lightAngleTwo = 0.0f;
@@ -420,26 +421,35 @@ void display(void)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // rotating zero life
-    glRotatef(lightAngleZero, 1.0f, 0.0f, 0.0f);
-    lightPositionZero[2] = lightAngleZero;
+    // rotating zero light - x Around
+    float angle = lightAngleZero * (M_PI / 180.0f);
+    float x = 5.0f * cos(angle);
+    float y = 5.0f * sin(angle);
+    lightPositionZero[1] = x;
+    lightPositionZero[2] = y;
+    // glRotatef(angle, 1.0f, 0.0f, 0.0f);
     glLightfv(GL_LIGHT0, GL_POSITION, lightPositionZero);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // rotating One Light
-    glRotatef(lightAngleOne, 0.0f, 1.0f, 0.0f);
-    lightPositionOne[0] = lightAngleOne;
-    glLightfv(GL_LIGHT1, GL_POSITION, lightPositionZero);
-
+    //  rotating One Light - Y Rotation
+    angle = (lightAngleOne * M_PI) / 180.0f;
+    x = 5.0f * cos(angle);
+    y = 5.0f * sin(angle);
+    lightPositionOne[0] = x;
+    lightPositionOne[2] = y;
+    glLightfv(GL_LIGHT1, GL_POSITION, lightPositionOne);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // rotating Two Light
-    glRotatef(lightAngleTwo, 0.0f, 0.0f, 1.0f);
-    lightPositionTwo[1] = lightAngleTwo;
-    glLightfv(GL_LIGHT1, GL_POSITION, lightPositionTwo);
+    //  rotating Two Light Z Rotation
+    angle = (lightAngleTwo * M_PI) / 180.0f;
+    x = 5.0f * cos(angle);
+    y = 5.0f * sin(angle);
+    lightPositionTwo[0] = x;
+    lightPositionTwo[1] = y;
+    glLightfv(GL_LIGHT2, GL_POSITION, lightPositionTwo);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -447,11 +457,8 @@ void display(void)
     glTranslatef(0.0f, 0.0f, -4.0f);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-    glColor3f(1.0f, 1.0f, 1.0f);
-
     // Draw Sphere
-    gluSphere(quadric, 0.75f, 50, 50);
+    gluSphere(quadric, 0.75f, 125, 125);
 
     SwapBuffers(ghdc);
 }
@@ -461,15 +468,15 @@ void update(void)
     /* code */
     lightAngleZero = lightAngleZero + 0.1f;
     if (lightAngleZero > 360.0f)
-        lightAngleZero = 0.0f;
+        lightAngleZero = -360.0f;
 
-    lightAngleOne = lightAngleOne + 0.1f;
+    lightAngleOne = lightAngleOne + 0.2f;
     if (lightAngleOne > 360.0f)
-        lightAngleOne = 0.0f;
+        lightAngleOne = -360.0f;
 
-    lightAngleTwo = lightAngleTwo + 0.1f;
+    lightAngleTwo = lightAngleTwo + 0.2f;
     if (lightAngleTwo > 360.0f)
-        lightAngleTwo = 0.0f;
+        lightAngleTwo = -360.0f;
 }
 
 void uninitialize(void)
