@@ -3,6 +3,7 @@
 #include "OGL.h"
 #include <stdio.h>
 #include <stdlib.h>
+#define _USE_MATH_DEFINES 1
 #include <math.h>
 
 /* OpenGL Header files */
@@ -407,16 +408,7 @@ void resize(int width, int height)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    if (width <= height)
-    {
-        glOrtho(0.0f, 15.0f, (0.0f * ((GLfloat)height / (GLfloat)width)), (15.0f * ((GLfloat)height / (GLfloat)width)), -10.0f, 10.0f);
-    }
-    else
-    {
-        glOrtho((0.0f * (GLfloat)width) / ((GLfloat)height), (15.0f * (GLfloat)width) / ((GLfloat)height), 0.0f, 15.0f, -10.0f, 10.0f);
-    }
-
-    // gluPerspective(45.0f, (GLfloat)width / (GLfloat)height, 0.1f, 100.0f);
+    gluPerspective(45.0f, (GLfloat)width / (GLfloat)height, 0.1f, 100.0f);
 }
 
 void display(void)
@@ -430,20 +422,35 @@ void display(void)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
+    GLfloat x, y;
+    GLfloat angle;
+
     if (keyPressed == 1)
     {
-        glRotatef(angleForXRotation, 1.0f, 0.0f, 0.0f);
-        lightPositionZero[2] = angleForXRotation;
+        angle = (angleForXRotation * M_PI) / 180.0f;
+        x = 45.0f * cos(angle);
+        y = 45.0f * sin(angle);
+
+        lightPositionZero[1] = x;
+        lightPositionZero[2] = y;
     }
     else if (keyPressed == 2)
     {
-        glRotatef(angleForYRotation, 0.0f, 1.0f, 0.0f);
-        lightPositionZero[0] = angleForYRotation;
+        angle = angleForYRotation * (M_PI / 180.0f);
+        x = 55.0f * cos(angle);
+        y = 55.0f * sin(angle);
+
+        lightPositionZero[0] = x;
+        lightPositionZero[2] = y;
     }
     else if (keyPressed == 3)
     {
-        glRotatef(angleForZRotation, 0.0f, 0.0f, 1.0f);
-        lightPositionZero[1] = angleForZRotation;
+        angle = angleForZRotation * (M_PI / 180.0f);
+        x = 45.0f * cos(angle);
+        y = 45.0f * sin(angle);
+
+        lightPositionZero[1] = x;
+        lightPositionZero[0] = y;
     }
     else
     {
@@ -474,7 +481,7 @@ void update(void)
 
     if (keyPressed == 2)
     {
-        angleForYRotation = angleForYRotation + 1.0f;
+        angleForYRotation = angleForYRotation + 1.00f;
         if (angleForYRotation > 360.0f)
             angleForYRotation = angleForYRotation - 360.0f;
     }
@@ -494,6 +501,9 @@ void draw24Sphere(void)
     GLfloat materialDiffuse[4];
     GLfloat materialSpecular[4];
     GLfloat materialShinniness;
+
+    glTranslatef(0.0f, 0.0f, -19.0f);
+    glPushMatrix();
 
     // ***** 1st sphere on 1st column, emerald *****
     // ambient material
@@ -523,8 +533,14 @@ void draw24Sphere(void)
 
     // geometry
     glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glTranslatef(1.5f, 14.0f, 0.0f); // x + 6  ,
+    // glLoadIdentity();
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(-9.0f, 6.0f, 0.0f);
+    // glTranslatef(1.5f, 14.0f, 0.0f); // x + 6  ,
+    glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -557,7 +573,9 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(1.5f, 11.5f, 0.0f);
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(-9.0f, 3.6f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -590,7 +608,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(1.5f, 9.0f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(-9.0f, 1.2f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -623,7 +645,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(1.5f, 6.5f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(-9.0f, -1.2f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -656,7 +682,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(1.5f, 4.0f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(-9.0f, -3.6f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -689,7 +719,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(1.5f, 1.5f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(-9.0f, -6.0f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
     // *******************************************************
@@ -724,7 +758,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(7.5f, 14.0f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(-3.0f, 6.0f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -757,7 +795,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(7.5f, 11.5f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(-3.0f, 3.6f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -790,7 +832,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(7.5f, 9.0f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(-3.0f, 1.2f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -823,7 +869,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(7.5f, 6.5f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(-3.0f, -1.2f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -856,7 +906,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(7.5f, 4.0f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(-3.0f, -3.6f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -889,7 +943,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(7.5f, 1.5f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(-3.0f, -6.0f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
     // *******************************************************
@@ -924,7 +982,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(13.5f, 14.0f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(3.0f, 6.0f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -957,7 +1019,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(13.5f, 11.5f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(3.0f, 3.6f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -990,7 +1056,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(13.5f, 9.0f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(3.0f, 1.2f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -1023,7 +1093,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(13.5f, 6.5f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(3.0f, -1.2f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -1056,7 +1130,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(13.5f, 4.0f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(3.0f, -3.6f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -1089,7 +1167,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(13.5f, 1.5f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(3.0f, -6.0f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
     // *******************************************************
@@ -1124,7 +1206,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(19.5f, 14.0f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(9.0f, 6.0f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -1157,7 +1243,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(19.5f, 11.5f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(9.0f, 3.6f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -1190,7 +1280,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(19.5f, 9.0f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(9.0f, 1.2f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -1223,7 +1317,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(19.5f, 6.5f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(9.0f, -1.2f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -1256,7 +1354,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(19.5f, 4.0f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(9.0f, -3.6f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
 
@@ -1289,7 +1391,11 @@ void draw24Sphere(void)
     // geometry
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(19.5f, 1.5f, 0.0f);
+
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(9.0f, -6.0f, 0.0f);
     gluSphere(quadric, 1.0f, 30, 30);
     // *******************************************************
     // *******************************************************
