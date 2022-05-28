@@ -25,7 +25,6 @@ int iHeightOfWindow;
 int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 GLUquadric *quadric = NULL;
-float AngleCube = 0.0f;
 
 GLfloat gfLightAmbiant[] = {0.5f, 0.5f, 0.5f, 1.0f};
 GLfloat gfLightDeffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};

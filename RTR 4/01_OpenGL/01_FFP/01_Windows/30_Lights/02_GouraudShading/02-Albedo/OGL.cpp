@@ -25,7 +25,6 @@ int iHeightOfWindow;
 int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 GLUquadric *quadric = NULL;
-float AngleCube = 0.0f;
 
 /*
 GLfloat gfLightAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
@@ -406,8 +405,6 @@ void display(void)
     glLoadIdentity();
     glTranslatef(0.0f, 0.0f, -4.0f);
 
-    //    glRotatef(AngleCube, 1.0f, 1.0f, 0.0f);
-
     gluSphere(quadric, 1.0f, 50, 50);
 
     glColor3f(1.0f, 1.0f, 1.0f);
@@ -418,9 +415,6 @@ void display(void)
 void update(void)
 {
     /* code */
-    // AngleCube = AngleCube + 0.05f;
-    if (AngleCube >= 360.0f)
-        AngleCube = 0.0f;
 }
 
 void uninitialize(void)

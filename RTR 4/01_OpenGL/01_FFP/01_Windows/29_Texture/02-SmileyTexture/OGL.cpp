@@ -118,9 +118,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 		fprintf(gpFile, "Makeing OpnGL as current Context Failed...\n");
 		uninitialize();
 	}
+	else if (iRetVal == -5)
+	{
+		fprintf(gpFile, "loadGLTexture Failed for texture_Smiley ...\n");
+		uninitialize();
+	}
 	else
 	{
-		fprintf(gpFile, "Initialize Successfull...\n");
+		fprintf(gpFile, "Initialize Successfull ...\n");
 	}
 
 	ShowWindow(hwnd, iCmdShow);
@@ -309,7 +314,7 @@ int initialize(void)
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	if (LoadGLTexture(&texture_Smiley, MAKEINTRESOURCE(IDBITMAP_SMILEY)) == FALSE)
-		return -6; // write log in wndproc
+		return -5; // write log in wndproc
 
 	// Depth related changes
 	glClearDepth(1.0f);

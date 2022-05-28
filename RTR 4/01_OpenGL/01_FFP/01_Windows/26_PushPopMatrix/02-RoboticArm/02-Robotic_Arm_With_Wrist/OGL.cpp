@@ -498,7 +498,6 @@ void display(void)
     // 5
     glPopMatrix();
     glTranslatef(-0.1f, -0.1f, 0.0f);
-
     glPushMatrix();
 
     glScalef(0.25f, 0.09f, 0.2f);
@@ -507,9 +506,6 @@ void display(void)
 
     gluSphere(quadric, 0.5f, 5, 5);
 
-    // pop Fore Arm Matrix
-    // Pop arm matrix
-    // Pop Shoulder matrix
     glPopMatrix();
     glPopMatrix();
     glPopMatrix();

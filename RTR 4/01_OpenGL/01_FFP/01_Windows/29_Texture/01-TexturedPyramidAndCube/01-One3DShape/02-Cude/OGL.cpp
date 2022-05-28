@@ -123,11 +123,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
     }
     else if (iRetVal == -5)
     {
-        fprintf(gpFile, " loadGLTexture Failed for texture_stone ...\n");
-        uninitialize();
-    }
-    else if (iRetVal == -6)
-    {
         fprintf(gpFile, "loadGLTexture Failed for texture kundali ...\n");
         uninitialize();
     }
@@ -333,7 +328,7 @@ int initialize(void)
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     if (LoadGLTexture(&texture_kundali, MAKEINTRESOURCE(IDBITMAP_KUNDALI)) == FALSE)
-        return -6; // write log in wndproc
+        return -5; // write log in wndproc
 
     // Enabaling the texture
     glEnable(GL_TEXTURE_2D);

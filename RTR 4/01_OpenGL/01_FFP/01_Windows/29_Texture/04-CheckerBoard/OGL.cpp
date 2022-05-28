@@ -120,7 +120,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 		fprintf(gpFile, "Makeing OpnGL as current Context Failed...\n");
 		uninitialize();
 	}
+	else if (iRetVal == -5)
+	{
+		fprintf(gpFile, "Makeing OpnGL as current Context Failed...\n");
+		uninitialize();
+	}
 	else
+
 	{
 		fprintf(gpFile, "Initialize Successfull...\n");
 	}
@@ -318,8 +324,8 @@ int initialize(void)
 	glShadeModel(GL_SMOOTH);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-	glEnable(GL_TEXTURE_2D);
 	LoadGlTexture();
+	glEnable(GL_TEXTURE_2D);
 
 	resize(WINWIDTH, WINHEIGHT); // WARMUP RESIZE CALL
 

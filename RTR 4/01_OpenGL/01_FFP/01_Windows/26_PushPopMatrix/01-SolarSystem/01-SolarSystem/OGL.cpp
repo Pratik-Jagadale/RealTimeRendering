@@ -24,10 +24,10 @@ BOOL gbFullScreen = FALSE;
 int iHeightOfWindow;
 int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
-
-float AnglePyramid = 0.0f;
-
-GLuint texture_stone;
+int day = 0;
+int year = 0;
+int moon = 0;
+GLUquadric *quadric = NULL;
 
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -121,11 +121,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
         fprintf(gpFile, "Making OpenGL as current Context Failed...\n");
         uninitialize();
     }
-    else if (iRetVal == -5)
-    {
-        fprintf(gpFile, " loadGLTexture Failed for texture_stone ...\n");
-        uninitialize();
-    }
     else
     {
         fprintf(gpFile, "Initialize Successfull...\n");
@@ -194,6 +189,26 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         case 'f':
         case 'F':
             ToggleFullScreen();
+            break;
+
+        case 'd':
+            day = (day + 6) % 360;
+            moon = (moon + 9) % 360;
+            break;
+
+        case 'D':
+            day = (day - 6) % 360;
+            moon = (moon - 9) % 360;
+            break;
+
+        case 'y':
+            day = (day + 6) % 360;
+            year = (year + 3) % 360;
+            break;
+
+        case 'Y':
+            day = (day - 6) % 360;
+            year = (year - 3) % 360;
             break;
         case 27:
             if (gpFile)
@@ -271,7 +286,6 @@ int initialize(void)
 {
     /* fucntion delcations */
     void resize(int, int);
-    BOOL LoadGLTexture(GLuint *, TCHAR[]);
 
     /* variable declartions */
     PIXELFORMATDESCRIPTOR pfd;
@@ -327,11 +341,9 @@ int initialize(void)
     glShadeModel(GL_SMOOTH);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-    if (LoadGLTexture(&texture_stone, MAKEINTRESOURCE(IDBITMAP_STONE)) == FALSE)
-        return -5; // write log in wndproc
-
-    // Enabaling the texture
-    glEnable(GL_TEXTURE_2D);
+    // quadric intialliza
+    // create quadric
+    quadric = gluNewQuadric();
 
     resize(WINWIDTH, WINHEIGHT); // WARMUP RESIZE CALL
 
@@ -354,64 +366,61 @@ void resize(int width, int height)
 
 void display(void)
 {
+    // function prototype
+    void colorSetcolor(int r, int g, int b);
+
     /* Code */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_MODELVIEW);
-    // Trangle *****
+
     glLoadIdentity();
-    glTranslatef(0.0f, 0.0f, -6.0f);
 
-    glRotatef(AnglePyramid, 0.0f, 1.0f, 0.0f); // Spinning
+    // view Tranformation (Camera Tranformation)
+    gluLookAt(0.0f, 0.0f, 10.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
-    glBindTexture(GL_TEXTURE_2D, texture_stone);
+    // SAVE Camera Matrix (Push)
+    glPushMatrix();
 
-    glBegin(GL_TRIANGLES);
+    // beutification - 1
+    glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
 
-    // FRONT FACE
+    // beutification - 2
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    glColor3f(1.0f, 1.0f, 1.0f);
+    // beutification - 3
+    glColor3f(1.0f, 1.0f, 0.0f);
 
-    glTexCoord2f(0.5f, 1.0f);
-    glVertex3f(0.0f, 1.0f, 0.0f);
+    // Draw Sphere
+    gluSphere(quadric, 0.75f, 30, 30);
 
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
+    // Restore the saved camera matrix of Sun (pop)
+    glPopMatrix();
 
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
+    // Save the current camera Matrix
+    glPushMatrix();
 
-    // RIGHT FACE
-    glTexCoord2f(0.5f, 1.0f);
-    glVertex3f(0.0f, 1.0f, 0.0f);
+    // rotation around sun
+    glRotatef((GLfloat)year, 0.0f, 1.0f, 0.0f);
 
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
+    /// To translation for earth
+    glTranslatef(2.5f, 0.0f, 0.0f);
 
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
+    // beutification - 4
+    glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
 
-    // BACK FACE
-    glTexCoord2f(0.5f, 1.0f);
-    glVertex3f(0.0f, 1.0f, 0.0f);
+    // self rotation (Spinning of earth)
+    glRotatef((GLfloat)day, 0.0f, 0.0f, 1.0f);
 
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
+    // draw earth
+    //  beutification - 5
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
+    glColor3f(0.4f, 0.9f, 1.0f);
 
-    // LEFT FACE
-    glTexCoord2f(0.5f, 1.0f);
-    glVertex3f(0.0f, 1.0f, 0.0f);
+    gluSphere(quadric, 0.4f, 20, 20);
 
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
-
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
-
-    glEnd();
+    glPopMatrix();
 
     SwapBuffers(ghdc);
 }
@@ -419,9 +428,6 @@ void display(void)
 void update(void)
 {
     /* code */
-    AnglePyramid = AnglePyramid + 0.05f;
-    if (AnglePyramid >= 360.0f)
-        AnglePyramid = 0.0f;
 }
 
 void uninitialize(void)
@@ -464,45 +470,14 @@ void uninitialize(void)
         gpFile = NULL;
     }
 
-    if (texture_stone)
+    if (quadric)
     {
-        glDeleteTextures(1, &texture_stone);
-        texture_stone = NULL;
+        gluDeleteQuadric(quadric);
+        quadric = NULL;
     }
 }
 
-BOOL LoadGLTexture(GLuint *texture, TCHAR ImageResourceID[])
+void colorSetcolor(int r, int g, int b)
 {
-    // variable declartions
-    HBITMAP hBitmap = NULL;
-    BITMAP bmp;
-    BOOL bResult = FALSE;
-
-    // code
-    hBitmap = (HBITMAP)LoadImage(GetModuleHandle(NULL), ImageResourceID, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-
-    if (hBitmap)
-    {
-        bResult = TRUE;
-        GetObject(hBitmap, sizeof(BITMAP), &bmp);
-
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-
-        glGenTextures(1, texture);
-
-        glBindTexture(GL_TEXTURE_2D, *texture);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-        // create the texture
-        gluBuild2DMipmaps(GL_TEXTURE_2D, 3, bmp.bmWidth, bmp.bmHeight, GL_BGR_EXT, GL_UNSIGNED_BYTE, bmp.bmBits);
-
-        glBindTexture(GL_TEXTURE_2D, 0); // unbind texture
-
-        // DELETE Object
-        DeleteObject(hBitmap);
-    }
-    return bResult;
+    glColor3f(r / 255, g / 255, b / 255);
 }

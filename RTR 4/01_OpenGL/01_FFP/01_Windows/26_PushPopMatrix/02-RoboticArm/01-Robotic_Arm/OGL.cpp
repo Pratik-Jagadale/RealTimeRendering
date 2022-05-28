@@ -24,10 +24,9 @@ BOOL gbFullScreen = FALSE;
 int iHeightOfWindow;
 int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
-
-float AnglePyramid = 0.0f;
-
-GLuint texture_stone;
+int shoulder = 0;
+int elbow = 0;
+GLUquadric *quadric = NULL;
 
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -121,11 +120,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
         fprintf(gpFile, "Making OpenGL as current Context Failed...\n");
         uninitialize();
     }
-    else if (iRetVal == -5)
-    {
-        fprintf(gpFile, " loadGLTexture Failed for texture_stone ...\n");
-        uninitialize();
-    }
     else
     {
         fprintf(gpFile, "Initialize Successfull...\n");
@@ -195,6 +189,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         case 'F':
             ToggleFullScreen();
             break;
+
+        case 'S':
+            shoulder = (shoulder + 3) % 360;
+            break;
+
+        case 's':
+            shoulder = (shoulder - 3) % 360;
+            break;
+
+        case 'E':
+            elbow = (elbow + 3) % 360;
+            break;
+
+        case 'e':
+            elbow = (elbow - 3) % 360;
+            break;
+
         case 27:
             if (gpFile)
             {
@@ -271,7 +282,6 @@ int initialize(void)
 {
     /* fucntion delcations */
     void resize(int, int);
-    BOOL LoadGLTexture(GLuint *, TCHAR[]);
 
     /* variable declartions */
     PIXELFORMATDESCRIPTOR pfd;
@@ -327,11 +337,7 @@ int initialize(void)
     glShadeModel(GL_SMOOTH);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-    if (LoadGLTexture(&texture_stone, MAKEINTRESOURCE(IDBITMAP_STONE)) == FALSE)
-        return -5; // write log in wndproc
-
-    // Enabaling the texture
-    glEnable(GL_TEXTURE_2D);
+    quadric = gluNewQuadric();
 
     resize(WINWIDTH, WINHEIGHT); // WARMUP RESIZE CALL
 
@@ -358,60 +364,49 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_MODELVIEW);
-    // Trangle *****
+
     glLoadIdentity();
-    glTranslatef(0.0f, 0.0f, -6.0f);
 
-    glRotatef(AnglePyramid, 0.0f, 1.0f, 0.0f); // Spinning
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    glBindTexture(GL_TEXTURE_2D, texture_stone);
+    glTranslatef(0.0f, 0.0f, -12.0f);
 
-    glBegin(GL_TRIANGLES);
+    glPushMatrix();
 
-    // FRONT FACE
+    glRotatef((GLfloat)shoulder, 0.0f, 0.0f, 1.0f);
 
-    glColor3f(1.0f, 1.0f, 1.0f);
+    glTranslatef(1.0f, 0.0f, 0.0f);
 
-    glTexCoord2f(0.5f, 1.0f);
-    glVertex3f(0.0f, 1.0f, 0.0f);
+    glPushMatrix();
 
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
+    glScalef(2.0f, 0.5f, 1.0f);
 
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
+    // Draw Arm
 
-    // RIGHT FACE
-    glTexCoord2f(0.5f, 1.0f);
-    glVertex3f(0.0f, 1.0f, 0.0f);
+    glColor3f(0.5f, 0.35f, 0.05f);
 
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(1.0f, -1.0f, 1.0f);
+    // we are drawing sphere but we are scalling which will look like ellipse
+    gluSphere(quadric, 0.5f, 10, 10);
 
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
+    glPopMatrix();
 
-    // BACK FACE
-    glTexCoord2f(0.5f, 1.0f);
-    glVertex3f(0.0f, 1.0f, 0.0f);
+    // Fore Arm
+    glTranslatef(1.0f, 0.0f, 0.0f);
 
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(1.0f, -1.0f, -1.0f);
+    glRotatef((GLfloat)elbow, 0.0f, 0.0f, 1.0f);
 
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
+    glTranslatef(1.0f, 0.0f, 0.0f);
 
-    // LEFT FACE
-    glTexCoord2f(0.5f, 1.0f);
-    glVertex3f(0.0f, 1.0f, 0.0f);
+    glPushMatrix();
 
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f, -1.0f);
+    glScalef(2.0f, 0.5f, 1.0f);
 
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(-1.0f, -1.0f, 1.0f);
+    glColor3f(0.5f, 0.35f, 0.05f);
 
-    glEnd();
+    gluSphere(quadric, 0.5f, 10, 10);
+
+    glPopMatrix();
+    glPopMatrix();
 
     SwapBuffers(ghdc);
 }
@@ -419,9 +414,6 @@ void display(void)
 void update(void)
 {
     /* code */
-    AnglePyramid = AnglePyramid + 0.05f;
-    if (AnglePyramid >= 360.0f)
-        AnglePyramid = 0.0f;
 }
 
 void uninitialize(void)
@@ -464,45 +456,9 @@ void uninitialize(void)
         gpFile = NULL;
     }
 
-    if (texture_stone)
+    if (quadric)
     {
-        glDeleteTextures(1, &texture_stone);
-        texture_stone = NULL;
+        gluDeleteQuadric(quadric);
+        quadric = NULL;
     }
-}
-
-BOOL LoadGLTexture(GLuint *texture, TCHAR ImageResourceID[])
-{
-    // variable declartions
-    HBITMAP hBitmap = NULL;
-    BITMAP bmp;
-    BOOL bResult = FALSE;
-
-    // code
-    hBitmap = (HBITMAP)LoadImage(GetModuleHandle(NULL), ImageResourceID, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-
-    if (hBitmap)
-    {
-        bResult = TRUE;
-        GetObject(hBitmap, sizeof(BITMAP), &bmp);
-
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-
-        glGenTextures(1, texture);
-
-        glBindTexture(GL_TEXTURE_2D, *texture);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-        // create the texture
-        gluBuild2DMipmaps(GL_TEXTURE_2D, 3, bmp.bmWidth, bmp.bmHeight, GL_BGR_EXT, GL_UNSIGNED_BYTE, bmp.bmBits);
-
-        glBindTexture(GL_TEXTURE_2D, 0); // unbind texture
-
-        // DELETE Object
-        DeleteObject(hBitmap);
-    }
-    return bResult;
 }
