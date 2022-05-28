@@ -458,15 +458,15 @@ void update(void)
     /* code */
     lightAngleZero = lightAngleZero + 0.2f;
     if (lightAngleZero > 360.0f)
-        lightAngleZero = -360.0f;
+        lightAngleZero = lightAngleZero - 360.0f;
 
     lightAngleOne = lightAngleOne + 0.2f;
     if (lightAngleOne > 360.0f)
-        lightAngleOne = -360.0f;
+        lightAngleOne = lightAngleOne - 360.0f;
 
     lightAngleTwo = lightAngleTwo + 0.2f;
     if (lightAngleTwo > 360.0f)
-        lightAngleTwo = -360.0f;
+        lightAngleTwo = lightAngleTwo - 360.0f;
 }
 
 void uninitialize(void)

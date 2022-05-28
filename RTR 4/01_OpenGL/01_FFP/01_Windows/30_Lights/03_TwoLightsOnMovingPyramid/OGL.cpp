@@ -435,7 +435,7 @@ void update(void)
     /* code */
     AnglePyramid = AnglePyramid + 0.05f;
     if (AnglePyramid >= 360.0f)
-        AnglePyramid = 0.0f;
+        AnglePyramid = AnglePyramid - 360.0f;
 }
 
 void uninitialize(void)
