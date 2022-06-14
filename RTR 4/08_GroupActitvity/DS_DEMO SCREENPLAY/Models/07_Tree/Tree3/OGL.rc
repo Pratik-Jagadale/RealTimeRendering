@@ -1,0 +1,6 @@
+#include "OGL.h"
+MYICON ICON p_Logo.ico
+
+IDBITMAP_WOOD BITMAP trunk.bmp
+IDBITMAP_LEAF BITMAP leaf.bmp
+

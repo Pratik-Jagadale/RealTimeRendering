@@ -1,5 +1,4 @@
-#ifndef _BST_H
-#define _BST_H
+#pragma once
 
 #define SUCCESS 1
 #define TRUE 1
@@ -22,9 +21,9 @@ typedef int bool;
 struct bst_node
 {
 	data_t data;
-	struct bst_node *left;
-	struct bst_node *right;
-	struct bst_node *parent;
+	bst_node_t *left;
+	bst_node_t *right;
+	bst_node_t *parent;
 };
 
 struct bst
@@ -60,5 +59,3 @@ void transplant_bst(bst_t *p_bst, bst_node_t *u, bst_node_t *v);
 
 /* General auxillary routines */
 void *xcalloc(size_t n, size_t s);
-
-#endif /* _BST_T */

@@ -11,9 +11,11 @@ bst_t *create_bst(void)
 
 ret_t insert_bst(bst_t *p_bst, data_t new_data)
 {
+	// Variable declarations
 	bst_node_t *p_new_node = NULL;
 	bst_node_t *p_run = NULL;
 
+	// code
 	p_new_node = get_bst_node(new_data);
 	p_run = p_bst->p_root_node;
 
@@ -321,10 +323,17 @@ bst_node_t *get_bst_node(data_t new_data)
 
 void *xcalloc(size_t n, size_t s)
 {
+	// variable declartions
 	void *p = NULL;
 
+	// code
 	p = calloc(n, s);
-	assert(p);
+
+	if (p == NULL)
+	{
+		printf("Memmory allocation Failed !!!!\n");
+		return;
+	}
 
 	return (p);
 }

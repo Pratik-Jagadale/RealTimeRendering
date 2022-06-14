@@ -1,0 +1,4 @@
+#include "OGL.h"
+
+MYICON ICON p_logo.ico
+IDBITMAP_ROOT_TEXTURE BITMAP Root.bmp
