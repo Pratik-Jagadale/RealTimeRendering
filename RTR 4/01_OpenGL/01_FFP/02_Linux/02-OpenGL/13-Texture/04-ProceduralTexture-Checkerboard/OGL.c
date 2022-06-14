@@ -19,6 +19,8 @@
 // MACROS
 #define WIN_WIDTH 800
 #define WIN_HEIGHT 600
+#define CHECKERBOARD_WIDTH 64
+#define CHECKERBOARD_HEIGHT 64
 
 // Global Variables
 Display *display = NULL; // 77 memebrs
@@ -32,6 +34,8 @@ FILE *gpFile = NULL;
 // OpenGL related Variable
 GLXContext glxContext;
 Bool bActiveWindow = False;
+GLubyte checkerboard[CHECKERBOARD_WIDTH][CHECKERBOARD_HEIGHT][4];
+GLuint Texture_Checkerboard;
 
 // Entry Point Function
 int main(void)
@@ -259,8 +263,8 @@ void toggleFullscreen(void)
 void initiallize(void)
 {
 	// 	Function Prototype
+	void LoadGlTexture(void);
 	void resize(int, int);
-	Bool loadGLTexture(GLuint *, const char *);
 
 	// code
 	glxContext = glXCreateContext(display, visualInfo, NULL, True);
@@ -278,6 +282,9 @@ void initiallize(void)
 
 	glShadeModel(GL_SMOOTH);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
+	LoadGlTexture();
+	glEnable(GL_TEXTURE_2D);
 
 	resize(WIN_WIDTH, WIN_HEIGHT); // WARMUP RESIZE CALL
 }
@@ -306,6 +313,12 @@ void uninitiallize(void)
 	// code
 	GLXContext currentContext;
 	currentContext = glXGetCurrentContext();
+
+	if (Texture_Checkerboard)
+	{
+		glDeleteTextures(1, &Texture_Checkerboard);
+		Texture_Checkerboard = 0;
+	}
 
 	if (currentContext && currentContext == glxContext)
 	{
@@ -355,7 +368,78 @@ void draw(void)
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0.0f, 0.0f, -8.0f);
+	glTranslatef(0.0f, 0.0f, -4.0f);
+
+	glBindTexture(GL_TEXTURE_2D, Texture_Checkerboard);
+
+	glBegin(GL_QUADS);
+	glTexCoord2f(1.0f, 1.0f);
+	glVertex3f(0.0f, 1.0f, 0.0f);
+	glTexCoord2f(0.0f, 1.0f);
+	glVertex3f(-2.0f, 1.0f, 0.0f);
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex3f(-2.0f, -1.0f, 0.0f);
+	glTexCoord2f(1.0f, 0.0f);
+	glVertex3f(0.0f, -1.0f, 0.0f);
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glTexCoord2f(1.0f, 1.0f);
+	glVertex3f(2.41421f, 1.0f, -1.41421f);
+	glTexCoord2f(0.0f, 1.0f);
+	glVertex3f(1.0f, 1.0f, 0.0f);
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex3f(1.0f, -1.0f, 0.0f);
+	glTexCoord2f(1.0f, 0.0f);
+	glVertex3f(2.41421f, -1.0f, -1.41421f);
+	glEnd();
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glXSwapBuffers(display, window);
+}
+
+void LoadGlTexture(void)
+{
+	// Functon Prototype
+	void MakeCheckerBoard(void);
+
+	// code
+	MakeCheckerBoard();
+
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glGenTextures(1, &Texture_Checkerboard);
+
+	glBindTexture(GL_TEXTURE_2D, Texture_Checkerboard);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, CHECKERBOARD_WIDTH, CHECKERBOARD_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, checkerboard);
+
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void MakeCheckerBoard(void)
+{
+	// Variable Declartions
+	int c;
+
+	// code
+	for (int i = 0; i < CHECKERBOARD_WIDTH; i++)
+	{
+		for (int j = 0; j < CHECKERBOARD_HEIGHT; j++)
+		{
+			c = (((i & 0x8) == 0) ^ ((j & 0x8) == 0)) * 255;
+
+			checkerboard[i][j][0] = (GLubyte)c;
+			checkerboard[i][j][1] = (GLubyte)c;
+			checkerboard[i][j][2] = (GLubyte)c;
+			checkerboard[i][j][3] = (GLubyte)255;
+		}
+	}
 }

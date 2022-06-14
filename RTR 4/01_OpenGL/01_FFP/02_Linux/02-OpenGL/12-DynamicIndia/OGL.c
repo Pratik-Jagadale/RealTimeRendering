@@ -331,69 +331,69 @@ void update(void)
 	if (y < 0.300)
 		y = 0.67f;
 
-	y_one = y_one - 0.01;
+	y_one = y_one - 0.001;
 	if (y_one < 0.300)
 		y_one = 0.67f;
 
-	y_TWO = y_TWO + 0.01;
+	y_TWO = y_TWO + 0.001;
 	if (y_TWO > 0.67f)
 		y_TWO = 0.300f;
 
 	if (pos_I_ONE < 0.0f)
-		pos_I_ONE = pos_I_ONE + 0.0015f;
+		pos_I_ONE = pos_I_ONE + 0.015f;
 	else if (pos_N > 0.0f)
-		pos_N = pos_N - 0.001f;
+		pos_N = pos_N - 0.01f;
 	else if (pos_D < 255.0f)
-		pos_D = pos_D + 0.1f;
+		pos_D = pos_D + 1.1f;
 	else if (pos_I_TWO < 0.0f)
-		pos_I_TWO = pos_I_TWO + 0.0015f;
+		pos_I_TWO = pos_I_TWO + 0.015f;
 	else if (pos_A > 0.0f)
-		pos_A = pos_A - 0.0015f;
+		pos_A = pos_A - 0.015f;
 	else if (arpl_B < 12.5f)
 	{
-		arpl_B = arpl_B + 0.001f;
-		arpl_A = arpl_A + 0.001f;
-		arpl_C = arpl_C + 0.001f;
+		arpl_B = arpl_B + 0.01f;
+		arpl_A = arpl_A + 0.01f;
+		arpl_C = arpl_C + 0.01f;
 
 		if (arpl_B < -4.0f)
 		{
 			if (arpl_A_Y > 0.0f)
-				arpl_A_Y = arpl_A_Y - 0.001f;
+				arpl_A_Y = arpl_A_Y - 0.01f;
 
 			if (jetAngleA < 360.0f)
-				jetAngleA = jetAngleA + 0.018f;
+				jetAngleA = jetAngleA + 0.18f;
 
 			if (jetAngleC > 0.0f)
-				jetAngleC = jetAngleC - 0.018f;
+				jetAngleC = jetAngleC - 0.18f;
 
 			if (arpl_C_Y < 0.0f)
-				arpl_C_Y = arpl_C_Y + 0.001;
+				arpl_C_Y = arpl_C_Y + 0.01;
 		}
 		else if (arpl_B > 7.5f)
 		{
 
 			if (arpl_A_Y < 5.0f)
-				arpl_A_Y = arpl_A_Y + 0.001f;
+				arpl_A_Y = arpl_A_Y + 0.01f;
 
 			if (jetAngleA < 90.0f)
-				jetAngleA = jetAngleA + 0.018f;
+				jetAngleA = jetAngleA + 0.18f;
 			else
 				jetAngleA = 0.0f;
 
 			if (jetAngleC > 270.0f)
-				jetAngleC = jetAngleC - 0.018f;
+				jetAngleC = jetAngleC - 0.18f;
 			else
 				jetAngleC = 360.0f;
 
 			if (arpl_C_Y > -5.0)
-				arpl_C_Y = arpl_C_Y - 0.001;
+				arpl_C_Y = arpl_C_Y - 0.01;
 		}
 		else if (arpl_B > 6.3f)
 			horizontalLine_A = horizontalLine_A + 0.2f;
 	}
 	else
 	{
-		zCord = zCord + 0.001f;
+		zCord = zCord + 0.01f;
 	}
 }
 
@@ -505,6 +505,16 @@ void draw(void)
 	drawIAF();
 
 	glXSwapBuffers(display, window);
+}
+
+void setColor(float r, float g, float b)
+{
+	glColor3f(r / 255.0f, g / 255.0f, b / 255.0f);
+}
+
+void setColor4f(float r, float g, float b, float alpha)
+{
+	glColor4f(r / 255.0f, g / 255.0f, b / 255.0f, alpha / 255.0f);
 }
 
 void drawIndia(void)
@@ -1103,14 +1113,4 @@ void drawF(void)
 	glVertex3f(-1.0f, 0.0f, 0.0f);
 	glVertex3f(0.0f, 0.0f, 0.0f);
 	glEnd();
-}
-
-void setColor(float r, float g, float b)
-{
-	glColor3f(r / 255.0f, g / 255.0f, b / 255.0f);
-}
-
-void setColor4f(float r, float g, float b, float alpha)
-{
-	glColor4f(r / 255.0f, g / 255.0f, b / 255.0f, alpha / 255.0f);
 }

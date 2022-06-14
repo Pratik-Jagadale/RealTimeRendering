@@ -75,11 +75,12 @@ int main(void)
 	if (gpFile == NULL) // fopen_s -> #include<stdio.h>
 	{
 		printf("Creation of Log File Failed..!!! Exiting...\n");
+		fprintf(gpFile, "Creation of Log File Failed..!!! Exiting...\n");
 		exit(0);
 	}
 	else
 	{
-		printf("Log File is Successfuly Created\n");
+		fprintf(gpFile, "Log File is Successfuly Created\n");
 	}
 
 	display = XOpenDisplay(NULL);
@@ -349,7 +350,7 @@ void uninitiallize(void)
 
 	if (gpFile)
 	{
-		printf("Log File Successfully Closed\n");
+		fprintf(gpFile, "Log File Successfully Closed\n");
 		fclose(gpFile);
 		gpFile = NULL;
 	}

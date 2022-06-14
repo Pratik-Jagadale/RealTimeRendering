@@ -287,10 +287,10 @@ int initiallize(void)
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	if (loadGLTexture(&texture_stone, "Stone.bmp") == False)
-		return -5;
+		return -1;
 
 	if (loadGLTexture(&texture_kundali, "Vijay_Kundali.bmp") == False)
-		return -6;
+		return -2;
 
 	// Depth related changes
 	glClearDepth(1.0f);

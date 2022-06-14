@@ -24,6 +24,7 @@ Window window;
 XEvent event;
 KeySym keysym;
 Bool fullscreen = False;
+FILE *gpFile = NULL;
 
 // OpenGL related Variable
 GLXContext glxContext;
@@ -63,6 +64,19 @@ int main(void)
 	Bool bDone = False;
 
 	// Code
+	gpFile = fopen("Log.txt", "w");
+
+	if (gpFile == NULL) // fopen_s -> #include<stdio.h>
+	{
+		printf("Creation of Log File Failed..!!! Exiting...\n");
+		fprintf(gpFile, "Creation of Log File Failed..!!! Exiting...\n");
+		exit(0);
+	}
+	else
+	{
+		fprintf(gpFile, "Log File is Successfuly Created\n");
+	}
+
 	display = XOpenDisplay(NULL);
 	if (display == NULL)
 	{
@@ -269,6 +283,13 @@ void uninitiallize(void)
 	{
 		XCloseDisplay(display);
 		display = NULL;
+	}
+
+	if (gpFile)
+	{
+		fprintf(gpFile, "Log File Successfully Closed\n");
+		fclose(gpFile);
+		gpFile = NULL;
 	}
 }
 

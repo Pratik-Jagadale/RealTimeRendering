@@ -35,8 +35,6 @@ GLfloat gfLightAmbiant[] = {0.5f, 0.5f, 0.5f, 1.0f};
 GLfloat gfLightDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
 GLfloat gfLightPositions[] = {0.0f, 0.0f, 2.0f, 1.0f};
 
-
-
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 float angle;
 Bool fullscreen = False;
@@ -300,8 +298,7 @@ void initiallize(void)
 
 	// Ligth related Changes
 	glLightfv(GL_LIGHT1, GL_AMBIENT, gfLightAmbiant);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, gfLightDeffuse);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, gfLightSpicular);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, gfLightDiffuse);
 	glLightfv(GL_LIGHT1, GL_POSITION, gfLightPositions);
 	glEnable(GL_LIGHT1);
 
@@ -368,7 +365,6 @@ void update(void)
 	angle = angle + 1.0f;
 	if (angle > 360.0f)
 		angle = angle - 360.0f;
-
 }
 
 Bool loadGLTexture(GLuint *texture, const char *path)
