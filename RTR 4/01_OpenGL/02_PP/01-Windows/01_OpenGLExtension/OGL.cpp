@@ -267,6 +267,7 @@ int initialize(void)
 {
 	/* fucntion delcations */
 	void resize(int, int);
+	void printGLInfo(void);
 
 	/* variable declartions */
 	PIXELFORMATDESCRIPTOR pfd;
@@ -314,6 +315,8 @@ int initialize(void)
 	if (glewInit() != GLEW_OK)
 		return -5;
 
+	printGLInfo();
+
 	/* Clear the  screen using blue color */
 	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
 
@@ -329,6 +332,27 @@ int initialize(void)
 	resize(WINWIDTH, WINHEIGHT);
 
 	return (0);
+}
+
+void printGLInfo(void)
+{
+	// local variable declartions
+	GLint numExtensions = 0;
+
+	// code
+	fprintf(gpFile, "OpenGL Vendor       : %s\n", glGetString(GL_VENDOR));					 // graphic card company
+	fprintf(gpFile, "OpenGL Renderer     : %s\n", glGetString(GL_RENDERER));				 // Graphic Vard
+	fprintf(gpFile, "OpenGL Version      : %s\n", glGetString(GL_VERSION));					 // Supported OpenGL version
+	fprintf(gpFile, "OpenGL GLSL Version : %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION)); // Graphics Library Shading Language
+
+	glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
+
+	fprintf(gpFile, "Number of Supported Extensions: %d\n", numExtensions);
+
+	for (int i = 0; i < numExtensions; i++)
+	{
+		fprintf(gpFile, "%s\n", glGetStringi(GL_EXTENSIONS, i));
+	}
 }
 
 void resize(int width, int height)
