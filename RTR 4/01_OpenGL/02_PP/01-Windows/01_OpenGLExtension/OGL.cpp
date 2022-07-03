@@ -315,6 +315,7 @@ int initialize(void)
 	if (glewInit() != GLEW_OK)
 		return -5;
 
+	// printf OpenGl Info
 	printGLInfo();
 
 	/* Clear the  screen using blue color */

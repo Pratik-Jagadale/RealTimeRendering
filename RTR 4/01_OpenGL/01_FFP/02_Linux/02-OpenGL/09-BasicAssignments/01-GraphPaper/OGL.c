@@ -388,9 +388,6 @@ void draw(void)
 	glLoadIdentity();
 	glTranslatef(0.0f, 0.0f, -6.0f);
 
-	glLoadIdentity();
-	glTranslatef(0.0f, 0.0f, -6.0f);
-
 	glLineWidth(3);
 
 	glBegin(GL_LINES);

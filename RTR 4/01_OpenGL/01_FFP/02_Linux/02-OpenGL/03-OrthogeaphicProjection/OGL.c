@@ -223,7 +223,6 @@ int main(void)
 		}
 		if (bActiveWindow == True)
 		{
-			update();
 			draw();
 		}
 	}
@@ -304,11 +303,6 @@ void resize(int width, int height)
 	}
 }
 
-void update(void)
-{
-	// code
-}
-
 void uninitiallize(void)
 {
 	// code
@@ -363,7 +357,16 @@ void draw(void)
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0.0f, 0.0f, -8.0f);
+	glTranslatef(0.0f, 0.0f, -4.0f);
+
+	glBegin(GL_TRIANGLES);
+	glColor3f(1.0f, 0.0f, 0.0f);
+	glVertex3f(0.0f, 1.0f, 0.0f);
+	glColor3f(0.0f, 1.0f, 0.0f);
+	glVertex3f(-1.0f, -1.0f, 0.0f);
+	glColor3f(0.0f, 0.0f, 1.0f);
+	glVertex3f(1.0f, -1.0f, 0.0f);
+	glEnd();
 
 	glXSwapBuffers(display, window);
 }

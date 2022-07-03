@@ -51,9 +51,16 @@ GLfloat materialShininess = 120.0f;
 GLfloat lightAngleOne = 0.0f;
 GLfloat lightAngleTwo = 0.0f;
 GLfloat lightAngleZero = 0.0f;
+
 float AngleCube = 90.0f;
 GLfloat radius = 8.0f;
 float yEyeVector = 0;
+
+GLuint texture_home_BricksWallpaper;
+GLuint texture_home_WhiteWallpaper;
+GLuint texture_home_Roof;
+GLuint texture_home_window;
+GLuint texture_home_door;
 
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -145,6 +152,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
     else if (iRetVal == -4)
     {
         fprintf(gpFile, "Making OpenGL as current Context Failed...\n");
+        uninitialize();
+    }
+    else if (iRetVal == -5)
+    {
+        fprintf(gpFile, "LoadGLTexture() Failed...\n");
         uninitialize();
     }
     else
@@ -339,6 +351,7 @@ int initialize(void)
 {
     /* fucntion delcations */
     void resize(int, int);
+    BOOL LoadGLTexture(GLuint * texture, TCHAR ImageResourceID[]);
 
     /* variable declartions */
     PIXELFORMATDESCRIPTOR pfd;
@@ -418,6 +431,23 @@ int initialize(void)
     glShadeModel(GL_SMOOTH);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
+    if (LoadGLTexture(&texture_home_BricksWallpaper, MAKEINTRESOURCE(IDBITMAP_BRICKSWALLPAPER)) == FALSE)
+        return -5; // write log in wndproc
+
+    if (LoadGLTexture(&texture_home_WhiteWallpaper, MAKEINTRESOURCE(IDBITMAP_WHITEWALLPAPER)) == FALSE)
+        return -6; // write log in wndproc
+
+    if (LoadGLTexture(&texture_home_Roof, MAKEINTRESOURCE(IDBITMAP_ROOFWALLPAPER)) == FALSE)
+        return -7; // write log in wndproc
+
+    if (LoadGLTexture(&texture_home_door, MAKEINTRESOURCE(IDBITMAP_HOME_DOORTEXTURE)) == FALSE)
+        return -7; // write log in wndproc
+
+    if (LoadGLTexture(&texture_home_window, MAKEINTRESOURCE(IDBITMAP_HOME_WINDOWTEXTURE)) == FALSE)
+        return -7; // write log in wndproc
+
+    glEnable(GL_TEXTURE_2D);
+
     /* Clear the  screen using black color */
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -489,6 +519,36 @@ void uninitialize(void)
     void ToggleFullScreen(void);
 
     /* code */
+    if (texture_home_door)
+    {
+        glDeleteTextures(1, &texture_home_door);
+        texture_home_door = 0;
+    }
+
+    if (texture_home_window)
+    {
+        glDeleteTextures(1, &texture_home_window);
+        texture_home_window = 0;
+    }
+
+    if (texture_home_BricksWallpaper)
+    {
+        glDeleteTextures(1, &texture_home_BricksWallpaper);
+        texture_home_BricksWallpaper = 0;
+    }
+
+    if (texture_home_WhiteWallpaper)
+    {
+        glDeleteTextures(1, &texture_home_WhiteWallpaper);
+        texture_home_WhiteWallpaper = 0;
+    }
+
+    if (texture_home_Roof)
+    {
+        glDeleteTextures(1, &texture_home_Roof);
+        texture_home_Roof = 0;
+    }
+
     if (gbFullScreen)
         ToggleFullScreen();
 
@@ -533,11 +593,11 @@ void uninitialize(void)
 void drawRoom(void)
 {
     // funnction declartions
-    void DrawBox(void);
+    void drawHome(void);
 
     // code
-    glScalef(8.0f, 3.0f, 6.0f);
-    DrawBox();
+    glScalef(8.0f, 4.0f, 6.0f);
+    drawHome();
 }
 
 void colorSetcolor(int r, int g, int b)
@@ -545,11 +605,14 @@ void colorSetcolor(int r, int g, int b)
     glColor3f(r / 255, g / 255, b / 255);
 }
 
-void DrawBox(void)
+void drawHome(void)
 {
-    glBegin(GL_QUADS);
+
+    glBindTexture(GL_TEXTURE_2D, texture_home_BricksWallpaper);
+
     // FRONT FACE
-    glColor3f(1.0f, 0.0f, 0.0f);
+    glBegin(GL_QUADS);
+    glColor3f(1.0f, 1.0f, 1.0f);
     glTexCoord2f(1.0f, 1.0f);
     glVertex3f(1.0f, 1.0f, 1.0f);
 
@@ -563,43 +626,150 @@ void DrawBox(void)
     glVertex3f(1.0f, -1.0f, 1.0f);
     glEnd();
 
+    glPushMatrix();
+    // window Right
+    glBindTexture(GL_TEXTURE_2D, texture_home_window);
+    glTranslatef(0.65f, 0.0f, 0.001f);
+    glScalef(0.15f, 0.4f, 1.0001f);
+
+    glBegin(GL_QUADS);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f, 1.0f);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(1.0f, -1.0f, 1.0f);
+    glEnd();
+
+    glPopMatrix();
+    glPushMatrix();
+
+    // window Left
+    glTranslatef(-0.65f, 0.0f, 0.001f);
+    glScalef(0.15f, 0.4f, 1.00001f);
+
+    glBegin(GL_QUADS);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f, 1.0f);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(1.0f, -1.0f, 1.0f);
+    glEnd();
+
+    glPopMatrix();
+    glPushMatrix();
+
+    // Dooor
+    glBindTexture(GL_TEXTURE_2D, texture_home_door);
+    glTranslatef(0.0f, -0.2f, 0.001f);
+    glScalef(0.2f, 0.8f, 1.0f);
+
+    glBegin(GL_QUADS);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f, 1.0f);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(1.0f, -1.0f, 1.0f);
+    glEnd();
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glPopMatrix();
+
+    glBindTexture(GL_TEXTURE_2D, texture_home_BricksWallpaper);
+
     // RIGHT FACE
     glBegin(GL_QUADS);
-    glColor3f(1.0f, 1.0f, 0.0f);
-    glTexCoord2f(1.0f, 0.0f);
-
+    glTexCoord2f(0.0f, 1.0f);
     glVertex3f(1.0f, 1.0f, -1.0f);
 
     glTexCoord2f(1.0f, 1.0f);
     glVertex3f(1.0f, 1.0f, 1.0f);
 
-    glTexCoord2f(0.0f, 1.0f);
+    glTexCoord2f(1.0f, 0.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
 
     glTexCoord2f(0.0f, 0.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
     glEnd();
 
-    // BACK FACE
-    glBegin(GL_QUADS);
-    glColor3f(0.0f, 1.0f, 0.0f);
+    // RIGHT FACE Traigle
+    glPushMatrix();
+
+    glTranslatef(1.0001f, 1.2f, 0.0);
+    glScalef(1.0f, 0.25f, 1.1f);
+
+    glBegin(GL_TRIANGLES);
+    glTexCoord2f(0.5f, 1.0f);
+    glVertex3f(0.0f, 1.0f, 0.0f);
+
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(0.0f, -1.0f, -1.0f);
+
     glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(0.0f, -1.0f, 1.0f);
+    glEnd();
+
+    // LEFT FACE Traigle
+    glPopMatrix();
+    glPushMatrix();
+
+    glTranslatef(-1.001f, 1.2f, 0.0);
+    glScalef(1.0f, 0.25f, 1.1f);
+
+    glBegin(GL_TRIANGLES);
+    glTexCoord2f(0.5f, 1.0f);
+    glVertex3f(0.0f, 1.0f, 0.0f);
+
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(0.0f, -1.0f, -1.0f);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(0.0f, -1.0f, 1.0f);
+    glEnd();
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glPopMatrix();
+    // BACK FACE
+    glBindTexture(GL_TEXTURE_2D, texture_home_BricksWallpaper);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 1.0f);
     glVertex3f(-1.0f, 1.0f, -1.0f);
 
     glTexCoord2f(1.0f, 1.0f);
     glVertex3f(1.0f, 1.0f, -1.0f);
 
-    glTexCoord2f(0.0f, 1.0f);
+    glTexCoord2f(1.0f, 0.0f);
     glVertex3f(1.0f, -1.0f, -1.0f);
 
     glTexCoord2f(0.0f, 0.0f);
-
     glVertex3f(-1.0f, -1.0f, -1.0f);
     glEnd();
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     // LEFT FACE
+    glBindTexture(GL_TEXTURE_2D, texture_home_BricksWallpaper);
     glBegin(GL_QUADS);
-    glColor3f(0.0f, 0.0f, 1.0f);
     glTexCoord2f(0.0f, 0.0f);
     glVertex3f(-1.0f, 1.0f, 1.0f);
 
@@ -613,9 +783,41 @@ void DrawBox(void)
     glVertex3f(-1.0f, -1.0f, 1.0f);
     glEnd();
 
+    glBindTexture(GL_TEXTURE_2D, 0);
+
     // TOP
+    // front side
+    glPushMatrix();
+
+    glTranslatef(0.0f, 0.19f, 0.45f);
+    glScalef(1.0f, 1.0f, 0.8f);
+    glRotatef(20.0f, 1.0f, 0.0f, 0.0f);
+
+    glBindTexture(GL_TEXTURE_2D, texture_home_Roof);
     glBegin(GL_QUADS);
-    glColor3f(1.0f, 0.0f, 1.0f);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(1.0f, 1.0f, -1.0f);
+
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(-1.0f, 1.0f, -1.0f);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+    glEnd();
+
+    glPopMatrix();
+    glPushMatrix();
+
+    // back side
+    glTranslatef(0.0f, 0.19f, -0.45f);
+    glScalef(1.0f, 1.0f, 0.8f);
+    glRotatef(-20.0f, 1.0f, 0.0f, 0.0f);
+
+    glBindTexture(GL_TEXTURE_2D, texture_home_Roof);
+    glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 1.0f);
     glVertex3f(1.0f, 1.0f, 1.0f);
 
@@ -629,8 +831,11 @@ void DrawBox(void)
     glVertex3f(-1.0f, 1.0f, 1.0f);
     glEnd();
 
+    glPopMatrix();
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glBindTexture(GL_TEXTURE_2D, texture_home_WhiteWallpaper);
     // BOTTOM FACE
-    glColor3f(0.0f, 0.0f, 1.0f);
     glBegin(GL_QUADS);
     glTexCoord2f(1.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
@@ -645,4 +850,40 @@ void DrawBox(void)
     glVertex3f(-1.0f, -1.0f, 1.0f);
 
     glEnd();
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+BOOL LoadGLTexture(GLuint *texture, TCHAR ImageResourceID[])
+{
+    // variable declartions
+    HBITMAP hBitmap = NULL;
+    BITMAP bmp;
+    BOOL bResult = FALSE;
+
+    // code
+    hBitmap = (HBITMAP)LoadImage(GetModuleHandle(NULL), ImageResourceID, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+
+    if (hBitmap)
+    {
+        bResult = TRUE;
+        GetObject(hBitmap, sizeof(BITMAP), &bmp);
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+        glGenTextures(1, texture);
+
+        glBindTexture(GL_TEXTURE_2D, *texture);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        // create the texture
+        gluBuild2DMipmaps(GL_TEXTURE_2D, 3, bmp.bmWidth, bmp.bmHeight, GL_BGR_EXT, GL_UNSIGNED_BYTE, bmp.bmBits);
+
+        glBindTexture(GL_TEXTURE_2D, 0); // unbind texture
+
+        // DELETE Object
+        DeleteObject(hBitmap);
+    }
+    return bResult;
 }

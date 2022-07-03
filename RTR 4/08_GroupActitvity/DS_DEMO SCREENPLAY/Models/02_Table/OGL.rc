@@ -1,3 +1,5 @@
 #include "OGL.h"
 
 MYICON ICON p_logo.ico
+
+IDBITMAP_WOODTEXTURE BITMAP texture_wood_tbl.bmp

@@ -26,7 +26,7 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 // Global variable declarations
 BOOL gbActiveWindow = FALSE;
 BOOL gbFullScreen = FALSE;
-FILE *gfFile_olp = NULL;
+FILE *gfFile = NULL;
 HWND gHwnd = NULL;
 HDC gHdc = NULL;
 HGLRC ghrc = NULL;
@@ -37,10 +37,9 @@ float AngleCube = 270.0f;
 GLfloat radius = 8.0f;
 float yEyeVector = 0;
 GLUquadric *quadric = NULL;
-BOOL bIsTrunk = TRUE;
-
-GLuint Texture_wood;
-GLuint Texture_leaf;
+BOOL isTrunk = TRUE;
+GLuint texture_wood;
+GLuint texture_leaf;
 
 // Entry Point Function
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
@@ -59,14 +58,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	BOOL bDone = FALSE;
 	int iRetVal = 0;
 
-	if (fopen_s(&gfFile_olp, "Log.txt", "w") != 0)
+	if (fopen_s(&gfFile, "Log.txt", "w") != 0)
 	{
 		MessageBox(NULL, TEXT("File Creation Failed.... exiting"), TEXT("Error"), MB_OK);
 		exit(0);
 	}
 	else
 	{
-		fprintf(gfFile_olp, "Log File Successfully Created\n");
+		fprintf(gfFile, "Log File Successfully Created\n");
 	}
 
 	// Initialization of WNDCLASSEX structure
@@ -88,7 +87,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 
 	// Create The Window
 	hwnd = CreateWindowEx(WS_EX_APPWINDOW, szAppName,
-						  TEXT("Om Laxman Patil"),
+						  TEXT("Pratik R Jagadale"),
 						  WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE,
 						  (GetSystemMetrics(SM_CXSCREEN) - WIN_WIDTH) / 2,
 						  (GetSystemMetrics(SM_CYSCREEN) - WIN_HIGHT) / 2,
@@ -105,38 +104,38 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	iRetVal = initialize();
 	if (iRetVal == -1)
 	{
-		fprintf(gfFile_olp, "Choose Pixcel Format failed\n ");
+		fprintf(gfFile, "Choose Pixcel Format failed\n ");
 		uninitialize();
 	}
 	if (iRetVal == -2)
 	{
-		fprintf(gfFile_olp, "Set Pixcel Format failed\n ");
+		fprintf(gfFile, "Set Pixcel Format failed\n ");
 		uninitialize();
 	}
 	if (iRetVal == -3)
 	{
-		fprintf(gfFile_olp, " Create OpenGL context failed\n ");
+		fprintf(gfFile, " Create OpenGL context failed\n ");
 		uninitialize();
 	}
 
 	if (iRetVal == -4)
 	{
-		fprintf(gfFile_olp, " Making OpenGL context current context failed\n ");
+		fprintf(gfFile, " Making OpenGL context current context failed\n ");
 		uninitialize();
 	}
 	if (iRetVal == -5)
 	{
-		fprintf(gfFile_olp, " Making OpenGL creation of quadric failed\n ");
+		fprintf(gfFile, " Making OpenGL creation of quadric failed\n ");
 		uninitialize();
 	}
 	if (iRetVal == -6)
 	{
-		fprintf(gfFile_olp, " Making OpenGL Texture wood failed\n ");
+		fprintf(gfFile, " Making OpenGL Texture wood failed\n ");
 		uninitialize();
 	}
 	if (iRetVal == -7)
 	{
-		fprintf(gfFile_olp, " Making OpenGL Texture leaf failed\n ");
+		fprintf(gfFile, " Making OpenGL Texture leaf failed\n ");
 		uninitialize();
 	}
 
@@ -367,17 +366,17 @@ int initialize(void)
 		return -5;
 	}
 
-	if (LoadGLTexture(&Texture_wood, MAKEINTRESOURCE(IDBITMAP_WOOD)) == FALSE)
+	if (LoadGLTexture(&texture_wood, MAKEINTRESOURCE(IDBITMAP_WOOD)) == FALSE)
 	{
 
-		fprintf(gfFile_olp, "LoadGLTexture failed for wood");
+		fprintf(gfFile, "LoadGLTexture failed for wood");
 		return -6;
 	}
 
-	if (LoadGLTexture(&Texture_leaf, MAKEINTRESOURCE(IDBITMAP_LEAF)) == FALSE)
+	if (LoadGLTexture(&texture_leaf, MAKEINTRESOURCE(IDBITMAP_LEAF)) == FALSE)
 	{
 
-		fprintf(gfFile_olp, "LoadGLTexture failed for leaf");
+		fprintf(gfFile, "LoadGLTexture failed for leaf");
 		return -7;
 	}
 	glEnable(GL_TEXTURE_2D);
@@ -419,8 +418,8 @@ void display(void)
 	// glTranslatef(0.0f,-10.0f, -50.0f);
 	glColor3f(1.0f, 1.0f, 1.0f);
 	drawTree(0.5f, 0.5f, 10.0f);
-	bIsTrunk = TRUE;
-	fprintf(gfFile_olp, "\n\n\n\n");
+	isTrunk = TRUE;
+	fprintf(gfFile, "\n\n\n\n");
 
 	SwapBuffers(gHdc);
 }
@@ -429,19 +428,19 @@ void drawTree(GLfloat base, GLfloat top, GLfloat height)
 {
 	void Cylinder(GLfloat, GLfloat, GLfloat);
 
-	if (bIsTrunk == TRUE)
+	if (isTrunk == TRUE)
 	{
 
 		Cylinder(base, top, height);
 
-		bIsTrunk = FALSE;
+		isTrunk = FALSE;
 		// glPopMatrix();
 	}
 	else
 	{
 		if (height <= 2.0f)
 		{
-			glBindTexture(GL_TEXTURE_2D, Texture_leaf);
+			glBindTexture(GL_TEXTURE_2D, texture_leaf);
 			glBegin(GL_QUADS);
 			glTexCoord2f(1.0f, 1.0f);
 			glVertex3f(0.5f, 0.5f, 0.0f);
@@ -501,7 +500,7 @@ void Cylinder(GLfloat base, GLfloat top, GLfloat height)
 	glPushMatrix();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glRotatef(90.0f, -1.0f, 0.0f, 0.0f);
-	glBindTexture(GL_TEXTURE_2D, Texture_wood);
+	glBindTexture(GL_TEXTURE_2D, texture_wood);
 	gluQuadricTexture(quadric, GL_TRUE);
 	gluCylinder(quadric, base, top, height, 10, 10);
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -548,26 +547,26 @@ void uninitialize(void)
 		DestroyWindow(gHwnd);
 		gHwnd = NULL;
 	}
-	if (gfFile_olp)
+	if (gfFile)
 	{
-		fprintf(gfFile_olp, "Log File Successfully Closed");
-		fclose(gfFile_olp);
-		gfFile_olp = NULL;
+		fprintf(gfFile, "Log File Successfully Closed");
+		fclose(gfFile);
+		gfFile = NULL;
 	}
 	if (quadric)
 	{
 		gluDeleteQuadric(quadric);
 		quadric = NULL;
 	}
-	if (Texture_leaf)
+	if (texture_leaf)
 	{
-		glDeleteTextures(1, &Texture_leaf);
-		Texture_leaf = 0;
+		glDeleteTextures(1, &texture_leaf);
+		texture_leaf = 0;
 	}
-	if (Texture_wood)
+	if (texture_wood)
 	{
-		glDeleteTextures(1, &Texture_wood);
-		Texture_wood = 0;
+		glDeleteTextures(1, &texture_wood);
+		texture_wood = 0;
 	}
 }
 

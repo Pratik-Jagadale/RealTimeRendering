@@ -1,0 +1,10 @@
+#include "OGL.h"
+
+MYICON ICON p_logo.ico
+IDBITMAP_BRICKSWALLPAPER BITMAP texture_BricksWallpaper.bmp
+
+IDBITMAP_WHITEWALLPAPER BITMAP texture_WhiteWallpaper.bmp
+IDBITMAP_ROOFWALLPAPER BITMAP texture_roof.bmp
+IDBITMAP_HOME_DOORTEXTURE BITMAP texture_home_door.bmp
+IDBITMAP_HOME_WINDOWTEXTURE BITMAP texture_home_window.bmp
+IDBITMAP_HOME_BASEBRICKSTEXTURE BITMAP texture_home_base.bmp

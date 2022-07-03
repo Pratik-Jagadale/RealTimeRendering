@@ -400,7 +400,6 @@ void draw(void)
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glLoadIdentity();
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 

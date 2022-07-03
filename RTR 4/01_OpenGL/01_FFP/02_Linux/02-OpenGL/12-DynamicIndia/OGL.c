@@ -13,8 +13,8 @@
 #include <GL/glx.h> // for briding API
 #include <GL/glu.h> // for glu functions
 
-// Texture library header
-#include <SOIL/SOIL.h>
+// OpenAl Related hader Files
+#include <AL/alut.h>
 
 // MACROS
 #define WIN_WIDTH 800
@@ -32,6 +32,11 @@ FILE *gpFile = NULL;
 // OpenGL related Variable
 GLXContext glxContext;
 Bool bActiveWindow = False;
+
+// OpelAl- realted variables declartions
+// Global so that we can access them in intizlizeAudi() and UninitizaizeAudio()
+ALCenum error; // ALcenum typedef of enum, error checking of ALUT and OpenGL functions
+ALuint audioBuffer, audioSource;
 
 // for lettres movements
 float pos_I_ONE = -5.0f;
@@ -259,6 +264,62 @@ int main(void)
 	return (0);
 }
 
+void initializationAudio(void)
+{
+	// function prototype
+	void uninitializeAudio(void);
+
+	// code
+	// STEP-1 Initizalizing ALUT
+	alutInit(NULL, NULL);
+	error = alutGetError(); // for capture error related to alutgetError()
+	if (error != ALUT_ERROR_NO_ERROR)
+	{
+		printf("AlutInit() Failed.\n");
+		uninitializeAudio();
+		return;
+	}
+
+	// STEP-2 Create Audio Buffer From Audio File
+	audioBuffer = alutCreateBufferFromFile("Ye_Mere_Watan_Ke_Logo.wav");
+	error = alutGetError();
+	if (error != ALUT_ERROR_NO_ERROR)
+	{
+		printf("alutGetError() Failed. Creation of Audio Buffer Failed.\n");
+		uninitializeAudio();
+		return;
+	}
+
+	// STEP-3 Create A Audio Source
+	alGenSources(1, &audioSource); // First OpenAl function - Openl Al audio Source Genrate kar // jar muiltiple audio create karyche astil tar sources cha array daycha
+	error = alGetError();
+	if (error != AL_NO_ERROR)
+	{
+		printf("alGenSources(Failed : Genertaing audio Source failed.\n");
+		uninitializeAudio();
+		return;
+	}
+
+	// STEP-4 attach the above created audio buffer to above audio source
+	alSourcei(audioSource, AL_BUFFER, audioBuffer); // i for integer if(integer then iv)( 1st - > which  audio soucre , 2 nd - what have to attach , 3 rd - which buffer )
+	error = alGetError();
+	if (error != AL_NO_ERROR)
+	{
+		printf("alSourcei()  Failed : attaching audio buffer to audio source failed.\n");
+		uninitializeAudio();
+		return;
+	}
+
+	// STEP-5 play audio from the source
+	alSourcePlay(audioSource);
+	if (error != AL_NO_ERROR)
+	{
+		printf("alSourcePlay() Failed.\n");
+		uninitializeAudio();
+		return;
+	}
+}
+
 void toggleFullscreen(void)
 {
 	// Local Variables
@@ -288,6 +349,7 @@ void initiallize(void)
 	// 	Function Prototype
 	void resize(int, int);
 	Bool loadGLTexture(GLuint *, const char *);
+	void initializationAudio(void);
 
 	// code
 	glxContext = glXCreateContext(display, visualInfo, NULL, True);
@@ -305,6 +367,9 @@ void initiallize(void)
 
 	glShadeModel(GL_SMOOTH);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
+	// intiallize audio
+	initializationAudio();
 
 	resize(WIN_WIDTH, WIN_HEIGHT); // WARMUP RESIZE CALL
 }
@@ -340,15 +405,15 @@ void update(void)
 		y_TWO = 0.300f;
 
 	if (pos_I_ONE < 0.0f)
-		pos_I_ONE = pos_I_ONE + 0.015f;
+		pos_I_ONE = pos_I_ONE + 0.01f;
 	else if (pos_N > 0.0f)
 		pos_N = pos_N - 0.01f;
 	else if (pos_D < 255.0f)
 		pos_D = pos_D + 1.1f;
 	else if (pos_I_TWO < 0.0f)
-		pos_I_TWO = pos_I_TWO + 0.015f;
+		pos_I_TWO = pos_I_TWO + 0.01f;
 	else if (pos_A > 0.0f)
-		pos_A = pos_A - 0.015f;
+		pos_A = pos_A - 0.01f;
 	else if (arpl_B < 12.5f)
 	{
 		arpl_B = arpl_B + 0.01f;
@@ -361,10 +426,10 @@ void update(void)
 				arpl_A_Y = arpl_A_Y - 0.01f;
 
 			if (jetAngleA < 360.0f)
-				jetAngleA = jetAngleA + 0.18f;
+				jetAngleA = jetAngleA + 0.17f;
 
 			if (jetAngleC > 0.0f)
-				jetAngleC = jetAngleC - 0.18f;
+				jetAngleC = jetAngleC - 0.17f;
 
 			if (arpl_C_Y < 0.0f)
 				arpl_C_Y = arpl_C_Y + 0.01;
@@ -376,12 +441,12 @@ void update(void)
 				arpl_A_Y = arpl_A_Y + 0.01f;
 
 			if (jetAngleA < 90.0f)
-				jetAngleA = jetAngleA + 0.18f;
+				jetAngleA = jetAngleA + 0.17f;
 			else
 				jetAngleA = 0.0f;
 
 			if (jetAngleC > 270.0f)
-				jetAngleC = jetAngleC - 0.18f;
+				jetAngleC = jetAngleC - 0.17f;
 			else
 				jetAngleC = 360.0f;
 
@@ -389,7 +454,7 @@ void update(void)
 				arpl_C_Y = arpl_C_Y - 0.01;
 		}
 		else if (arpl_B > 6.3f)
-			horizontalLine_A = horizontalLine_A + 0.2f;
+			horizontalLine_A = horizontalLine_A + 2.0f;
 	}
 	else
 	{
@@ -399,9 +464,14 @@ void update(void)
 
 void uninitiallize(void)
 {
+
+	void uninitializeAudio(void);
+
 	// code
 	GLXContext currentContext;
 	currentContext = glXGetCurrentContext();
+
+	uninitializeAudio();
 
 	if (currentContext && currentContext == glxContext)
 	{
@@ -442,6 +512,56 @@ void uninitiallize(void)
 		fclose(gpFile);
 		gpFile = NULL;
 	}
+}
+
+void uninitializeAudio(void)
+{
+	// variabl declartions
+	ALint state;
+
+	// code
+	// stop Playing the Audio From the Source
+	alGetSourcei(audioSource, AL_SOURCE_STATE, &state);
+	if (state == AL_PLAYING)
+	{
+		alSourceStop(audioSource);
+		error = alGetError();
+		if (error != AL_NO_ERROR)
+		{
+			printf("alSourceStop() Failed.\n");
+		}
+	}
+
+	// Detach The Audio Buffer From the Audio Souce
+	alSourcei(audioSource, AL_BUFFER, 0);
+	error = alGetError();
+	if (error != AL_NO_ERROR)
+	{
+		printf("alSourcei() Failed : attaching Audio Buffer To Audio Source Failed.\n");
+	}
+
+	// Delete The Audio Source
+	alDeleteSources(1, &audioSource);
+	error = alGetError();
+	if (error != AL_NO_ERROR)
+	{
+		printf("alDeleteSources() Failed : Deleting Audio Source Failed.\n");
+	}
+	else
+		audioSource = 0;
+
+	// delete the audio Buffer
+	alDeleteBuffers(1, &audioBuffer);
+	error = alGetError();
+	if (error != AL_NO_ERROR)
+	{
+		printf("alDeleteBuffers() Failed : Deleting Audio Buffer Failed.\n");
+	}
+	else
+		audioSource = 0;
+
+	// Uninitilize ALUT
+	alutExit();
 }
 
 void draw(void)

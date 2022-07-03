@@ -389,7 +389,7 @@ void draw(void)
 	glLoadIdentity();
 	glTranslatef(0.0f, 0.0f, -8.0f);
 
-	glRotatef(AngleCube, 1.0f, 1.0f, 0.0f);
+	glRotatef(AngleCube, 1.0f, 1.0f, 1.0f);
 
 	glBegin(GL_QUADS);
 	// FRONT FACE

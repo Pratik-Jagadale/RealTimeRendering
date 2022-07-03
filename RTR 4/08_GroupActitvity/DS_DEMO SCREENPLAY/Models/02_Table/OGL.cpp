@@ -25,32 +25,24 @@ BOOL gbFullScreen = FALSE;
 int iHeightOfWindow;
 int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
-GLUquadric *quadric = NULL;
 
-BOOL bLight = FALSE;
-GLfloat lightAmbinatZero[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightDefuseZero[] = {1.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightSpecularZero[] = {1.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightPositionZero[] = {0.0f, 0.0f, 0.0f, 1.0f};
+GLuint texture_wood;
 
-GLfloat lightAmbinatOne[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightDefuseOne[] = {0.0f, 1.0f, 0.0f, 1.0f};
-GLfloat lightSpecularOne[] = {0.0f, 1.0f, 0.0f, 1.0f};
-GLfloat lightPositionOne[] = {0.0f, 0.0f, 0.0f, 1.0f};
-
-GLfloat lightAmbinatTwo[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightDefuseTwo[] = {0.0f, 0.0f, 1.0f, 1.0f};
-GLfloat lightSpecularTwo[] = {0.0f, 0.0f, 1.0f, 1.0f};
-GLfloat lightPositionTwo[] = {0.0f, 0.0f, 0.0f, 1.0f};
+GLfloat gfLightAmbiant[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat gfLightDeffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat gflightSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat gfLightPositions[] = {0.0f, 5.0f, -6.0f, 0.0f};
+GLfloat gfLightSpotLightDirection[] = {0.0f, -1.0f, 0.0f, 1.0};
 
 GLfloat materialAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat materialDefuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat materialDefuse[] = {1.0f, 0.0f, 0.0f, 1.0f};
 GLfloat materialSpecular[] = {1.0f, 1.f, 1.0f, 1.0f};
 GLfloat materialShininess = 120.0f;
 
-GLfloat lightAngleOne = 0.0f;
-GLfloat lightAngleTwo = 0.0f;
-GLfloat lightAngleZero = 0.0f;
+BOOL bLight = FALSE;
+GLfloat angle1 = 70.0f;
+GLfloat angle2 = 10.0f;
+
 float AngleCube = 90.0f;
 GLfloat radius = 8.0f;
 float yEyeVector = 0;
@@ -81,12 +73,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
     // Code
     if (fopen_s(&gpFile, "Log.txt", "w") != 0) // fopen_s -> #include<stdio.h>
     {
-        MessageBox(NULL, TEXT("Creation of Log File Faile..!!! Exiting..."), TEXT("File I/O Error"), MB_OK);
+        MessageBox(NULL, TEXT("Creation of Log File Faile..!!! Exiting...\n"), TEXT("File I/O Error"), MB_OK);
         exit(0);
     }
     else
     {
-        fprintf(gpFile, "Log File is Successfuly Created");
+        fprintf(gpFile, "Log File is Successfuly Created\n");
     }
 
     // Initializaion of wndclassex structure
@@ -145,6 +137,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
     else if (iRetVal == -4)
     {
         fprintf(gpFile, "Making OpenGL as current Context Failed...\n");
+        uninitialize();
+    }
+    else if (iRetVal == -5)
+    {
+        fprintf(gpFile, "LoadGLTexture() failed...\n");
         uninitialize();
     }
     else
@@ -339,6 +336,7 @@ int initialize(void)
 {
     /* fucntion delcations */
     void resize(int, int);
+    BOOL LoadGLTexture(GLuint *, TCHAR[]);
 
     /* variable declartions */
     PIXELFORMATDESCRIPTOR pfd;
@@ -384,31 +382,25 @@ int initialize(void)
 
     /* Here start OpeGL Code */
 
-    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbinatZero);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDefuseZero);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecularZero);
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPositionZero);
+    // Ligth related
 
-    glEnable(GL_LIGHT0);
-
-    glLightfv(GL_LIGHT1, GL_AMBIENT, lightAmbinatOne);
-    glLightfv(GL_LIGHT1, GL_DIFFUSE, lightDefuseOne);
-    glLightfv(GL_LIGHT1, GL_SPECULAR, lightSpecularOne);
-    glLightfv(GL_LIGHT1, GL_POSITION, lightPositionOne);
-
-    glEnable(GL_LIGHT1);
-
-    glLightfv(GL_LIGHT2, GL_AMBIENT, lightAmbinatTwo);
-    glLightfv(GL_LIGHT2, GL_DIFFUSE, lightDefuseTwo);
-    glLightfv(GL_LIGHT2, GL_SPECULAR, lightSpecularTwo);
-    glLightfv(GL_LIGHT2, GL_POSITION, lightPositionTwo);
-
-    glEnable(GL_LIGHT2);
+    glLightfv(GL_LIGHT1, GL_AMBIENT, gfLightAmbiant);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, gfLightDeffuse);
+    glLightfv(GL_LIGHT1, GL_POSITION, gfLightPositions);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, gflightSpecular);
+    glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, gfLightSpotLightDirection);
+    glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, angle1);
+    glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, angle2);
+    glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 1.5f);
+    glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.0f);
+    glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.0f);
 
     glMaterialfv(GL_FRONT, GL_AMBIENT, materialAmbiant);
     glMaterialfv(GL_FRONT, GL_DIFFUSE, materialDefuse);
     glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpecular);
     glMaterialf(GL_FRONT, GL_SHININESS, materialShininess);
+
+    glEnable(GL_LIGHT1);
 
     // Depth related changes
     glClearDepth(1.0f);
@@ -419,11 +411,13 @@ int initialize(void)
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
     /* Clear the  screen using black color */
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(0.25f, 0.25f, 0.25f, 0.0f);
 
-    // quadric intialliza
-    // create quadric.
-    quadric = gluNewQuadric();
+    if (LoadGLTexture(&texture_wood, MAKEINTRESOURCE(IDBITMAP_WOODTEXTURE)) == FALSE)
+        return -5; // write log in wndproc
+
+    // Enabaling the texture
+    glEnable(GL_TEXTURE_2D);
 
     resize(WINWIDTH, WINHEIGHT); // WARMUP RESIZE CALL
 
@@ -458,48 +452,18 @@ void display(void)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // rotating zero light - x Around
-    float angle = lightAngleZero * (M_PI / 180.0f);
-    float x = 5.0f * cos(angle);
-    float y = 5.0f * sin(angle);
-    lightPositionZero[1] = x;
-    lightPositionZero[2] = y;
-    // glRotatef(angle, 1.0f, 0.0f, 0.0f);
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPositionZero);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    //  rotating One Light - Y Rotation
-    angle = (lightAngleOne * M_PI) / 180.0f;
-    x = 5.0f * cos(angle);
-    y = 5.0f * sin(angle);
-    lightPositionOne[0] = x;
-    lightPositionOne[2] = y;
-    glLightfv(GL_LIGHT1, GL_POSITION, lightPositionOne);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    //  rotating Two Light Z Rotation
-    angle = (lightAngleTwo * M_PI) / 180.0f;
-    x = 5.0f * cos(angle);
-    y = 5.0f * sin(angle);
-    lightPositionTwo[0] = x;
-    lightPositionTwo[1] = y;
-    glLightfv(GL_LIGHT2, GL_POSITION, lightPositionTwo);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    float angle;
 
     angle = AngleCube * M_PI / 180.0f;
+    glLightfv(GL_LIGHT1, GL_POSITION, gfLightPositions);
 
     gluLookAt(radius * cos(angle), yEyeVector, radius * sin(angle),
-              0.0f, 0.0f, 0.0f,
+              0.0f, 0.0f, -6.0f,
               0.0f, 1.0f, 0.0f);
 
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    //    gluSphere(quadric, 0.75f, 125, 125);
-    // Draw Sphere
+    //    gluLookAt(0.0f, 1.0f, 4.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+
+    glTranslatef(0.0f, 0.0f, -6.0f);
 
     // Table
     drawTable();
@@ -514,16 +478,43 @@ void drawTable(void)
 
     // code
     glPushMatrix();
+    // First column
+    materialDefuse[0] = 1.0f; // r
+    materialDefuse[1] = 1.0f; // g
+    materialDefuse[2] = 1.0f; // b
+    materialDefuse[3] = 1.0f; // a
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, materialDefuse);
+
+    materialSpecular[0] = 1.0;  // r
+    materialSpecular[1] = 1.0;  // g
+    materialSpecular[2] = 1.0;  // b
+    materialSpecular[3] = 1.0f; // a
+    glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpecular);
+
+    angle1 = 10.0f;
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glPopMatrix();
+    glPushMatrix();
 
     // Base
     glScalef(3.0f, 0.10f, 2.0f);
+    glBindTexture(GL_TEXTURE_2D, texture_wood);
     DrawBox();
 
     // Left Base Support
+    angle1 = 90.0f;
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
     glPopMatrix();
     glPushMatrix();
     glTranslatef(2.8f, -0.20f, 0.0f);
     glScalef(0.15f, 0.10f, 2.0f);
+
     DrawBox();
 
     // Rigth Base Support
@@ -531,6 +522,7 @@ void drawTable(void)
     glPushMatrix();
     glTranslatef(-2.8f, -0.20f, 0.0f);
     glScalef(0.15f, 0.10f, 2.0f);
+
     DrawBox();
 
     // Middle Base Supprt
@@ -543,48 +535,38 @@ void drawTable(void)
     // front-Left Leg
     glPopMatrix();
     glPushMatrix();
-    glTranslatef(-2.8f, -1.5f, 1.8f);
+    glTranslatef(-2.8f, -1.5001f, 1.8f);
     glScalef(0.10f, 1.6f, 0.10f);
     DrawBox();
 
     // back-Left Leg
     glPopMatrix();
     glPushMatrix();
-    glTranslatef(-2.8f, -1.5f, -1.8f);
+    glTranslatef(-2.8f, -1.5001f, -1.8f);
     glScalef(0.10f, 1.6f, 0.10f);
     DrawBox();
 
     // front-Right Leg
     glPopMatrix();
     glPushMatrix();
-    glTranslatef(2.8f, -1.5f, 1.8f);
+    glTranslatef(2.8f, -1.5001f, 1.8f);
     glScalef(0.10f, 1.6f, 0.10f);
     DrawBox();
 
     // Back-Right Leg
     glPopMatrix();
     glPushMatrix();
-    glTranslatef(2.8f, -1.5f, -1.8f);
+    glTranslatef(2.8f, -1.5001f, -1.8f);
     glScalef(0.10f, 1.6f, 0.10f);
     DrawBox();
 
+    glBindTexture(GL_TEXTURE_2D, 0);
     glPopMatrix();
 }
 
 void update(void)
 {
     /* code */
-    lightAngleZero = lightAngleZero + 0.1f;
-    if (lightAngleZero > 360.0f)
-        lightAngleZero = lightAngleZero - 360.0f;
-
-    lightAngleOne = lightAngleOne + 0.2f;
-    if (lightAngleOne > 360.0f)
-        lightAngleOne = lightAngleOne - 360.0f;
-
-    lightAngleTwo = lightAngleTwo + 0.2f;
-    if (lightAngleTwo > 360.0f)
-        lightAngleTwo = lightAngleTwo - 360.0f;
 }
 
 void uninitialize(void)
@@ -627,10 +609,9 @@ void uninitialize(void)
         gpFile = NULL;
     }
 
-    if (quadric)
+    if (texture_wood)
     {
-        gluDeleteQuadric(quadric);
-        quadric = NULL;
+        glDeleteTextures(1, &texture_wood);
     }
 }
 
@@ -643,7 +624,7 @@ void DrawBox(void)
 {
     glBegin(GL_QUADS);
     // FRONT FACE
-    glColor3f(1.0f, 0.0f, 0.0f);
+    glNormal3f(0.0f, 0.0f, 1.0f);
     glTexCoord2f(1.0f, 1.0f);
     glVertex3f(1.0f, 1.0f, 1.0f);
 
@@ -659,7 +640,7 @@ void DrawBox(void)
 
     // RIGHT FACE
     glBegin(GL_QUADS);
-    glColor3f(1.0f, 1.0f, 0.0f);
+    glNormal3f(1.0f, 0.0f, 0.0f);
     glTexCoord2f(1.0f, 0.0f);
 
     glVertex3f(1.0f, 1.0f, -1.0f);
@@ -676,7 +657,7 @@ void DrawBox(void)
 
     // BACK FACE
     glBegin(GL_QUADS);
-    glColor3f(0.0f, 1.0f, 0.0f);
+    glNormal3f(0.0f, 0.0f, -1.0f);
     glTexCoord2f(1.0f, 0.0f);
     glVertex3f(-1.0f, 1.0f, -1.0f);
 
@@ -693,7 +674,7 @@ void DrawBox(void)
 
     // LEFT FACE
     glBegin(GL_QUADS);
-    glColor3f(0.0f, 0.0f, 1.0f);
+    glNormal3f(-1.0f, 0.0f, 0.0f);
     glTexCoord2f(0.0f, 0.0f);
     glVertex3f(-1.0f, 1.0f, 1.0f);
 
@@ -709,7 +690,7 @@ void DrawBox(void)
 
     // TOP
     glBegin(GL_QUADS);
-    glColor3f(1.0f, 0.0f, 1.0f);
+    glNormal3f(0.0f, 1.0f, 0.0f);
     glTexCoord2f(0.0f, 1.0f);
     glVertex3f(1.0f, 1.0f, 1.0f);
 
@@ -724,8 +705,9 @@ void DrawBox(void)
     glEnd();
 
     // BOTTOM FACE
-    glColor3f(0.0f, 0.0f, 1.0f);
+
     glBegin(GL_QUADS);
+    glNormal3f(0.0f, 1.0f, 0.0f);
     glTexCoord2f(1.0f, 1.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
 
@@ -757,4 +739,46 @@ void drawQuad(void)
     glTexCoord2f(1.0f, 0.0f);
     glVertex3f(1.0f, -1.0f, 1.0f);
     glEnd();
+}
+
+BOOL LoadGLTexture(GLuint *texture, TCHAR ImageResourceID[])
+{
+    // variable declartions
+    HBITMAP hBitmap = NULL;
+    BITMAP bmp;
+    BOOL bResult = FALSE;
+
+    // code
+    hBitmap = (HBITMAP)LoadImage(GetModuleHandle(NULL), ImageResourceID, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+
+    if (hBitmap)
+    {
+        fprintf(gpFile, "1\n");
+        bResult = TRUE;
+        GetObject(hBitmap, sizeof(BITMAP), &bmp);
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+        fprintf(gpFile, "2\n");
+        glGenTextures(1, texture);
+
+        glBindTexture(GL_TEXTURE_2D, *texture);
+        fprintf(gpFile, "3\n");
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        fprintf(gpFile, "4\n");
+
+        // create the texture
+        gluBuild2DMipmaps(GL_TEXTURE_2D, 3, bmp.bmWidth, bmp.bmHeight, GL_BGR_EXT, GL_UNSIGNED_BYTE, bmp.bmBits);
+
+        glBindTexture(GL_TEXTURE_2D, 0); // unbind texture
+        fprintf(gpFile, "5\n");
+
+        // DELETE Object
+        DeleteObject(hBitmap);
+        fprintf(gpFile, "6\n");
+    }
+    return bResult;
 }

@@ -25,32 +25,27 @@ BOOL gbFullScreen = FALSE;
 int iHeightOfWindow;
 int iWidthOfWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
-GLUquadric *quadric = NULL;
 
-BOOL bLight = FALSE;
-GLfloat lightAmbinatZero[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightDefuseZero[] = {1.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightSpecularZero[] = {1.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightPositionZero[] = {0.0f, 0.0f, 0.0f, 1.0f};
+GLuint texture_book;
 
-GLfloat lightAmbinatOne[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightDefuseOne[] = {0.0f, 1.0f, 0.0f, 1.0f};
-GLfloat lightSpecularOne[] = {0.0f, 1.0f, 0.0f, 1.0f};
-GLfloat lightPositionOne[] = {0.0f, 0.0f, 0.0f, 1.0f};
-
-GLfloat lightAmbinatTwo[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightDefuseTwo[] = {0.0f, 0.0f, 1.0f, 1.0f};
-GLfloat lightSpecularTwo[] = {0.0f, 0.0f, 1.0f, 1.0f};
-GLfloat lightPositionTwo[] = {0.0f, 0.0f, 0.0f, 1.0f};
+GLfloat gfLightAmbiant[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat gfLightDeffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat gflightSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat gfLightPositions[] = {0.0f, 5.0f, -6.0f, 0.0f};
+GLfloat gfLightSpotLightDirection[] = {0.0f, -1.0f, 0.0f, 1.0};
 
 GLfloat materialAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat materialDefuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat materialDefuse[] = {1.0f, 0.0f, 0.0f, 1.0f};
 GLfloat materialSpecular[] = {1.0f, 1.f, 1.0f, 1.0f};
 GLfloat materialShininess = 120.0f;
 
-GLfloat lightAngleOne = 0.0f;
-GLfloat lightAngleTwo = 0.0f;
-GLfloat lightAngleZero = 0.0f;
+BOOL bLight = FALSE;
+GLfloat angle1 = 70.0f;
+GLfloat angle2 = 10.0f;
+
+float AngleCube = 90.0f;
+GLfloat radius = 8.0f;
+float yEyeVector = 0;
 
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -78,12 +73,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
     // Code
     if (fopen_s(&gpFile, "Log.txt", "w") != 0) // fopen_s -> #include<stdio.h>
     {
-        MessageBox(NULL, TEXT("Creation of Log File Faile..!!! Exiting..."), TEXT("File I/O Error"), MB_OK);
+        MessageBox(NULL, TEXT("Creation of Log File Faile..!!! Exiting...\n"), TEXT("File I/O Error"), MB_OK);
         exit(0);
     }
     else
     {
-        fprintf(gpFile, "Log File is Successfuly Created");
+        fprintf(gpFile, "Log File is Successfuly Created\n");
     }
 
     // Initializaion of wndclassex structure
@@ -142,6 +137,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
     else if (iRetVal == -4)
     {
         fprintf(gpFile, "Making OpenGL as current Context Failed...\n");
+        uninitialize();
+    }
+    else if (iRetVal == -5)
+    {
+        fprintf(gpFile, "LoadGLTexture() failed...\n");
         uninitialize();
     }
     else
@@ -212,6 +212,37 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         case 'f':
         case 'F':
             ToggleFullScreen();
+            break;
+
+        case 'W':
+        case 'w':
+            radius = radius - 1.0f;
+
+            break;
+
+        case 'S':
+        case 's':
+            radius = radius + 1.0f;
+            break;
+
+        case 'A':
+        case 'a':
+            AngleCube = AngleCube - 1.0f;
+            break;
+
+        case 'D':
+        case 'd':
+            AngleCube = AngleCube + 1.00f;
+            break;
+
+        case 'Q':
+        case 'q':
+            yEyeVector = yEyeVector + 1.0f;
+            break;
+
+        case 'E':
+        case 'e':
+            yEyeVector = yEyeVector - 1.0f;
             break;
 
         case 'L':
@@ -305,6 +336,7 @@ int initialize(void)
 {
     /* fucntion delcations */
     void resize(int, int);
+    BOOL LoadGLTexture(GLuint *, TCHAR[]);
 
     /* variable declartions */
     PIXELFORMATDESCRIPTOR pfd;
@@ -350,31 +382,25 @@ int initialize(void)
 
     /* Here start OpeGL Code */
 
-    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbinatZero);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDefuseZero);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecularZero);
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPositionZero);
+    // Ligth related
 
-    glEnable(GL_LIGHT0);
-
-    glLightfv(GL_LIGHT1, GL_AMBIENT, lightAmbinatOne);
-    glLightfv(GL_LIGHT1, GL_DIFFUSE, lightDefuseOne);
-    glLightfv(GL_LIGHT1, GL_SPECULAR, lightSpecularOne);
-    glLightfv(GL_LIGHT1, GL_POSITION, lightPositionOne);
-
-    glEnable(GL_LIGHT1);
-
-    glLightfv(GL_LIGHT2, GL_AMBIENT, lightAmbinatTwo);
-    glLightfv(GL_LIGHT2, GL_DIFFUSE, lightDefuseTwo);
-    glLightfv(GL_LIGHT2, GL_SPECULAR, lightSpecularTwo);
-    glLightfv(GL_LIGHT2, GL_POSITION, lightPositionTwo);
-
-    glEnable(GL_LIGHT2);
+    glLightfv(GL_LIGHT1, GL_AMBIENT, gfLightAmbiant);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, gfLightDeffuse);
+    glLightfv(GL_LIGHT1, GL_POSITION, gfLightPositions);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, gflightSpecular);
+    glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, gfLightSpotLightDirection);
+    glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, angle1);
+    glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, angle2);
+    glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 1.5f);
+    glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.0f);
+    glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.0f);
 
     glMaterialfv(GL_FRONT, GL_AMBIENT, materialAmbiant);
     glMaterialfv(GL_FRONT, GL_DIFFUSE, materialDefuse);
     glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpecular);
     glMaterialf(GL_FRONT, GL_SHININESS, materialShininess);
+
+    glEnable(GL_LIGHT1);
 
     // Depth related changes
     glClearDepth(1.0f);
@@ -385,11 +411,13 @@ int initialize(void)
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
     /* Clear the  screen using black color */
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(0.25f, 0.25f, 0.25f, 0.0f);
 
-    // quadric intialliza
-    // create quadric.
-    quadric = gluNewQuadric();
+    if (LoadGLTexture(&texture_book, MAKEINTRESOURCE(IDBITMAP_BOOKTEXTURE)) == FALSE)
+        return -5; // write log in wndproc
+
+    // Enabaling the texture
+    glEnable(GL_TEXTURE_2D);
 
     resize(WINWIDTH, WINHEIGHT); // WARMUP RESIZE CALL
 
@@ -414,6 +442,9 @@ void display(void)
 {
     // function prototype
     void colorSetcolor(int r, int g, int b);
+    void DrawBox(void);
+
+    void drawTable(void);
 
     /* Code */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -421,62 +452,77 @@ void display(void)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // rotating zero light - x Around
-    float angle = lightAngleZero * (M_PI / 180.0f);
-    float x = 5.0f * cos(angle);
-    float y = 5.0f * sin(angle);
-    lightPositionZero[1] = x;
-    lightPositionZero[2] = y;
-    // glRotatef(angle, 1.0f, 0.0f, 0.0f);
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPositionZero);
+    float angle;
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    angle = AngleCube * M_PI / 180.0f;
+    glLightfv(GL_LIGHT1, GL_POSITION, gfLightPositions);
 
-    //  rotating One Light - Y Rotation
-    angle = (lightAngleOne * M_PI) / 180.0f;
-    x = 5.0f * cos(angle);
-    y = 5.0f * sin(angle);
-    lightPositionOne[0] = x;
-    lightPositionOne[2] = y;
-    glLightfv(GL_LIGHT1, GL_POSITION, lightPositionOne);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    gluLookAt(radius * cos(angle), yEyeVector, radius * sin(angle),
+              0.0f, 0.0f, -6.0f,
+              0.0f, 1.0f, 0.0f);
 
-    //  rotating Two Light Z Rotation
-    angle = (lightAngleTwo * M_PI) / 180.0f;
-    x = 5.0f * cos(angle);
-    y = 5.0f * sin(angle);
-    lightPositionTwo[0] = x;
-    lightPositionTwo[1] = y;
-    glLightfv(GL_LIGHT2, GL_POSITION, lightPositionTwo);
+    //    gluLookAt(0.0f, 1.0f, 4.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+    glTranslatef(0.0f, 0.0f, -6.0f);
 
-    glTranslatef(0.0f, 0.0f, -4.0f);
-
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    // Draw Sphere
-    gluSphere(quadric, 0.75f, 125, 125);
+    // Table
+    drawTable();
 
     SwapBuffers(ghdc);
+}
+
+void drawTable(void)
+{
+    // variable declartions
+    void DrawBox(void);
+
+    // code
+    glPushMatrix();
+    // First column
+    materialDefuse[0] = 1.0f; // r
+    materialDefuse[1] = 1.0f; // g
+    materialDefuse[2] = 1.0f; // b
+    materialDefuse[3] = 1.0f; // a
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, materialDefuse);
+
+    materialSpecular[0] = 1.0;  // r
+    materialSpecular[1] = 1.0;  // g
+    materialSpecular[2] = 1.0;  // b
+    materialSpecular[3] = 1.0f; // a
+    glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpecular);
+
+    angle1 = 10.0f;
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glPopMatrix();
+    glPushMatrix();
+
+    // left side pages Base
+    glTranslatef(0.8f, 0.0f, 0.0f);
+    glRotatef(10.0f, 0.0f, 0.0f, 1.0f);
+    glScalef(0.9f, 0.18f, 1.5f);
+    glBindTexture(GL_TEXTURE_2D, texture_book);
+    DrawBox();
+
+    glPopMatrix();
+    glPushMatrix();
+
+    // Right side pages Base
+    glTranslatef(-0.8f, 0.0f, 0.00001f);
+    glRotatef(-10.0f, 0.0f, 0.0f, 1.0f);
+    glScalef(0.9f, 0.18f, 1.5f);
+    glBindTexture(GL_TEXTURE_2D, texture_book);
+    DrawBox();
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glPopMatrix();
 }
 
 void update(void)
 {
     /* code */
-    lightAngleZero = lightAngleZero + 0.1f;
-    if (lightAngleZero > 360.0f)
-        lightAngleZero = lightAngleZero - 360.0f;
-
-    lightAngleOne = lightAngleOne + 0.2f;
-    if (lightAngleOne > 360.0f)
-        lightAngleOne = lightAngleOne - 360.0f;
-
-    lightAngleTwo = lightAngleTwo + 0.2f;
-    if (lightAngleTwo > 360.0f)
-        lightAngleTwo = lightAngleTwo - 360.0f;
 }
 
 void uninitialize(void)
@@ -519,14 +565,176 @@ void uninitialize(void)
         gpFile = NULL;
     }
 
-    if (quadric)
+    if (texture_book)
     {
-        gluDeleteQuadric(quadric);
-        quadric = NULL;
+        glDeleteTextures(1, &texture_book);
     }
 }
 
 void colorSetcolor(int r, int g, int b)
 {
     glColor3f(r / 255, g / 255, b / 255);
+}
+
+void DrawBox(void)
+{
+    glBegin(GL_QUADS);
+    // FRONT FACE
+    glNormal3f(0.0f, 0.0f, 1.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f, 1.0f);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(1.0f, -1.0f, 1.0f);
+    glEnd();
+
+    // RIGHT FACE
+    glBegin(GL_QUADS);
+    glNormal3f(1.0f, 0.0f, 0.0f);
+    glTexCoord2f(1.0f, 0.0f);
+
+    glVertex3f(1.0f, 1.0f, -1.0f);
+
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(1.0f, -1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(1.0f, -1.0f, -1.0f);
+    glEnd();
+
+    // BACK FACE
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 0.0f, -1.0f);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-1.0f, 1.0f, -1.0f);
+
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f, 1.0f, -1.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(1.0f, -1.0f, -1.0f);
+
+    glTexCoord2f(0.0f, 0.0f);
+
+    glVertex3f(-1.0f, -1.0f, -1.0f);
+    glEnd();
+
+    // LEFT FACE
+    glBegin(GL_QUADS);
+    glNormal3f(-1.0f, 0.0f, 0.0f);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-1.0f, 1.0f, -1.0f); // y = -1
+
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(-1.0f, -1.0f, -1.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f, -1.0f, 1.0f);
+    glEnd();
+
+    // TOP
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(1.0f, 1.0f, -1.0f);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-1.0f, 1.0f, -1.0f);
+
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+    glEnd();
+
+    // BOTTOM FACE
+
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f, -1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(1.0f, -1.0f, -1.0f);
+
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f, -1.0f);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f, 1.0f);
+
+    glEnd();
+}
+
+void drawQuad(void)
+{
+    glBegin(GL_QUADS);
+    // FRONT FACE
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f, 1.0f);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(1.0f, -1.0f, 1.0f);
+    glEnd();
+}
+
+BOOL LoadGLTexture(GLuint *texture, TCHAR ImageResourceID[])
+{
+    // variable declartions
+    HBITMAP hBitmap = NULL;
+    BITMAP bmp;
+    BOOL bResult = FALSE;
+
+    // code
+    hBitmap = (HBITMAP)LoadImage(GetModuleHandle(NULL), ImageResourceID, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+
+    if (hBitmap)
+    {
+        fprintf(gpFile, "1\n");
+        bResult = TRUE;
+        GetObject(hBitmap, sizeof(BITMAP), &bmp);
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+        fprintf(gpFile, "2\n");
+        glGenTextures(1, texture);
+
+        glBindTexture(GL_TEXTURE_2D, *texture);
+        fprintf(gpFile, "3\n");
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        fprintf(gpFile, "4\n");
+
+        // create the texture
+        gluBuild2DMipmaps(GL_TEXTURE_2D, 3, bmp.bmWidth, bmp.bmHeight, GL_BGR_EXT, GL_UNSIGNED_BYTE, bmp.bmBits);
+
+        glBindTexture(GL_TEXTURE_2D, 0); // unbind texture
+        fprintf(gpFile, "5\n");
+
+        // DELETE Object
+        DeleteObject(hBitmap);
+        fprintf(gpFile, "6\n");
+    }
+    return bResult;
 }
