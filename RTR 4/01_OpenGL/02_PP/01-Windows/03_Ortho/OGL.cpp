@@ -7,6 +7,9 @@
 /* OpenGL Header files */
 #include <GL/glew.h> // This must be before gl.h
 #include <GL/gl.h>
+#include "vmath.h"
+
+using namespace vmath;
 
 /* OpenGL libraries */
 #pragma comment(lib, "glew32.lib")
@@ -14,6 +17,11 @@
 
 #define WINWIDTH 800
 #define WINHEIGHT 600
+
+/* Global Function Declartion */
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+void ToggleFullScreen();
+BOOL gbActiveWindow = FALSE;
 
 // global variable declarations
 HWND ghwnd = NULL;
@@ -26,13 +34,22 @@ int iXMyWindow;
 int iYMyWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 
-/* Global Function Declartion */
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-void ToggleFullScreen();
-BOOL gbActiveWindow = FALSE;
-
-// PP related global variables
+// PP Related Global Variables
 GLuint shaderProgramObject;
+
+enum
+{
+	AMC_ATRIBUTE_POSITION = 0,
+	AMC_ATRIBUTE_COLOR,
+	AMC_ATRIBUTE_NORMAL,
+	AMC_ATRIBUTE_TEXTURE0
+};
+
+GLuint vao;				 // Vertex Array Object
+GLuint vbo;				 // Vertex Buffer Object
+GLuint mvpMatrixUniform; //
+
+mat4 orthographicProjectionMatrix;
 
 /* Entry Point Function */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
@@ -54,7 +71,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	// Code
 	if (fopen_s(&gpFile, "Log.txt", "w") != 0) // fopen_s -> #include<stdio.h>
 	{
-		MessageBox(NULL, TEXT("Creation of Log File Faile..!!! Exiting..."), TEXT("File I/O Error"), MB_OK);
+		MessageBox(NULL, TEXT("Creation of Log File Failed..!!! Exiting..."), TEXT("File I/O Error"), MB_OK);
 		exit(0);
 	}
 	else
@@ -82,17 +99,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	iHeightOfWindow = GetSystemMetrics(SM_CYSCREEN); // Height of Window Screen
 	iWidthOfWindow = GetSystemMetrics(SM_CXSCREEN);	 // Width Of Window Screen
 
-	iXMyWindow = (iWidthOfWindow) / 4;	// x coordinate for MyWindow
-	iYMyWindow = (iHeightOfWindow) / 4; // y coordinate for MyWindow
-
 	/* Create Window */
 	hwnd = CreateWindowEx(WS_EX_APPWINDOW, szAppName,
-						  TEXT("OpenGL Window -  Pratik Jagadale"),
+						  TEXT("OpenGL -  Pratik Rejendra Jagadale"),
 						  WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE,
-						  iXMyWindow,
-						  iYMyWindow,
-						  (iWidthOfWindow) / 2,
-						  (iHeightOfWindow) / 2,
+						  (iWidthOfWindow - WINWIDTH) / 2,
+						  (iHeightOfWindow - WINHEIGHT) / 2,
+						  WINWIDTH,
+						  WINHEIGHT,
 						  NULL,
 						  NULL,
 						  hInstance,
@@ -326,8 +340,11 @@ int initialize(void)
 	const GLchar *vertexShaderSourceCode =
 		"#version 460 core"
 		"\n"
+		"in vec4 a_position;"
+		"uniform mat4 u_mvpMatrix;"
 		"void main(void)"
 		"{"
+		"gl_Position = u_mvpMatrix * a_position;"
 		"}";
 
 	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
@@ -367,8 +384,10 @@ int initialize(void)
 	const GLchar *gragmentShaderSourceCode =
 		"#version 460 core"
 		"\n"
+		"out vec4 FragColor;"
 		"void main(void)"
 		"{"
+		"FragColor = vec4(1.0,1.0,1.0,1.0);"
 		"}";
 
 	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
@@ -404,6 +423,9 @@ int initialize(void)
 
 	glAttachShader(shaderProgramObject, fragmentShaderObject);
 
+	// prelinked binding
+	glBindAttribLocation(shaderProgramObject, AMC_ATRIBUTE_POSITION, "a_position");
+
 	// link
 	glLinkProgram(shaderProgramObject);
 
@@ -430,16 +452,37 @@ int initialize(void)
 		}
 	}
 
-	/* Clear the  screen using blue color */
-	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+	// post link - getting
+	mvpMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_mvpMatrix");
+
+	// vao and vba related code
+	// declartions of vertex Data array
+	const GLfloat trangleVertices[] = {
+		0.0f, 50.0f, 0.0f,
+		-50.0f, -50.0f, 0.0f,
+		50.0f, -50.0f, 0.0f};
+
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(trangleVertices), trangleVertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(AMC_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(AMC_ATRIBUTE_POSITION);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 
 	// Depth Related Changes
-	// glClearDepth(1.0f); removed because not working in pp
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 
 	glShadeModel(GL_SMOOTH);
-	// glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST); removed because not working in pp
+
+	/* Clear the  screen using blue color */
+	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+
+	orthographicProjectionMatrix = mat4::identity();
 
 	// warmup resize call
 	resize(WINWIDTH, WINHEIGHT);
@@ -475,6 +518,27 @@ void resize(int width, int height)
 		height = 1;
 
 	glViewport(0, 0, width, height);
+
+	if (width <= height)
+	{
+		orthographicProjectionMatrix = vmath::ortho(
+			-100.0f,
+			100.0f,
+			-100.0f * (GLfloat)height / GLfloat(width),
+			100.0f * (GLfloat)height / GLfloat(width),
+			-100.0f,
+			100.0f);
+	}
+	else
+	{
+		orthographicProjectionMatrix = vmath::ortho(
+			-100.0f * ((GLfloat)width / (GLfloat)height),
+			100.0f * ((GLfloat)width / (GLfloat)height),
+			-100.0f,
+			100.0f,
+			-100.0f,
+			100.0f);
+	}
 }
 
 void display(void)
@@ -485,8 +549,20 @@ void display(void)
 	// use shader program obejct
 	glUseProgram(shaderProgramObject);
 
+	// Tranformations
+	mat4 modelViewMatrix = mat4::identity();
+	mat4 modelViewProjectionMatrix = mat4::identity();
+
+	modelViewProjectionMatrix = orthographicProjectionMatrix * modelViewMatrix;
+
+	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
+
+	glBindVertexArray(vao);
+
 	// draw the desired graphics
 	// drawing code -- magic
+
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 
 	// unuse the shader program object
 	glUseProgram(0);
@@ -505,11 +581,24 @@ void uninitialize(void)
 	void ToggleFullScreen(void);
 
 	/* code */
-
 	if (gbFullScreen)
 		ToggleFullScreen();
 
 	/*  */
+	// deletion of vbo
+	if (vbo)
+	{
+		glDeleteBuffers(1, &vbo);
+		vbo = 0;
+	}
+
+	// deletion of vao
+	if (vao)
+	{
+		glDeleteVertexArrays(1, &vao);
+		vao = 0;
+	}
+
 	if (shaderProgramObject)
 	{
 		glUseProgram(shaderProgramObject);
