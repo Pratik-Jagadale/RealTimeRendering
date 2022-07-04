@@ -381,7 +381,7 @@ int initialize(void)
 	status = 0;
 	infoLogLength = 0;
 
-	const GLchar *gragmentShaderSourceCode =
+	const GLchar *fragmentShaderSourceCode =
 		"#version 460 core"
 		"\n"
 		"out vec4 FragColor;"
@@ -392,7 +392,7 @@ int initialize(void)
 
 	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
 
-	glShaderSource(fragmentShaderObject, 1, (const GLchar **)&gragmentShaderSourceCode, NULL);
+	glShaderSource(fragmentShaderObject, 1, (const GLchar **)&fragmentShaderSourceCode, NULL);
 
 	glCompileShader(fragmentShaderObject);
 
@@ -524,8 +524,8 @@ void resize(int width, int height)
 		orthographicProjectionMatrix = vmath::ortho(
 			-100.0f,
 			100.0f,
-			-100.0f * (GLfloat)height / GLfloat(width),
-			100.0f * (GLfloat)height / GLfloat(width),
+			-100.0f * (GLfloat)height / (GLfloat)width,
+			100.0f * (GLfloat)height / (GLfloat)width,
 			-100.0f,
 			100.0f);
 	}
