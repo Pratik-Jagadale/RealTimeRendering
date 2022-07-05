@@ -364,7 +364,7 @@ int initialize(void)
 	status = 0;
 	infoLogLength = 0;
 
-	const GLchar *gragmentShaderSourceCode =
+	const GLchar *fragmentShaderSourceCode =
 		"#version 460 core"
 		"\n"
 		"void main(void)"
@@ -373,7 +373,7 @@ int initialize(void)
 
 	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
 
-	glShaderSource(fragmentShaderObject, 1, (const GLchar **)&gragmentShaderSourceCode, NULL);
+	glShaderSource(fragmentShaderObject, 1, (const GLchar **)&fragmentShaderSourceCode, NULL);
 
 	glCompileShader(fragmentShaderObject);
 
@@ -526,7 +526,6 @@ void uninitialize(void)
 		{
 			glDetachShader(shaderProgramObject, shaderObject[i]);
 			glDeleteShader(shaderObject[i]);
-			shaderObject = 0;
 		}
 		free(shaderObject);
 		shaderObject = NULL;
