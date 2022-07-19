@@ -58,7 +58,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	int initialize(void);
 	void uninitialize(void);
 	void display(void);
-	void update(void);
 
 	/* variable declarations */
 	WNDCLASSEX wndclass;
@@ -175,7 +174,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 				/* Render the seen */
 				display();
 				// updatetheseen
-				update();
 			}
 		}
 	}
