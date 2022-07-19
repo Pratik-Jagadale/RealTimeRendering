@@ -42,8 +42,9 @@ enum
 };
 
 GLuint vao;				 // Vertex Array Object
-GLuint vbo;				 // Vertex Buffer Object
-GLuint mvpMatrixUniform; //
+GLuint vbo_Position;	 // Vertex Buffer Object - Position
+GLuint vbo_Color;		 // Vertex Buffer Object - Color
+GLuint mvpMatrixUniform; // model View Projection
 
 mat4 perspectiveProjectionMatrix;
 
@@ -131,7 +132,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	}
 	else if (iRetVal == -4)
 	{
-		fprintf(gpFile, "Makeing OpnGL as current Context Failed...\n");
+		fprintf(gpFile, "Makeing OpenGL as current Context Failed...\n");
 		uninitialize();
 	}
 	else if (iRetVal == -5)
@@ -338,10 +339,13 @@ int initialize(void)
 		"#version 460 core"
 		"\n"
 		"in vec4 a_position;"
+		"in vec4 a_color;"
 		"uniform mat4 u_mvpMatrix;"
+		"out vec4 a_color_out;"
 		"void main(void)"
 		"{"
 		"gl_Position = u_mvpMatrix * a_position;"
+		"a_color_out = a_color;"
 		"}";
 
 	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
@@ -381,10 +385,11 @@ int initialize(void)
 	const GLchar *fragmentShaderSourceCode =
 		"#version 460 core"
 		"\n"
+		"in vec4 a_color_out;"
 		"out vec4 FragColor;"
 		"void main(void)"
 		"{"
-		"FragColor = vec4(1.0,1.0,1.0,1.0);"
+		"FragColor = a_color_out;"
 		"}";
 
 	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
@@ -421,7 +426,10 @@ int initialize(void)
 	glAttachShader(shaderProgramObject, fragmentShaderObject);
 
 	// prelinked binding
+	// Binding Position Array
 	glBindAttribLocation(shaderProgramObject, AMC_ATRIBUTE_POSITION, "a_position");
+	// Binding Color Array
+	glBindAttribLocation(shaderProgramObject, AMC_ATRIBUTE_COLOR, "a_color");
 
 	// link
 	glLinkProgram(shaderProgramObject);
@@ -454,20 +462,39 @@ int initialize(void)
 
 	// vao and vba related code
 	// declartions of vertex Data array
-	const GLfloat triangleVertices[] = {
+	const GLfloat trianglePosition[] = {
 		0.0f, 1.0f, 0.0f,
 		-1.0f, -1.0f, 0.0f,
 		1.0f, -1.0f, 0.0f};
 
+	const GLfloat triangleColor[] = {
+		1.0f, 0.0f, 0.0f, // RED
+		0.0f, 1.0f, 0.0f, // BLUE
+		0.0f, 0.0f, 1.0f  // GREEN
+	};
+
+	// vao and vbo related code
+	// vao
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	// vbo for position
+	glGenBuffers(1, &vbo_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Position);
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVertices), triangleVertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(trianglePosition), trianglePosition, GL_STATIC_DRAW);
 	glVertexAttribPointer(AMC_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(AMC_ATRIBUTE_POSITION);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// vbo for color
+	glGenBuffers(1, &vbo_Color);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Color);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(triangleColor), triangleColor, GL_STATIC_DRAW);
+	glVertexAttribPointer(AMC_ATRIBUTE_COLOR, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(AMC_ATRIBUTE_COLOR);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -479,7 +506,7 @@ int initialize(void)
 	glShadeModel(GL_SMOOTH);
 
 	/* Clear the  screen using blue color */
-	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	perspectiveProjectionMatrix = mat4::identity();
 
@@ -553,6 +580,8 @@ void display(void)
 
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 
+	glBindVertexArray(0);
+
 	// unuse the shader program object
 	glUseProgram(0);
 
@@ -574,11 +603,18 @@ void uninitialize(void)
 		ToggleFullScreen();
 
 	/*  */
-	// deletion of vbo
-	if (vbo)
+	// deletion of vbo_Color
+	if (vbo_Color)
 	{
-		glDeleteBuffers(1, &vbo);
-		vbo = 0;
+		glDeleteBuffers(1, &vbo_Color);
+		vbo_Color = 0;
+	}
+
+	// deletion of vbo_Position
+	if (vbo_Position)
+	{
+		glDeleteBuffers(1, &vbo_Position);
+		vbo_Position = 0;
 	}
 
 	// deletion of vao

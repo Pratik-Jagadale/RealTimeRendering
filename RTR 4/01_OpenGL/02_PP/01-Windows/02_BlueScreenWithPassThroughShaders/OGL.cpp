@@ -526,7 +526,7 @@ void uninitialize(void)
 		{
 			glDetachShader(shaderProgramObject, shaderObject[i]);
 			glDeleteShader(shaderObject[i]);
-			shaderObjects[i] = 0;
+			shaderObject[i] = 0;
 		}
 		free(shaderObject);
 		shaderObject = NULL;

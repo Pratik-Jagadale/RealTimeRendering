@@ -553,6 +553,8 @@ void display(void)
 
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 
+	glBindVertexArray(0);
+
 	// unuse the shader program object
 	glUseProgram(0);
 

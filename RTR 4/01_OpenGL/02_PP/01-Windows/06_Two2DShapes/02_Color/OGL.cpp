@@ -41,10 +41,12 @@ enum
 	AMC_ATRIBUTE_TEXTURE0
 };
 
-GLuint vao;				 // Vertex Array Object
-GLuint vbo_Position;	 // Vertex Buffer Object - Position
-GLuint vbo_Color;		 // Vertex Buffer Object - Color
-GLuint mvpMatrixUniform; // model View Projection
+GLuint vao_Triangle;		  // Vertex Array Object - Triangle
+GLuint vbo_Triangle_Position; // Vertex Buffer Object - Triangle - Position
+GLuint vbo_Triangle_Color;	  // Vertex Buffer Object - Triangle
+GLuint vao_Square;			  // Vertex Array Object - Square
+GLuint vbo_Square_Position;	  // Vertex Buffer Object - Square- Position
+GLuint mvpMatrixUniform;	  // model View Projection
 
 mat4 perspectiveProjectionMatrix;
 
@@ -460,7 +462,7 @@ int initialize(void)
 	// post link - getting
 	mvpMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_mvpMatrix");
 
-	// vao and vba related code
+	// vao_Triangle and vba related code
 	// declartions of vertex Data array
 	const GLfloat trianglePosition[] = {
 		0.0f, 1.0f, 0.0f,
@@ -473,14 +475,20 @@ int initialize(void)
 		0.0f, 0.0f, 1.0f  // GREEN
 	};
 
+	const GLfloat SquarePosition[] = {
+		1.0f, 1.0f, 0.0f,
+		-1.0f, 1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f};
+
 	// vao and vbo related code
-	// vao
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	// vao for Triangle
+	glGenVertexArrays(1, &vao_Triangle);
+	glBindVertexArray(vao_Triangle);
 
 	// vbo for position
-	glGenBuffers(1, &vbo_Position);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Position);
+	glGenBuffers(1, &vbo_Triangle_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Triangle_Position);
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(trianglePosition), trianglePosition, GL_STATIC_DRAW);
 	glVertexAttribPointer(AMC_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -489,8 +497,8 @@ int initialize(void)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// vbo for color
-	glGenBuffers(1, &vbo_Color);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Color);
+	glGenBuffers(1, &vbo_Triangle_Color);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Triangle_Color);
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(triangleColor), triangleColor, GL_STATIC_DRAW);
 	glVertexAttribPointer(AMC_ATRIBUTE_COLOR, 3, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -498,6 +506,25 @@ int initialize(void)
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+
+	// vao for Square
+	glGenVertexArrays(1, &vao_Square);
+	glBindVertexArray(vao_Square);
+
+	// vbo for position
+	glGenBuffers(1, &vbo_Square_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Square_Position);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(SquarePosition), SquarePosition, GL_STATIC_DRAW);
+	glVertexAttribPointer(AMC_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(AMC_ATRIBUTE_POSITION);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// vbo for sqaure color
+	glVertexAttrib3f(AMC_ATRIBUTE_COLOR, 0.0f, 0.0f, 1.0f);
+
+	glBindVertexArray(0); // ubind vao for Square
 
 	// Depth Related Changes
 	glEnable(GL_DEPTH_TEST);
@@ -560,12 +587,13 @@ void display(void)
 	// use shader program obejct
 	glUseProgram(shaderProgramObject);
 
+	// Triangle
 	// Tranformations
 	mat4 translationMatrix = mat4::identity();
 	mat4 modelViewMatrix = mat4::identity();
 	mat4 modelViewProjectionMatrix = mat4::identity();
 
-	translationMatrix = vmath::translate(0.0f, 0.0f, -4.0f); // glTranslatef() is replaced by this line
+	translationMatrix = vmath::translate(-1.5f, 0.0f, -6.0f); // glTranslatef() is replaced by this line
 
 	modelViewMatrix = translationMatrix;
 
@@ -573,12 +601,37 @@ void display(void)
 
 	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
 
-	glBindVertexArray(vao);
+	glBindVertexArray(vao_Triangle);
 
 	// draw the desired graphics
 	// drawing code -- magic
 
 	glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	glBindVertexArray(0);
+
+	// Square
+	// Tranformations
+	translationMatrix = mat4::identity();
+	modelViewMatrix = mat4::identity();
+	modelViewProjectionMatrix = mat4::identity();
+
+	translationMatrix = vmath::translate(1.5f, 0.0f, -6.0f); // glTranslatef() is replaced by this line
+
+	modelViewMatrix = translationMatrix;
+
+	modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
+
+	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
+
+	glBindVertexArray(vao_Square);
+
+	// draw the desired graphics
+	// drawing code -- magic
+
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	glBindVertexArray(0);
 
 	// unuse the shader program object
 	glUseProgram(0);
@@ -601,25 +654,39 @@ void uninitialize(void)
 		ToggleFullScreen();
 
 	/*  */
-	// deletion of vbo_Color
-	if (vbo_Color)
+	// delete vbo_Square_Position
+	if (vbo_Square_Position)
 	{
-		glDeleteBuffers(1, &vbo_Color);
-		vbo_Color = 0;
+		glDeleteBuffers(1, &vbo_Square_Position);
+		vbo_Square_Position = 0;
 	}
 
-	// deletion of vbo_Position
-	if (vbo_Position)
+	// deletion of vao_Square
+	if (vao_Square)
 	{
-		glDeleteBuffers(1, &vbo_Position);
-		vbo_Position = 0;
+		glDeleteVertexArrays(1, &vao_Square);
+		vao_Square = 0;
 	}
 
-	// deletion of vao
-	if (vao)
+	// deletion of vbo_Triangle_Color
+	if (vbo_Triangle_Color)
 	{
-		glDeleteVertexArrays(1, &vao);
-		vao = 0;
+		glDeleteBuffers(1, &vbo_Triangle_Color);
+		vbo_Triangle_Color = 0;
+	}
+
+	// deletion of vbo_Triangle_Position
+	if (vbo_Triangle_Position)
+	{
+		glDeleteBuffers(1, &vbo_Triangle_Position);
+		vbo_Triangle_Position = 0;
+	}
+
+	// deletion of vao_Triangle
+	if (vao_Triangle)
+	{
+		glDeleteVertexArrays(1, &vao_Triangle);
+		vao_Triangle = 0;
 	}
 
 	if (shaderProgramObject)

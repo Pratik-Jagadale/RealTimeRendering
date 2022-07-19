@@ -28,10 +28,6 @@ HWND ghwnd = NULL;
 HDC ghdc = NULL;
 HGLRC ghrc = NULL;
 BOOL gbFullScreen = FALSE;
-int iHeightOfWindow;
-int iWidthOfWindow;
-int iXMyWindow;
-int iYMyWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 
 // PP Related Global Variables
@@ -45,11 +41,13 @@ enum
 	AMC_ATRIBUTE_TEXTURE0
 };
 
-GLuint vao;				 // Vertex Array Object
-GLuint vbo;				 // Vertex Buffer Object
-GLuint mvpMatrixUniform; //
+GLuint vao_Triangle;		  // Vertex Array Object - Triangle
+GLuint vbo_Triangle_Position; // Vertex Buffer Object - Triangle - Position
+GLuint vao_Square;			  // Vertex Array Object - Square
+GLuint vbo_Square_Position;	  // Vertex Buffer Object - Square- Position
+GLuint mvpMatrixUniform;	  // model View Projection
 
-mat4 orthographicProjectionMatrix;
+mat4 perspectiveProjectionMatrix;
 
 /* Entry Point Function */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
@@ -67,6 +65,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	TCHAR szAppName[] = TEXT("MyWindow");
 	BOOL bDone = FALSE;
 	int iRetVal = 0;
+	int iHeightOfWindow, iWidthOfWindow;
 
 	// Code
 	if (fopen_s(&gpFile, "Log.txt", "w") != 0) // fopen_s -> #include<stdio.h>
@@ -101,7 +100,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 
 	/* Create Window */
 	hwnd = CreateWindowEx(WS_EX_APPWINDOW, szAppName,
-						  TEXT("OpenGL -  Pratik Rejendra Jagadale"),
+						  TEXT("OpenGL -  Pratik Rajendra Jagadale"),
 						  WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE,
 						  (iWidthOfWindow - WINWIDTH) / 2,
 						  (iHeightOfWindow - WINHEIGHT) / 2,
@@ -134,7 +133,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	}
 	else if (iRetVal == -4)
 	{
-		fprintf(gpFile, "Makeing OpnGL as current Context Failed...\n");
+		fprintf(gpFile, "Makeing OpenGL as current Context Failed...\n");
 		uninitialize();
 	}
 	else if (iRetVal == -5)
@@ -384,10 +383,11 @@ int initialize(void)
 	const GLchar *fragmentShaderSourceCode =
 		"#version 460 core"
 		"\n"
+		"in vec4 a_color_out;"
 		"out vec4 FragColor;"
 		"void main(void)"
 		"{"
-		"FragColor = vec4(1.0,1.0,1.0,1.0);"
+		"FragColor = vec4(1.0f,1.0f,1.0f,1.0f);"
 		"}";
 
 	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
@@ -424,6 +424,7 @@ int initialize(void)
 	glAttachShader(shaderProgramObject, fragmentShaderObject);
 
 	// prelinked binding
+	// Binding Position Array
 	glBindAttribLocation(shaderProgramObject, AMC_ATRIBUTE_POSITION, "a_position");
 
 	// link
@@ -455,24 +456,49 @@ int initialize(void)
 	// post link - getting
 	mvpMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_mvpMatrix");
 
-	// vao and vba related code
+	// vao_Triangle and vba related code
 	// declartions of vertex Data array
-	const GLfloat triangleVertices[] = {
-		0.0f, 50.0f, 0.0f,
-		-50.0f, -50.0f, 0.0f,
-		50.0f, -50.0f, 0.0f};
+	const GLfloat trianglePosition[] = {
+		0.0f, 1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f};
 
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	const GLfloat SquarePosition[] = {
+		1.0f, 1.0f, 0.0f,
+		-1.0f, 1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f};
 
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVertices), triangleVertices, GL_STATIC_DRAW);
+	// vao and vbo related code
+	// vao for Triangle
+	glGenVertexArrays(1, &vao_Triangle);
+	glBindVertexArray(vao_Triangle);
+
+	// vbo for position
+	glGenBuffers(1, &vbo_Triangle_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Triangle_Position);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(trianglePosition), trianglePosition, GL_STATIC_DRAW);
 	glVertexAttribPointer(AMC_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(AMC_ATRIBUTE_POSITION);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+
+	// vao for Square
+	glGenVertexArrays(1, &vao_Square);
+	glBindVertexArray(vao_Square);
+
+	// vbo for position
+	glGenBuffers(1, &vbo_Square_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Square_Position);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(SquarePosition), SquarePosition, GL_STATIC_DRAW);
+	glVertexAttribPointer(AMC_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(AMC_ATRIBUTE_POSITION);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindVertexArray(0); // ubind vao for Square
 
 	// Depth Related Changes
 	glEnable(GL_DEPTH_TEST);
@@ -483,7 +509,7 @@ int initialize(void)
 	/* Clear the  screen using blue color */
 	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
 
-	orthographicProjectionMatrix = mat4::identity();
+	perspectiveProjectionMatrix = mat4::identity();
 
 	// warmup resize call
 	resize(WINWIDTH, WINHEIGHT);
@@ -520,26 +546,11 @@ void resize(int width, int height)
 
 	glViewport(0, 0, width, height);
 
-	if (width <= height)
-	{
-		orthographicProjectionMatrix = vmath::ortho(
-			-100.0f,
-			100.0f,
-			-100.0f * (GLfloat)height / (GLfloat)width,
-			100.0f * (GLfloat)height / (GLfloat)width,
-			-100.0f,
-			100.0f);
-	}
-	else
-	{
-		orthographicProjectionMatrix = vmath::ortho(
-			-100.0f * ((GLfloat)width / (GLfloat)height),
-			100.0f * ((GLfloat)width / (GLfloat)height),
-			-100.0f,
-			100.0f,
-			-100.0f,
-			100.0f);
-	}
+	perspectiveProjectionMatrix = vmath::perspective(
+		45.0f,
+		(GLfloat)width / (GLfloat)height,
+		0.1f,
+		100.0f);
 }
 
 void display(void)
@@ -550,20 +561,49 @@ void display(void)
 	// use shader program obejct
 	glUseProgram(shaderProgramObject);
 
+	// Triangle
 	// Tranformations
+	mat4 translationMatrix = mat4::identity();
 	mat4 modelViewMatrix = mat4::identity();
 	mat4 modelViewProjectionMatrix = mat4::identity();
 
-	modelViewProjectionMatrix = orthographicProjectionMatrix * modelViewMatrix;
+	translationMatrix = vmath::translate(-1.5f, 0.0f, -6.0f); // glTranslatef() is replaced by this line
+
+	modelViewMatrix = translationMatrix;
+
+	modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
 
 	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
 
-	glBindVertexArray(vao);
+	glBindVertexArray(vao_Triangle);
 
 	// draw the desired graphics
 	// drawing code -- magic
 
 	glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	glBindVertexArray(0);
+
+	// Square
+	// Tranformations
+	translationMatrix = mat4::identity();
+	modelViewMatrix = mat4::identity();
+	modelViewProjectionMatrix = mat4::identity();
+
+	translationMatrix = vmath::translate(1.5f, 0.0f, -6.0f); // glTranslatef() is replaced by this line
+
+	modelViewMatrix = translationMatrix;
+
+	modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
+
+	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
+
+	glBindVertexArray(vao_Square);
+
+	// draw the desired graphics
+	// drawing code -- magic
+
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
 	glBindVertexArray(0);
 
@@ -588,18 +628,32 @@ void uninitialize(void)
 		ToggleFullScreen();
 
 	/*  */
-	// deletion of vbo
-	if (vbo)
+	// delete vbo_Square_Position
+	if (vbo_Square_Position)
 	{
-		glDeleteBuffers(1, &vbo);
-		vbo = 0;
+		glDeleteBuffers(1, &vbo_Square_Position);
+		vbo_Square_Position = 0;
 	}
 
-	// deletion of vao
-	if (vao)
+	// deletion of vao_Square
+	if (vao_Square)
 	{
-		glDeleteVertexArrays(1, &vao);
-		vao = 0;
+		glDeleteVertexArrays(1, &vao_Square);
+		vao_Square = 0;
+	}
+
+	// deletion of vbo_Triangle_Position
+	if (vbo_Triangle_Position)
+	{
+		glDeleteBuffers(1, &vbo_Triangle_Position);
+		vbo_Triangle_Position = 0;
+	}
+
+	// deletion of vao_Triangle
+	if (vao_Triangle)
+	{
+		glDeleteVertexArrays(1, &vao_Triangle);
+		vao_Triangle = 0;
 	}
 
 	if (shaderProgramObject)

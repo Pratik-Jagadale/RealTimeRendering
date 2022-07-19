@@ -284,7 +284,7 @@ int initialize(void)
 {
 	/* fucntion delcations */
 	void resize(int, int);
-	void printfGLInfo(void);
+	void printGLInfo(void);
 	void uninitialize(void);
 
 	/* variable declartions */
@@ -334,7 +334,7 @@ int initialize(void)
 		return -5;
 
 	// Print OpenGL  Info
-	// printfGLInfo();
+	printGLInfo();
 
 	// Vertex Shader
 	const GLchar *vertexShaderSourceCode =
@@ -488,7 +488,7 @@ int initialize(void)
 	return (0);
 }
 
-void printfGLInfo(void)
+void printGLInfo(void)
 {
 	// Local Variable declarations
 	GLint numExtensions = 0;
@@ -609,7 +609,7 @@ void uninitialize(void)
 		{
 			glDetachShader(shaderProgramObject, shaderObject[i]);
 			glDeleteShader(shaderObject[i]);
-			shaderObject = 0;
+			shaderObject[i] = 0;
 		}
 		free(shaderObject);
 		shaderObject = NULL;

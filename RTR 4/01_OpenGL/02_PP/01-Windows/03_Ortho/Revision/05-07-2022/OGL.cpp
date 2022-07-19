@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 /* OpenGL Header files */
-#include <GL/glew.h> // This must be before gl.h
+#include <GL/glew.h>
 #include <GL/gl.h>
 #include "vmath.h"
 
@@ -21,9 +21,9 @@ using namespace vmath;
 /* Global Function Declartion */
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void ToggleFullScreen();
-BOOL gbActiveWindow = FALSE;
 
 // global variable declarations
+BOOL gbActiveWindow = FALSE;
 HWND ghwnd = NULL;
 HDC ghdc = NULL;
 HGLRC ghrc = NULL;
@@ -34,7 +34,6 @@ int iXMyWindow;
 int iYMyWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 
-// PP Related Global Variables
 GLuint shaderProgramObject;
 
 enum
@@ -45,14 +44,15 @@ enum
 	AMC_ATRIBUTE_TEXTURE0
 };
 
-GLuint vao;				 // Vertex Array Object
-GLuint vbo;				 // Vertex Buffer Object
-GLuint mvpMatrixUniform; //
+GLuint vao; // vertex array object
+GLuint vbo; // vertex buffer object
+GLuint mvpMatrixUniform;
 
 mat4 orthographicProjectionMatrix;
 
 /* Entry Point Function */
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
+int WINAPI
+WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
 {
 	/* function declartions */
 	int initialize(void);
@@ -71,7 +71,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	// Code
 	if (fopen_s(&gpFile, "Log.txt", "w") != 0) // fopen_s -> #include<stdio.h>
 	{
-		MessageBox(NULL, TEXT("Creation of Log File Failed..!!! Exiting..."), TEXT("File I/O Error"), MB_OK);
+		MessageBox(NULL, TEXT("Creation of Log File Faile..!!! Exiting..."), TEXT("File I/O Error"), MB_OK);
 		exit(0);
 	}
 	else
@@ -101,7 +101,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 
 	/* Create Window */
 	hwnd = CreateWindowEx(WS_EX_APPWINDOW, szAppName,
-						  TEXT("OpenGL -  Pratik Rejendra Jagadale"),
+						  TEXT("OpenGL Window - Pratik Rajendra Jagadale!"),
 						  WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE,
 						  (iWidthOfWindow - WINWIDTH) / 2,
 						  (iHeightOfWindow - WINHEIGHT) / 2,
@@ -140,8 +140,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	else if (iRetVal == -5)
 	{
 		fprintf(gpFile, "GLEW Initialization Failed...\n");
-		uninitialize();
 	}
+
 	else
 	{
 		fprintf(gpFile, "Initialize Successfull...\n");
@@ -284,7 +284,7 @@ int initialize(void)
 {
 	/* fucntion delcations */
 	void resize(int, int);
-	void printfGLInfo(void);
+	void printGLInfo(void);
 	void uninitialize(void);
 
 	/* variable declartions */
@@ -333,10 +333,11 @@ int initialize(void)
 	if (glewInit() != GLEW_OK)
 		return -5;
 
-	// Print OpenGL Info
-	printfGLInfo();
+	// Print OpenGL  Info
+	printGLInfo();
+	fprintf(gpFile, "VERTEX SHADER COMPILATION LOG: \n");
 
-	// vartex Shader
+	// Vertex Shader
 	const GLchar *vertexShaderSourceCode =
 		"#version 460 core"
 		"\n"
@@ -368,7 +369,7 @@ int initialize(void)
 			{
 				GLsizei written;
 				glGetShaderInfoLog(vertexShaderObject, infoLogLength, &written, log);
-				fprintf(gpFile, "VERTEX SHADER COMPILATION LOG : %s\n", log);
+				fprintf(gpFile, "VERTEX SHADER COMPILATION LOG: %s\n", log);
 				free(log);
 				log = NULL;
 				uninitialize();
@@ -376,8 +377,7 @@ int initialize(void)
 		}
 	}
 
-	// fragment Shader
-
+	// Fragment Shader
 	status = 0;
 	infoLogLength = 0;
 
@@ -387,7 +387,7 @@ int initialize(void)
 		"out vec4 FragColor;"
 		"void main(void)"
 		"{"
-		"FragColor = vec4(1.0,1.0,1.0,1.0);"
+		"FragColor = vec4(1.0,1.0,0.0,1.0);"
 		"}";
 
 	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
@@ -416,9 +416,9 @@ int initialize(void)
 		}
 	}
 
-	// Shader Program Object
-	// pr
+	// shader prgram object
 	shaderProgramObject = glCreateProgram();
+
 	glAttachShader(shaderProgramObject, vertexShaderObject);
 
 	glAttachShader(shaderProgramObject, fragmentShaderObject);
@@ -433,7 +433,6 @@ int initialize(void)
 	infoLogLength = 0;
 
 	glGetProgramiv(shaderProgramObject, GL_LINK_STATUS, &status);
-
 	if (status == GL_FALSE)
 	{
 		glGetProgramiv(shaderProgramObject, GL_INFO_LOG_LENGTH, &infoLogLength);
@@ -444,7 +443,7 @@ int initialize(void)
 			{
 				GLsizei written;
 				glGetProgramInfoLog(shaderProgramObject, infoLogLength, &written, log);
-				fprintf(gpFile, "SHADER PROGRAM LINK LOG: %s \n", log);
+				fprintf(gpFile, "SHADER PROGRAM LINK LOG : %s \n", log);
 				free(log);
 				log = NULL;
 				uninitialize();
@@ -452,22 +451,21 @@ int initialize(void)
 		}
 	}
 
-	// post link - getting
+	// Post Link - getting
 	mvpMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_mvpMatrix");
 
 	// vao and vba related code
-	// declartions of vertex Data array
-	const GLfloat triangleVertices[] = {
+	// declartions of vertex data array
+	const GLfloat trangleVertices[] = {
 		0.0f, 50.0f, 0.0f,
 		-50.0f, -50.0f, 0.0f,
 		50.0f, -50.0f, 0.0f};
 
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
-
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVertices), triangleVertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(trangleVertices), trangleVertices, GL_STATIC_DRAW);
 	glVertexAttribPointer(AMC_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(AMC_ATRIBUTE_POSITION);
 
@@ -491,7 +489,7 @@ int initialize(void)
 	return (0);
 }
 
-void printfGLInfo(void)
+void printGLInfo(void)
 {
 	// Local Variable declarations
 	GLint numExtensions = 0;
@@ -525,8 +523,8 @@ void resize(int width, int height)
 		orthographicProjectionMatrix = vmath::ortho(
 			-100.0f,
 			100.0f,
-			-100.0f * (GLfloat)height / (GLfloat)width,
-			100.0f * (GLfloat)height / (GLfloat)width,
+			-100.0f * ((GLfloat)height / (GLfloat)width),
+			100.0f * ((GLfloat)height / (GLfloat)width),
 			-100.0f,
 			100.0f);
 	}
@@ -547,10 +545,10 @@ void display(void)
 	/* Code */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// use shader program obejct
+	// use shader program object
 	glUseProgram(shaderProgramObject);
 
-	// Tranformations
+	// tranformations
 	mat4 modelViewMatrix = mat4::identity();
 	mat4 modelViewProjectionMatrix = mat4::identity();
 
@@ -561,13 +559,9 @@ void display(void)
 	glBindVertexArray(vao);
 
 	// draw the desired graphics
-	// drawing code -- magic
-
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 
-	glBindVertexArray(0);
-
-	// unuse the shader program object
+	// unuse the shder Prgram object
 	glUseProgram(0);
 
 	SwapBuffers(ghdc);
@@ -588,17 +582,15 @@ void uninitialize(void)
 		ToggleFullScreen();
 
 	/*  */
-	// deletion of vbo
 	if (vbo)
 	{
 		glDeleteBuffers(1, &vbo);
 		vbo = 0;
 	}
 
-	// deletion of vao
 	if (vao)
 	{
-		glDeleteVertexArrays(1, &vao);
+		glDeleteBuffers(1, &vao);
 		vao = 0;
 	}
 

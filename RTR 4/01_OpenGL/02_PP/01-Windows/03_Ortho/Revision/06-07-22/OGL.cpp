@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 /* OpenGL Header files */
-#include <GL/glew.h> // This must be before gl.h
+#include <GL/glew.h>
 #include <GL/gl.h>
 #include "vmath.h"
 
@@ -18,11 +18,6 @@ using namespace vmath;
 #define WINWIDTH 800
 #define WINHEIGHT 600
 
-/* Global Function Declartion */
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-void ToggleFullScreen();
-BOOL gbActiveWindow = FALSE;
-
 // global variable declarations
 HWND ghwnd = NULL;
 HDC ghdc = NULL;
@@ -34,20 +29,24 @@ int iXMyWindow;
 int iYMyWindow;
 FILE *gpFile = NULL; // FILE* -> #include<stdio.h>
 
-// PP Related Global Variables
-GLuint shaderProgramObject;
+/* Global Function Declartion */
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+void ToggleFullScreen();
+BOOL gbActiveWindow = FALSE;
+
+GLuint shaderProgramObejct;
 
 enum
 {
-	AMC_ATRIBUTE_POSITION = 0,
+	AMC_ATRIBUTE_POSITION,
 	AMC_ATRIBUTE_COLOR,
 	AMC_ATRIBUTE_NORMAL,
 	AMC_ATRIBUTE_TEXTURE0
 };
 
-GLuint vao;				 // Vertex Array Object
-GLuint vbo;				 // Vertex Buffer Object
-GLuint mvpMatrixUniform; //
+GLuint vao;
+GLuint vbo;
+GLuint mvpMatrixProjectMatrix;
 
 mat4 orthographicProjectionMatrix;
 
@@ -71,7 +70,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	// Code
 	if (fopen_s(&gpFile, "Log.txt", "w") != 0) // fopen_s -> #include<stdio.h>
 	{
-		MessageBox(NULL, TEXT("Creation of Log File Failed..!!! Exiting..."), TEXT("File I/O Error"), MB_OK);
+		MessageBox(NULL, TEXT("Creation of Log File Faile..!!! Exiting..."), TEXT("File I/O Error"), MB_OK);
 		exit(0);
 	}
 	else
@@ -99,14 +98,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	iHeightOfWindow = GetSystemMetrics(SM_CYSCREEN); // Height of Window Screen
 	iWidthOfWindow = GetSystemMetrics(SM_CXSCREEN);	 // Width Of Window Screen
 
+	iXMyWindow = (iWidthOfWindow) / 4;	// x coordinate for MyWindow
+	iYMyWindow = (iHeightOfWindow) / 4; // y coordinate for MyWindow
+
 	/* Create Window */
 	hwnd = CreateWindowEx(WS_EX_APPWINDOW, szAppName,
-						  TEXT("OpenGL -  Pratik Rejendra Jagadale"),
+						  TEXT("OpenGL Window - AstroMediComp"),
 						  WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE,
-						  (iWidthOfWindow - WINWIDTH) / 2,
-						  (iHeightOfWindow - WINHEIGHT) / 2,
-						  WINWIDTH,
-						  WINHEIGHT,
+						  iXMyWindow,
+						  iYMyWindow,
+						  (iWidthOfWindow) / 2,
+						  (iHeightOfWindow) / 2,
 						  NULL,
 						  NULL,
 						  hInstance,
@@ -140,7 +142,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	else if (iRetVal == -5)
 	{
 		fprintf(gpFile, "GLEW Initialization Failed...\n");
-		uninitialize();
 	}
 	else
 	{
@@ -284,7 +285,7 @@ int initialize(void)
 {
 	/* fucntion delcations */
 	void resize(int, int);
-	void printfGLInfo(void);
+	void printGLInfo(void);
 	void uninitialize(void);
 
 	/* variable declartions */
@@ -333,10 +334,10 @@ int initialize(void)
 	if (glewInit() != GLEW_OK)
 		return -5;
 
-	// Print OpenGL Info
-	printfGLInfo();
+	// Print OpenGL info
+	// printGLInfo();
 
-	// vartex Shader
+	// Vertex Shader
 	const GLchar *vertexShaderSourceCode =
 		"#version 460 core"
 		"\n"
@@ -349,18 +350,19 @@ int initialize(void)
 
 	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
 
-	glShaderSource(vertexShaderObject, 1, (const GLchar **)&vertexShaderSourceCode, NULL);
+	glShaderSource(vertexShaderObject, 1, (const GLchar **)&vertexShaderObject, NULL);
 
 	glCompileShader(vertexShaderObject);
 
-	GLint status;
+	GLint Status;
 	GLint infoLogLength;
 	char *log = NULL;
-	glGetShaderiv(vertexShaderObject, GL_COMPILE_STATUS, &status);
+	glGetShaderiv(vertexShaderObject, GL_COMPILE_STATUS, &Status);
 
-	if (status == GL_FALSE)
+	if (Status == GL_FALSE)
 	{
 		glGetShaderiv(vertexShaderObject, GL_INFO_LOG_LENGTH, &infoLogLength);
+
 		if (infoLogLength > 0)
 		{
 			log = (char *)malloc(infoLogLength);
@@ -368,7 +370,7 @@ int initialize(void)
 			{
 				GLsizei written;
 				glGetShaderInfoLog(vertexShaderObject, infoLogLength, &written, log);
-				fprintf(gpFile, "VERTEX SHADER COMPILATION LOG : %s\n", log);
+				fprintf(gpFile, "VERTEX SHADER COMPILATION LOG: %s\n", log);
 				free(log);
 				log = NULL;
 				uninitialize();
@@ -376,9 +378,8 @@ int initialize(void)
 		}
 	}
 
-	// fragment Shader
-
-	status = 0;
+	// Fragment Shader
+	Status = 0;
 	infoLogLength = 0;
 
 	const GLchar *fragmentShaderSourceCode =
@@ -396,9 +397,9 @@ int initialize(void)
 
 	glCompileShader(fragmentShaderObject);
 
-	glGetShaderiv(fragmentShaderObject, GL_COMPILE_STATUS, &status);
+	glGetShaderiv(fragmentShaderObject, GL_COMPILE_STATUS, &Status);
 
-	if (status == GL_FALSE)
+	if (Status == GL_FALSE)
 	{
 		glGetShaderiv(fragmentShaderObject, GL_INFO_LOG_LENGTH, &infoLogLength);
 		if (infoLogLength > 0)
@@ -416,35 +417,34 @@ int initialize(void)
 		}
 	}
 
-	// Shader Program Object
-	// pr
-	shaderProgramObject = glCreateProgram();
-	glAttachShader(shaderProgramObject, vertexShaderObject);
+	// shader prgram object
+	shaderProgramObejct = glCreateProgram();
 
-	glAttachShader(shaderProgramObject, fragmentShaderObject);
+	glAttachShader(shaderProgramObejct, vertexShaderObject);
+
+	glAttachShader(shaderProgramObejct, fragmentShaderObject);
 
 	// prelinked binding
-	glBindAttribLocation(shaderProgramObject, AMC_ATRIBUTE_POSITION, "a_position");
+	glBindAttribLocation(shaderProgramObejct, AMC_ATRIBUTE_POSITION, "a_position");
 
 	// link
-	glLinkProgram(shaderProgramObject);
+	glLinkProgram(shaderProgramObejct);
 
-	status = 0;
+	Status = 0;
 	infoLogLength = 0;
 
-	glGetProgramiv(shaderProgramObject, GL_LINK_STATUS, &status);
-
-	if (status == GL_FALSE)
+	glGetProgramiv(shaderProgramObejct, GL_LINK_STATUS, &Status);
+	if (Status == GL_FALSE)
 	{
-		glGetProgramiv(shaderProgramObject, GL_INFO_LOG_LENGTH, &infoLogLength);
+		glGetProgramiv(shaderProgramObejct, GL_INFO_LOG_LENGTH, &infoLogLength);
 		if (infoLogLength > 0)
 		{
 			log = (char *)malloc(infoLogLength);
 			if (log != NULL)
 			{
 				GLsizei written;
-				glGetProgramInfoLog(shaderProgramObject, infoLogLength, &written, log);
-				fprintf(gpFile, "SHADER PROGRAM LINK LOG: %s \n", log);
+				glGetProgramInfoLog(shaderProgramObejct, infoLogLength, &written, log);
+				fprintf(gpFile, "SHADER PROGRAM LINK LOG : %s \n", log);
 				free(log);
 				log = NULL;
 				uninitialize();
@@ -452,22 +452,21 @@ int initialize(void)
 		}
 	}
 
-	// post link - getting
-	mvpMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_mvpMatrix");
+	// Post Link - getting
+	mvpMatrixProjectMatrix = glGetUniformLocation(shaderProgramObejct, "u_mvpMatrix");
 
 	// vao and vba related code
-	// declartions of vertex Data array
-	const GLfloat triangleVertices[] = {
+	// declartions of vertex data array
+	const GLfloat trangleVertices[] = {
 		0.0f, 50.0f, 0.0f,
 		-50.0f, -50.0f, 0.0f,
 		50.0f, -50.0f, 0.0f};
 
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
-
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVertices), triangleVertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(trangleVertices), trangleVertices, GL_STATIC_DRAW);
 	glVertexAttribPointer(AMC_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(AMC_ATRIBUTE_POSITION);
 
@@ -475,15 +474,15 @@ int initialize(void)
 	glBindVertexArray(0);
 
 	// Depth Related Changes
+	//	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 
 	glShadeModel(GL_SMOOTH);
+	//	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
 	/* Clear the  screen using blue color */
 	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
-
-	orthographicProjectionMatrix = mat4::identity();
 
 	// warmup resize call
 	resize(WINWIDTH, WINHEIGHT);
@@ -491,7 +490,7 @@ int initialize(void)
 	return (0);
 }
 
-void printfGLInfo(void)
+void printGLInfo(void)
 {
 	// Local Variable declarations
 	GLint numExtensions = 0;
@@ -518,15 +517,13 @@ void resize(int width, int height)
 	if (height == 0) // to avoid devided by zero
 		height = 1;
 
-	glViewport(0, 0, width, height);
-
 	if (width <= height)
 	{
 		orthographicProjectionMatrix = vmath::ortho(
 			-100.0f,
 			100.0f,
-			-100.0f * (GLfloat)height / (GLfloat)width,
-			100.0f * (GLfloat)height / (GLfloat)width,
+			-100.0f * ((GLfloat)height / (GLfloat)width),
+			100.0f * ((GLfloat)height / (GLfloat)width),
 			-100.0f,
 			100.0f);
 	}
@@ -540,6 +537,8 @@ void resize(int width, int height)
 			-100.0f,
 			100.0f);
 	}
+
+	glViewport(0, 0, width, height);
 }
 
 void display(void)
@@ -547,27 +546,21 @@ void display(void)
 	/* Code */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// use shader program obejct
-	glUseProgram(shaderProgramObject);
+	// use shader program object
+	glUseProgram(shaderProgramObejct);
 
-	// Tranformations
+	// tranformations
 	mat4 modelViewMatrix = mat4::identity();
 	mat4 modelViewProjectionMatrix = mat4::identity();
 
 	modelViewProjectionMatrix = orthographicProjectionMatrix * modelViewMatrix;
 
-	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
+	glUniformMatrix4fv(mvpMatrixProjectMatrix, 1, GL_FALSE, modelViewProjectionMatrix);
 
 	glBindVertexArray(vao);
 
-	// draw the desired graphics
-	// drawing code -- magic
-
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 
-	glBindVertexArray(0);
-
-	// unuse the shader program object
 	glUseProgram(0);
 
 	SwapBuffers(ghdc);
@@ -588,43 +581,41 @@ void uninitialize(void)
 		ToggleFullScreen();
 
 	/*  */
-	// deletion of vbo
 	if (vbo)
 	{
 		glDeleteBuffers(1, &vbo);
 		vbo = 0;
 	}
 
-	// deletion of vao
 	if (vao)
 	{
-		glDeleteVertexArrays(1, &vao);
+		glDeleteBuffers(1, &vao);
 		vao = 0;
 	}
 
-	if (shaderProgramObject)
+	if (shaderProgramObejct)
 	{
-		glUseProgram(shaderProgramObject);
+		glUseProgram(shaderProgramObejct);
 
 		GLsizei numAttachedShaders;
 
-		glGetProgramiv(shaderProgramObject, GL_ATTACHED_SHADERS, &numAttachedShaders);
+		glGetProgramiv(shaderProgramObejct, GL_ATTACHED_SHADERS, &numAttachedShaders);
 
 		GLuint *shaderObject = NULL;
 		shaderObject = (GLuint *)malloc(numAttachedShaders * sizeof(GLuint));
-		glGetAttachedShaders(shaderProgramObject, numAttachedShaders, &numAttachedShaders, shaderObject);
+		glGetAttachedShaders(shaderProgramObejct, numAttachedShaders, &numAttachedShaders, shaderObject);
 
 		for (GLsizei i = 0; i < numAttachedShaders; i++)
 		{
-			glDetachShader(shaderProgramObject, shaderObject[i]);
+			glDetachShader(shaderProgramObejct, shaderObject[i]);
 			glDeleteShader(shaderObject[i]);
 			shaderObject[i] = 0;
 		}
 		free(shaderObject);
 		shaderObject = NULL;
 		glUseProgram(0);
-		glDeleteProgram(shaderProgramObject);
-		shaderProgramObject = 0;
+		glDeleteProgram(shaderProgramObejct);
+		shaderProgramObejct = 0;
 	}
 
 	if (wglGetCurrentContext() == ghrc)
