@@ -486,6 +486,7 @@ int initialize(void)
 	glEnableVertexAttribArray(AMC_ATRIBUTE_POSITION);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 
 	// vao for Square
 	glGenVertexArrays(1, &vao_Square);
@@ -624,11 +625,11 @@ void update(void)
 	/* code */
 	angleTriangle = angleTriangle + 0.1f;
 	if (angleTriangle >= 360.0f)
-		angleTriangle = angleTriangle - 360.0F;
+		angleTriangle = angleTriangle - 360.0f;
 
 	angleSquare = angleSquare + 0.1f;
 	if (angleSquare >= 360.0f)
-		angleSquare = angleSquare - 360.0F;
+		angleSquare = angleSquare - 360.0f;
 }
 
 void uninitialize(void)

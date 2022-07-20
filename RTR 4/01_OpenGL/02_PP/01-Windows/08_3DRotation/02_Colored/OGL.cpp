@@ -41,13 +41,16 @@ enum
 	AMC_ATRIBUTE_TEXTURE0
 };
 
-GLuint vao_Triangle;		  // Vertex Array Object - Triangle
-GLuint vbo_Triangle_Position; // Vertex Buffer Object - Triangle - Position
-GLuint vao_Square;			  // Vertex Array Object - Square
-GLuint vbo_Square_Position;	  // Vertex Buffer Object - Square- Position
-GLuint mvpMatrixUniform;	  // model View Projection
-
+GLuint vao_Pyramid;			 // Vertex Array Object - Pyramid
+GLuint vbo_Pyramid_Position; // Vertex Buffer Object - Pyramid - Position
+GLuint vbo_Pyramid_Color;	 // Vertex Buffer Object - Pyramid
+GLuint vao_Cube;			 // Vertex Array Object - Cube
+GLuint vbo_Cube_Position;	 // Vertex Buffer Object - Cube- Position
+GLuint mvpMatrixUniform;	 // model View Projection
 mat4 perspectiveProjectionMatrix;
+
+GLfloat anglePyramid = 0.0f;
+GLfloat angleCube = 0.0f;
 
 /* Entry Point Function */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
@@ -56,6 +59,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	int initialize(void);
 	void uninitialize(void);
 	void display(void);
+	void update(void);
 
 	/* variable declarations */
 	WNDCLASSEX wndclass;
@@ -173,6 +177,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 				/* Render the seen */
 				display();
 				// updatetheseen
+				update();
 			}
 		}
 	}
@@ -338,10 +343,13 @@ int initialize(void)
 		"#version 460 core"
 		"\n"
 		"in vec4 a_position;"
+		"in vec4 a_color;"
 		"uniform mat4 u_mvpMatrix;"
+		"out vec4 a_color_out;"
 		"void main(void)"
 		"{"
 		"gl_Position = u_mvpMatrix * a_position;"
+		"a_color_out = a_color;"
 		"}";
 
 	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
@@ -385,7 +393,7 @@ int initialize(void)
 		"out vec4 FragColor;"
 		"void main(void)"
 		"{"
-		"FragColor = vec4(1.0f,1.0f,1.0f,1.0f);"
+		"FragColor = a_color_out;"
 		"}";
 
 	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
@@ -424,6 +432,8 @@ int initialize(void)
 	// prelinked binding
 	// Binding Position Array
 	glBindAttribLocation(shaderProgramObject, AMC_ATRIBUTE_POSITION, "a_position");
+	// Binding Color Array
+	glBindAttribLocation(shaderProgramObject, AMC_ATRIBUTE_COLOR, "a_color");
 
 	// link
 	glLinkProgram(shaderProgramObject);
@@ -454,50 +464,69 @@ int initialize(void)
 	// post link - getting
 	mvpMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_mvpMatrix");
 
-	// vao_Triangle and vba related code
+	// vao_Pyramid and vba related code
 	// declartions of vertex Data array
-	const GLfloat trianglePosition[] = {
+	const GLfloat PyramidPosition[] = {
 		0.0f, 1.0f, 0.0f,
 		-1.0f, -1.0f, 0.0f,
 		1.0f, -1.0f, 0.0f};
 
-	const GLfloat SquarePosition[] = {
+	const GLfloat PyramidColor[] = {
+		1.0f, 0.0f, 0.0f, // RED
+		0.0f, 1.0f, 0.0f, // BLUE
+		0.0f, 0.0f, 1.0f  // GREEN
+	};
+
+	const GLfloat CubePosition[] = {
 		1.0f, 1.0f, 0.0f,
 		-1.0f, 1.0f, 0.0f,
 		-1.0f, -1.0f, 0.0f,
 		1.0f, -1.0f, 0.0f};
 
 	// vao and vbo related code
-	// vao for Triangle
-	glGenVertexArrays(1, &vao_Triangle);
-	glBindVertexArray(vao_Triangle);
+	// vao for Pyramid
+	glGenVertexArrays(1, &vao_Pyramid);
+	glBindVertexArray(vao_Pyramid);
 
 	// vbo for position
-	glGenBuffers(1, &vbo_Triangle_Position);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Triangle_Position);
+	glGenBuffers(1, &vbo_Pyramid_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Pyramid_Position);
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(trianglePosition), trianglePosition, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(PyramidPosition), PyramidPosition, GL_STATIC_DRAW);
 	glVertexAttribPointer(AMC_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(AMC_ATRIBUTE_POSITION);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// vbo for color
+	glGenBuffers(1, &vbo_Pyramid_Color);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Pyramid_Color);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(PyramidColor), PyramidColor, GL_STATIC_DRAW);
+	glVertexAttribPointer(AMC_ATRIBUTE_COLOR, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(AMC_ATRIBUTE_COLOR);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
-	// vao for Square
-	glGenVertexArrays(1, &vao_Square);
-	glBindVertexArray(vao_Square);
+	// vao for Cube
+	glGenVertexArrays(1, &vao_Cube);
+	glBindVertexArray(vao_Cube);
 
 	// vbo for position
-	glGenBuffers(1, &vbo_Square_Position);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Square_Position);
+	glGenBuffers(1, &vbo_Cube_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Cube_Position);
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(SquarePosition), SquarePosition, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(CubePosition), CubePosition, GL_STATIC_DRAW);
 	glVertexAttribPointer(AMC_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(AMC_ATRIBUTE_POSITION);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	glBindVertexArray(0); // ubind vao for Square
+	// vbo for sqaure color
+	glVertexAttrib3f(AMC_ATRIBUTE_COLOR, 0.0f, 0.0f, 1.0f);
+
+	glBindVertexArray(0); // ubind vao for Cube
 
 	// Depth Related Changes
 	glEnable(GL_DEPTH_TEST);
@@ -506,7 +535,7 @@ int initialize(void)
 	glShadeModel(GL_SMOOTH);
 
 	/* Clear the  screen using blue color */
-	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	perspectiveProjectionMatrix = mat4::identity();
 
@@ -560,44 +589,46 @@ void display(void)
 	// use shader program obejct
 	glUseProgram(shaderProgramObject);
 
-	// Triangle
+	// Pyramid
 	// Tranformations
 	mat4 translationMatrix = mat4::identity();
+	mat4 rotationMatrix = mat4::identity();
 	mat4 modelViewMatrix = mat4::identity();
 	mat4 modelViewProjectionMatrix = mat4::identity();
 
 	translationMatrix = vmath::translate(-1.5f, 0.0f, -6.0f); // glTranslatef() is replaced by this line
+	rotationMatrix = vmath::rotate(anglePyramid, 0.0f, 1.0f, 0.0f);
 
-	modelViewMatrix = translationMatrix;
+	modelViewMatrix = translationMatrix * rotationMatrix; // order is very important
 
 	modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
 
 	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
 
-	glBindVertexArray(vao_Triangle);
+	glBindVertexArray(vao_Pyramid);
 
-	// draw the desired graphics
-	// drawing code -- magic
-
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 3);
 
 	glBindVertexArray(0);
 
-	// Square
+	// Cube
 	// Tranformations
 	translationMatrix = mat4::identity();
+	rotationMatrix = mat4::identity();
 	modelViewMatrix = mat4::identity();
 	modelViewProjectionMatrix = mat4::identity();
 
 	translationMatrix = vmath::translate(1.5f, 0.0f, -6.0f); // glTranslatef() is replaced by this line
 
-	modelViewMatrix = translationMatrix;
+	rotationMatrix = vmath::rotate(angleCube, 1.0f, 0.0f, 0.0f);
+
+	modelViewMatrix = translationMatrix * rotationMatrix;
 
 	modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
 
 	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
 
-	glBindVertexArray(vao_Square);
+	glBindVertexArray(vao_Cube);
 
 	// draw the desired graphics
 	// drawing code -- magic
@@ -615,6 +646,13 @@ void display(void)
 void update(void)
 {
 	/* code */
+	anglePyramid = anglePyramid + 0.1f;
+	if (anglePyramid >= 360.0f)
+		anglePyramid = anglePyramid - 360.0F;
+
+	angleCube = angleCube + 0.1f;
+	if (angleCube >= 360.0f)
+		angleCube = angleCube - 360.0F;
 }
 
 void uninitialize(void)
@@ -627,32 +665,39 @@ void uninitialize(void)
 		ToggleFullScreen();
 
 	/*  */
-	// delete vbo_Square_Position
-	if (vbo_Square_Position)
+	// delete vbo_Cube_Position
+	if (vbo_Cube_Position)
 	{
-		glDeleteBuffers(1, &vbo_Square_Position);
-		vbo_Square_Position = 0;
+		glDeleteBuffers(1, &vbo_Cube_Position);
+		vbo_Cube_Position = 0;
 	}
 
-	// deletion of vao_Square
-	if (vao_Square)
+	// deletion of vao_Cube
+	if (vao_Cube)
 	{
-		glDeleteVertexArrays(1, &vao_Square);
-		vao_Square = 0;
+		glDeleteVertexArrays(1, &vao_Cube);
+		vao_Cube = 0;
 	}
 
-	// deletion of vbo_Triangle_Position
-	if (vbo_Triangle_Position)
+	// deletion of vbo_Pyramid_Color
+	if (vbo_Pyramid_Color)
 	{
-		glDeleteBuffers(1, &vbo_Triangle_Position);
-		vbo_Triangle_Position = 0;
+		glDeleteBuffers(1, &vbo_Pyramid_Color);
+		vbo_Pyramid_Color = 0;
 	}
 
-	// deletion of vao_Triangle
-	if (vao_Triangle)
+	// deletion of vbo_Pyramid_Position
+	if (vbo_Pyramid_Position)
 	{
-		glDeleteVertexArrays(1, &vao_Triangle);
-		vao_Triangle = 0;
+		glDeleteBuffers(1, &vbo_Pyramid_Position);
+		vbo_Pyramid_Position = 0;
+	}
+
+	// deletion of vao_Pyramid
+	if (vao_Pyramid)
+	{
+		glDeleteVertexArrays(1, &vao_Pyramid);
+		vao_Pyramid = 0;
 	}
 
 	if (shaderProgramObject)

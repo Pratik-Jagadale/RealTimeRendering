@@ -521,9 +521,6 @@ int initialize(void)
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// vbo for sqaure color
-	glVertexAttrib3f(AMC_ATRIBUTE_COLOR, 0.0f, 0.0f, 1.0f);
-
 	glBindVertexArray(0); // ubind vao for Square
 
 	// Depth Related Changes
