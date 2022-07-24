@@ -585,7 +585,7 @@ void display(void)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
 	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
 
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	// glDrawArrays(GL_TRIANGLES, 0, gNumElements);
 
 	glBindVertexArray(0);
 
