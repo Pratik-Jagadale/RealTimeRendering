@@ -8,14 +8,12 @@
 #include <GL/glew.h> // This must be before gl.h
 #include <GL/gl.h>
 #include "vmath.h"
-#include "Sphere.h"
 
 using namespace vmath;
 
 /* OpenGL libraries */
 #pragma comment(lib, "glew32.lib")
 #pragma comment(lib, "OpenGL32.lib")
-#pragma comment(lib, "Sphere.lib")
 
 #define WINWIDTH 800
 #define WINHEIGHT 600
@@ -37,29 +35,30 @@ GLuint shaderProgramObject;
 
 enum
 {
-	PRJ_ATRIBUTE_POSITION = 0,
+	PRJ_ATTRIBUTE_POSITION = 0,
 	PRJ_ATRIBUTE_COLOR,
-	PRJ_ATRIBUTE_NORMAL,
+	PRJ_ATTRIBUTE_NORMAL,
 	PRJ_ATRIBUTE_TEXTURE0
 };
 
-GLuint gVao_sphere;			 // Vertex Array Object
-GLuint gVbo_sphere_position; // Vertex Buffer Object
-GLuint gVbo_sphere_normal;
-GLuint gVbo_sphere_element;
-
+GLuint vao_Cube;		  // Vertex Array Object - Cube
+GLuint vbo_Cube_Position; // Vertex Buffer Object - Cube-
+GLuint vbo_Cube_Normal;
 GLuint modelMatrixUniform;
 GLuint viewMatrixUniform;
 GLuint projectionMatrixUniform;
-
 mat4 perspectiveProjectionMatrix;
+GLuint lDUniform; //
+GLuint kDUniform; //
+GLuint lightPositionUniform;
+GLuint lightingEnableUniform;
 
-float sphere_vertices[1146];
-float sphere_normals[1146];
-float sphere_textures[764];
-unsigned short sphere_elements[2280];
-int gNumVertices;
-int gNumElements;
+BOOL bLight = FALSE;
+GLfloat angleCube = 0.0f;
+
+GLfloat lightDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat materialDiffuse[] = {0.5f, 0.5f, 0.5f, 1.0f};
+GLfloat lightPositions[] = {0.0f, 0.0f, 2.0f, 1.0f};
 
 /* Entry Point Function */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
@@ -68,6 +67,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	int initialize(void);
 	void uninitialize(void);
 	void display(void);
+	void update(void);
 
 	/* variable declarations */
 	WNDCLASSEX wndclass;
@@ -144,7 +144,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	}
 	else if (iRetVal == -4)
 	{
-		fprintf(gpFile, "Makeing OpnGL as current Context Failed...\n");
+		fprintf(gpFile, "Makeing OpenGL as current Context Failed...\n");
 		uninitialize();
 	}
 	else if (iRetVal == -5)
@@ -185,6 +185,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 				/* Render the seen */
 				display();
 				// updatetheseen
+				update();
 			}
 		}
 	}
@@ -221,6 +222,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		case 'F':
 			ToggleFullScreen();
 			break;
+
+		case 'L':
+		case 'l':
+			if (bLight == FALSE)
+			{
+				bLight = TRUE;
+			}
+			else
+			{
+				bLight = FALSE;
+			}
+			break;
+
 		case 27:
 			if (gpFile)
 			{
@@ -350,12 +364,26 @@ int initialize(void)
 		"#version 460 core"
 		"\n"
 		"in vec4 a_position;"
+		"in vec3 a_normal;"
 		"uniform mat4 u_modelMatrix;"
 		"uniform mat4 u_viewMatrix;"
 		"uniform mat4 u_projectionMatrix;"
+		"uniform vec3 u_ld;"
+		"uniform vec3 u_kd;"
+		"uniform vec4 u_lightPosition;"
+		"uniform int u_lightingEnabled;"
+		"out vec3 diffuse_light_color;"
 		"void main(void)"
 		"{"
-		"gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;"
+		"if(u_lightingEnabled == 1)"
+		"{"
+		"vec4 eyeCoordinate = u_viewMatrix * u_modelMatrix * a_position;"
+		"mat3 normalMatrix = mat3(transpose(inverse(u_viewMatrix * u_modelMatrix)));"
+		"vec3 transformedNormals = normalize(normalMatrix * a_normal);"
+		"vec3 lightDirection = vec3(normalize(u_lightPosition - eyeCoordinate));"
+		"diffuse_light_color = u_ld * u_kd * max(dot(lightDirection,transformedNormals),0.0);"
+		"}"
+		"gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix  * a_position;"
 		"}";
 
 	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
@@ -395,10 +423,19 @@ int initialize(void)
 	const GLchar *fragmentShaderSourceCode =
 		"#version 460 core"
 		"\n"
+		"in vec3 diffuse_light_color;"
+		"uniform int u_lightingEnabled;"
 		"out vec4 FragColor;"
 		"void main(void)"
 		"{"
-		"FragColor = vec4(1.0,1.0,1.0,1.0);"
+		"if(u_lightingEnabled == 1)"
+		"{"
+		"FragColor = vec4(diffuse_light_color, 1.0);"
+		"}"
+		"else"
+		"{"
+		"FragColor = vec4(1.0f,1.0f,1.0f,1.0f);"
+		"}"
 		"}";
 
 	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
@@ -435,7 +472,9 @@ int initialize(void)
 	glAttachShader(shaderProgramObject, fragmentShaderObject);
 
 	// prelinked binding
-	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_POSITION, "a_position");
+	// Binding Position Array
+	glBindAttribLocation(shaderProgramObject, PRJ_ATTRIBUTE_POSITION, "a_position");
+	glBindAttribLocation(shaderProgramObject, PRJ_ATTRIBUTE_NORMAL, "a_normal");
 
 	// link
 	glLinkProgram(shaderProgramObject);
@@ -468,47 +507,115 @@ int initialize(void)
 	viewMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_viewMatrix");
 	projectionMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_projectionMatrix");
 
-	// gVao_sphere and vba related code
+	lDUniform = glGetUniformLocation(shaderProgramObject, "u_ld");
+	kDUniform = glGetUniformLocation(shaderProgramObject, "u_kd");
+	lightPositionUniform = glGetUniformLocation(shaderProgramObject, "u_lightPosition");
+	lightingEnableUniform = glGetUniformLocation(shaderProgramObject, "u_lightingEnabled");
+
+	// vao_Pyramid and vba related code
 	// declartions of vertex Data array
-	getSphereVertexData(sphere_vertices, sphere_normals, sphere_textures, sphere_elements);
-	gNumVertices = getNumberOfSphereVertices();
-	gNumElements = getNumberOfSphereElements();
+	const GLfloat CubePosition[] = {
+		// top
+		1.0f, 1.0f, -1.0f,
+		-1.0f, 1.0f, -1.0f,
+		-1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f,
 
-	// vao vbo reelated code
-	// vao
-	glGenVertexArrays(1, &gVao_sphere);
-	glBindVertexArray(gVao_sphere);
+		// bottom
+		1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f, 1.0f,
+		1.0f, -1.0f, 1.0f,
 
-	// position vbo
-	glGenBuffers(1, &gVbo_sphere_position);
-	glBindBuffer(GL_ARRAY_BUFFER, gVbo_sphere_position);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_vertices), sphere_vertices, GL_STATIC_DRAW);
+		// front
+		1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f,
+		-1.0f, -1.0f, 1.0f,
+		1.0f, -1.0f, 1.0f,
 
-	glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		// back
+		1.0f, 1.0f, -1.0f,
+		-1.0f, 1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
 
-	glEnableVertexAttribArray(PRJ_ATRIBUTE_POSITION);
+		// right
+		1.0f, 1.0f, -1.0f,
+		1.0f, 1.0f, 1.0f,
+		1.0f, -1.0f, 1.0f,
+		1.0f, -1.0f, -1.0f,
+
+		// left
+		-1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f, 1.0f};
+
+	GLfloat cubeNormals[] = {
+		// top surface
+		0.0f, 1.0f, 0.0f, // top-right of top
+		0.0f, 1.0f, 0.0f, // top-left of top
+		0.0f, 1.0f, 0.0f, // bottom-left of top
+		0.0f, 1.0f, 0.0f, // bottom-right of top
+
+		// bottom surface
+		0.0f, -1.0f, 0.0f, // top-right of bottom
+		0.0f, -1.0f, 0.0f, // top-left of bottom
+		0.0f, -1.0f, 0.0f, // bottom-left of bottom
+		0.0f, -1.0f, 0.0f, // bottom-right of bottom
+
+		// front surface
+		0.0f, 0.0f, 1.0f, // top-right of front
+		0.0f, 0.0f, 1.0f, // top-left of front
+		0.0f, 0.0f, 1.0f, // bottom-left of front
+		0.0f, 0.0f, 1.0f, // bottom-right of front
+
+		// back surface
+		0.0f, 0.0f, -1.0f, // top-right of back
+		0.0f, 0.0f, -1.0f, // top-left of back
+		0.0f, 0.0f, -1.0f, // bottom-left of back
+		0.0f, 0.0f, -1.0f, // bottom-right of back
+
+		// right surface
+		1.0f, 0.0f, 0.0f, // top-right of right
+		1.0f, 0.0f, 0.0f, // top-left of right
+		1.0f, 0.0f, 0.0f, // bottom-left of right
+		1.0f, 0.0f, 0.0f, // bottom-right of right
+
+		// left surface
+		-1.0f, 0.0f, 0.0f, // top-right of left
+		-1.0f, 0.0f, 0.0f, // top-left of left
+		-1.0f, 0.0f, 0.0f, // bottom-left of left
+		-1.0f, 0.0f, 0.0f  // bottom-right of left
+
+	};
+
+	// vao and vbo related code
+	// vao for Cube
+	glGenVertexArrays(1, &vao_Cube);
+	glBindVertexArray(vao_Cube);
+
+	// vbo for position
+	glGenBuffers(1, &vbo_Cube_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Cube_Position);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(CubePosition), CubePosition, GL_STATIC_DRAW);
+	glVertexAttribPointer(PRJ_ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(PRJ_ATTRIBUTE_POSITION);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// normal vbo
-	glGenBuffers(1, &gVbo_sphere_normal);
-	glBindBuffer(GL_ARRAY_BUFFER, gVbo_sphere_normal);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_normals), sphere_normals, GL_STATIC_DRAW);
+	// vbo for Normal
+	glGenBuffers(1, &vbo_Cube_Normal);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Cube_Normal);
 
-	glVertexAttribPointer(PRJ_ATRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-	glEnableVertexAttribArray(PRJ_ATRIBUTE_NORMAL);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cubeNormals), cubeNormals, GL_STATIC_DRAW);
+	glVertexAttribPointer(PRJ_ATTRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(PRJ_ATTRIBUTE_NORMAL);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// element vbo
-	glGenBuffers(1, &gVbo_sphere_element);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(sphere_elements), sphere_elements, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	// unbind vao
-	glBindVertexArray(0);
+	glBindVertexArray(0); // unbind vao for Cube
 
 	// Depth Related Changes
 	glEnable(GL_DEPTH_TEST);
@@ -517,7 +624,7 @@ int initialize(void)
 	glShadeModel(GL_SMOOTH);
 
 	/* Clear the  screen using blue color */
-	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	perspectiveProjectionMatrix = mat4::identity();
 
@@ -571,28 +678,57 @@ void display(void)
 	// use shader program obejct
 	glUseProgram(shaderProgramObject);
 
+	// Cube
 	// Tranformations
 	mat4 translationMatrix = mat4::identity();
+	mat4 rotationMatrix_X = mat4::identity();
+	mat4 rotationMatrix_Y = mat4::identity();
+	mat4 rotationMatrix_Z = mat4::identity();
+	mat4 rotationMatrix = mat4::identity();
+
 	mat4 modelMatrix = mat4::identity();
 	mat4 viewMatrix = mat4::identity();
 
-	translationMatrix = vmath::translate(0.0f, 0.0f, -2.0f); // glTranslatef() is replaced by this line
+	translationMatrix = vmath::translate(0.0f, 0.0f, -6.0f); // glTranslatef() is replaced by this line
 
-	modelMatrix = translationMatrix;
+	rotationMatrix_X = vmath::rotate(angleCube, 1.0f, 0.0f, 0.0f);
+	rotationMatrix_Y = vmath::rotate(angleCube, 0.0f, 1.0f, 0.0f);
+	rotationMatrix_Z = vmath::rotate(angleCube, 0.0f, 0.0f, 1.0f);
+
+	rotationMatrix = rotationMatrix_X * rotationMatrix_Y * rotationMatrix_Z;
+
+	modelMatrix = translationMatrix * rotationMatrix;
 
 	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
 	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
 	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
 
-	// draw the desired graphics
-	// drawing code -- magic
+	// Sending Light Related uniforms
+	if (bLight == TRUE)
+	{
+		glUniform1i(lightingEnableUniform, 1);
+		glUniform3fv(lDUniform, 1, lightDiffuse);
+		glUniform3fv(kDUniform, 1, materialDiffuse);
+		glUniform4fv(lightPositionUniform, 1, lightPositions);
+	}
+	else
+	{
+		glUniform1i(lightingEnableUniform, 0);
+	}
 
-	glBindVertexArray(gVao_sphere);
+	glBindVertexArray(vao_Cube);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-	// glDrawArrays(GL_TRIANGLES, 0, gNumElements);
+	glDrawArrays(GL_TRIANGLE_FAN, 4, 4);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 8, 4);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 12, 4);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 16, 4);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 20, 4);
 
 	glBindVertexArray(0);
 
@@ -605,6 +741,9 @@ void display(void)
 void update(void)
 {
 	/* code */
+	angleCube = angleCube + 0.1f;
+	if (angleCube >= 360.0f)
+		angleCube = angleCube - 360.0f;
 }
 
 void uninitialize(void)
@@ -617,32 +756,25 @@ void uninitialize(void)
 		ToggleFullScreen();
 
 	/*  */
-	// deletion of gVbo_sphere_element
-	if (gVbo_sphere_element)
+	// delete vbo_normal
+	if (vbo_Cube_Normal)
 	{
-		glDeleteBuffers(1, &gVbo_sphere_element);
-		gVbo_sphere_element = 0;
+		glDeleteBuffers(1, &vbo_Cube_Normal);
+		vbo_Cube_Normal = 0;
 	}
 
-	// deletion of gVbo_sphere_normal
-	if (gVbo_sphere_normal)
+	// delete vbo_Cube_Position
+	if (vbo_Cube_Position)
 	{
-		glDeleteBuffers(1, &gVbo_sphere_normal);
-		gVbo_sphere_normal = 0;
+		glDeleteBuffers(1, &vbo_Cube_Position);
+		vbo_Cube_Position = 0;
 	}
 
-	// deletion of gVbo_sphere_Position
-	if (gVbo_sphere_position)
+	// deletion of vao_Cube
+	if (vao_Cube)
 	{
-		glDeleteBuffers(1, &gVbo_sphere_position);
-		gVbo_sphere_position = 0;
-	}
-
-	// deletion of gVao_sphere
-	if (gVao_sphere)
-	{
-		glDeleteVertexArrays(1, &gVao_sphere);
-		gVao_sphere = 0;
+		glDeleteVertexArrays(1, &vao_Cube);
+		vao_Cube = 0;
 	}
 
 	if (shaderProgramObject)
@@ -700,3 +832,21 @@ void uninitialize(void)
 		gpFile = NULL;
 	}
 }
+
+// STEPS # for Diffise lights
+/*
+1.1 Calculate Eye Coordinates by multiplying position with model view matrix
+1.2 calculate Normal Matrix from model view matrix .
+		Normal matrix definition = "normal matrix is upper left 3 * 3 matrix
+									of inverse of transpose of that matrix"
+1.3 Calculate Tranformed Normals by multyplying normal withs above calclated
+	matrix and normalize the result.
+1.4 Calculate the light directioin with substracting eye coordinate by eye position(calculated in step 1)
+1.5 Now calculate diffuse ligtht using following equation
+
+	L = Ld * Kd * (s.n)
+
+	Description ->
+	(Total light intencity) = apna dileli intencity values * materisl cha diffuse constant *
+	(dot product of light (s = s for source light direction)direction * (n)transformed normal )
+*/
