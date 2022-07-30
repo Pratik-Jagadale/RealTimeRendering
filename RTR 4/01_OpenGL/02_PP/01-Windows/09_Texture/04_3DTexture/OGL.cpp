@@ -743,9 +743,9 @@ void display(void)
 
 	glDrawArrays(GL_TRIANGLES, 0, 12);
 
-	glBindTexture(GL_TEXTURE_2D, 0);
-
 	glBindVertexArray(0);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	// Cube
 	// Tranformations
@@ -786,9 +786,9 @@ void display(void)
 
 	glDrawArrays(GL_TRIANGLE_FAN, 20, 4);
 
-	glBindTexture(GL_TEXTURE_2D, 0);
-
 	glBindVertexArray(0);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 

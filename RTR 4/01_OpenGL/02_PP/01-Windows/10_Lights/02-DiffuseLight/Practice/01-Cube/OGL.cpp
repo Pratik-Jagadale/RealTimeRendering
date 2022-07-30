@@ -239,16 +239,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case 27:
-			if (gpFile)
-			{
-				fprintf(gpFile, "Log File Successfully Closes");
-				fclose(gpFile);
-				gpFile = NULL;
-			}
-			PostQuitMessage(0);
+			DestroyWindow(ghwnd);
+			break;
 		}
 		break;
-
 	case WM_SIZE:
 		resize(WORD(lParam), HIWORD(lParam));
 		break;
@@ -477,7 +471,7 @@ int initialize(void)
 	// prelinked binding
 	// Binding Position Array
 	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_POSITION, "a_position");
-	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_POSITION, "a_normal");
+	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_NORMAL, "a_normal");
 
 	// link
 	glLinkProgram(shaderProgramObject);

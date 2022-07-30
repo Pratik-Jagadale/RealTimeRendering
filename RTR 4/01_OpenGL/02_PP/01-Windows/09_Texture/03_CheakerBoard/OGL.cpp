@@ -633,9 +633,9 @@ void display(void)
 
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-	glBindTexture(GL_TEXTURE_2D, 0);
-
 	glBindVertexArray(0);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	// unuse the shader program object
 	glUseProgram(0);

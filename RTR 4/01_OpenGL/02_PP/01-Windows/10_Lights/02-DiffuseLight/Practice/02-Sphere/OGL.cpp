@@ -8,12 +8,14 @@
 #include <GL/glew.h> // This must be before gl.h
 #include <GL/gl.h>
 #include "vmath.h"
+#include "Sphere.h"
 
 using namespace vmath;
 
 /* OpenGL libraries */
 #pragma comment(lib, "glew32.lib")
 #pragma comment(lib, "OpenGL32.lib")
+#pragma comment(lib, "Sphere.lib")
 
 #define WINWIDTH 800
 #define WINHEIGHT 600
@@ -41,15 +43,34 @@ enum
 	PRJ_ATRIBUTE_TEXTURE0
 };
 
-GLuint vao;				 // Vertex Array Object -
-GLuint vbo_Position;	 // Vertex Buffer Object - Pyramid - Position
-GLuint vbo_Texcoord;	 // Vertex Buffer Object - Pyramid
-GLuint mvpMatrixUniform; // model View Projection
-GLuint textureSamplerUniform;
-GLuint keyPressUniform;
+GLuint gVao_sphere;			 // Vertex Array Object
+GLuint gVbo_sphere_position; // Vertex Buffer Object
+GLuint gVbo_sphere_normal;
+GLuint gVbo_sphere_element;
+
+GLuint modelMatrixUniform;
+GLuint viewMatrixUniform;
+GLuint projectionMatrixUniform;
+
 mat4 perspectiveProjectionMatrix;
-GLuint texture_smiley;
-int keyPressed = -1;
+
+GLuint ldUniform; // light direction
+GLuint kdUniform; // material diffuse
+GLuint lightPositionUniform;
+GLuint lightingEnbaledUniform;
+
+GLfloat lightDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat materialDiffuse[] = {0.5f, 0.5f, 0.5f, 1.0f};
+GLfloat lightPositions[] = {0.0f, 0.0f, 2.0f, 1.0f};
+
+BOOL bLight;
+
+float sphere_vertices[1146];
+float sphere_normals[1146];
+float sphere_textures[764];
+unsigned short sphere_elements[2280];
+int gNumVertices;
+int gNumElements;
 
 /* Entry Point Function */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
@@ -134,17 +155,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	}
 	else if (iRetVal == -4)
 	{
-		fprintf(gpFile, "Makeing OpenGL as current Context Failed...\n");
+		fprintf(gpFile, "Makeing OpnGL as current Context Failed...\n");
 		uninitialize();
 	}
 	else if (iRetVal == -5)
 	{
 		fprintf(gpFile, "GLEW Initialization Failed...\n");
-		uninitialize();
-	}
-	else if (iRetVal == -6)
-	{
-		fprintf(gpFile, " loadGLTexture Failed for texture_smiley ...\n");
 		uninitialize();
 	}
 	else
@@ -209,30 +225,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 	case WM_ERASEBKGND:
 		return (0);
 
-	case WM_KEYDOWN:
-		switch (wParam)
-		{
-		case 49:
-			keyPressed = 1;
-			break;
-
-		case 50:
-			keyPressed = 2;
-			break;
-
-		case 51:
-			keyPressed = 3;
-			break;
-
-		case 52:
-			keyPressed = 4;
-			break;
-		default:
-			keyPressed = 0;
-			break;
-		}
-		break;
-
 	case WM_CHAR:
 		switch (wParam)
 		{
@@ -240,17 +232,24 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		case 'F':
 			ToggleFullScreen();
 			break;
-		case 27:
-			if (gpFile)
+
+		case 'L':
+		case 'l':
+			if (bLight == FALSE)
 			{
-				fprintf(gpFile, "Log File Successfully Closes");
-				fclose(gpFile);
-				gpFile = NULL;
+				bLight = TRUE;
 			}
-			PostQuitMessage(0);
+			else
+			{
+				bLight = FALSE;
+			}
+			break;
+
+		case 27:
+			DestroyWindow(hwnd);
+			break;
 		}
 		break;
-
 	case WM_SIZE:
 		resize(WORD(lParam), HIWORD(lParam));
 		break;
@@ -265,6 +264,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 	default:
 		break;
 	}
+
 	return (DefWindowProc(hwnd, iMsg, wParam, lParam));
 }
 
@@ -314,7 +314,6 @@ int initialize(void)
 	void resize(int, int);
 	void printfGLInfo(void);
 	void uninitialize(void);
-	BOOL LoadGLTexture(GLuint *, TCHAR[]);
 
 	/* variable declartions */
 	PIXELFORMATDESCRIPTOR pfd;
@@ -370,13 +369,26 @@ int initialize(void)
 		"#version 460 core"
 		"\n"
 		"in vec4 a_position;"
-		"in vec2 a_texcoord;"
-		"uniform mat4 u_mvpMatrix;"
-		"out vec2 a_texcoord_out;"
+		"in vec3 a_normal;"
+		"uniform mat4 u_modelMatrix;"
+		"uniform mat4 u_viewMatrix;"
+		"uniform mat4 u_projectionMatrix;"
+		"uniform vec3 u_ld;"
+		"uniform vec3 u_kd;"
+		"uniform vec4 u_lightPosition;"
+		"uniform int u_lightEnabled;"
+		"out vec3 diffuse_light_color;"
 		"void main(void)"
 		"{"
-		"gl_Position = u_mvpMatrix * a_position;"
-		"a_texcoord_out = a_texcoord;"
+		"if(u_lightEnabled == 1)"
+		"{"
+		"vec4 eyeCoordinate = u_viewMatrix * u_modelMatrix * a_position;"
+		"mat3 normalMatrix = mat3(transpose(inverse(u_viewMatrix * u_modelMatrix)));"
+		"vec3 transformedNormals = normalize(normalMatrix * a_normal);"
+		"vec3 lightDirection = vec3(normalize(u_lightPosition - eyeCoordinate));"
+		"diffuse_light_color = u_ld * u_kd * max(dot(lightDirection, transformedNormals), 0.0);"
+		"}"
+		"gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;"
 		"}";
 
 	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
@@ -416,15 +428,14 @@ int initialize(void)
 	const GLchar *fragmentShaderSourceCode =
 		"#version 460 core"
 		"\n"
-		"in vec2 a_texcoord_out;"
-		"uniform sampler2D u_textureSampler;"
-		"uniform int u_keyPressed;"
+		"in vec3 diffuse_light_color;"
+		"uniform int u_lightEnabled;"
 		"out vec4 FragColor;"
 		"void main(void)"
 		"{"
-		"if(u_keyPressed == 1)"
+		"if(u_lightEnabled == 1)"
 		"{"
-		"FragColor = texture(u_textureSampler , a_texcoord_out);"
+		"FragColor = vec4(diffuse_light_color,1.0);"
 		"}"
 		"else"
 		"{"
@@ -466,10 +477,8 @@ int initialize(void)
 	glAttachShader(shaderProgramObject, fragmentShaderObject);
 
 	// prelinked binding
-	// Binding Position Array
 	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_POSITION, "a_position");
-	// Binding texcoord Array
-	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_TEXTURE0, "a_texcoord");
+	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_NORMAL, "a_normal");
 
 	// link
 	glLinkProgram(shaderProgramObject);
@@ -498,42 +507,51 @@ int initialize(void)
 	}
 
 	// post link - getting
-	mvpMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_mvpMatrix");
-	textureSamplerUniform = glGetUniformLocation(shaderProgramObject, "u_textureSampler");
-	keyPressUniform = glGetUniformLocation(shaderProgramObject, "u_keyPressed");
+	modelMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_modelMatrix");
+	viewMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_viewMatrix");
+	projectionMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_projectionMatrix");
 
-	// vao_Pyramid and vba related code
+	ldUniform = glGetUniformLocation(shaderProgramObject, "u_ld");
+	kdUniform = glGetUniformLocation(shaderProgramObject, "u_kd");
+	lightPositionUniform = glGetUniformLocation(shaderProgramObject, "u_lightPosition");
+	lightingEnbaledUniform = glGetUniformLocation(shaderProgramObject, "u_lightEnabled");
+
+	// gVao_sphere and vba related code
 	// declartions of vertex Data array
-	const GLfloat position[] = {
-		1.0f, 1.0f, 0.0f,
-		-1.0f, 1.0f, 0.0f,
-		-1.0f, -1.0f, 0.0f,
-		1.0f, -1.0f, 0.0f};
+	getSphereVertexData(sphere_vertices, sphere_normals, sphere_textures, sphere_elements);
+	gNumVertices = getNumberOfSphereVertices();
+	gNumElements = getNumberOfSphereElements();
 
-	// vao and vbo related code
-	// vao for QUAD
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	// vao vbo reelated code
+	// vao
+	glGenVertexArrays(1, &gVao_sphere);
+	glBindVertexArray(gVao_sphere);
 
-	// vbo for position
-	glGenBuffers(1, &vbo_Position);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Position);
+	// position vbo
+	glGenBuffers(1, &gVbo_sphere_position);
+	glBindBuffer(GL_ARRAY_BUFFER, gVbo_sphere_position);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_vertices), sphere_vertices, GL_STATIC_DRAW);
 
-	glBufferData(GL_ARRAY_BUFFER, sizeof(position), position, GL_STATIC_DRAW);
 	glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
 	glEnableVertexAttribArray(PRJ_ATRIBUTE_POSITION);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// vbo for Texcoord
-	glGenBuffers(1, &vbo_Texcoord);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Texcoord);
-
-	glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(GL_FLOAT), NULL, GL_DYNAMIC_DRAW);
-	glVertexAttribPointer(PRJ_ATRIBUTE_TEXTURE0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(PRJ_ATRIBUTE_TEXTURE0);
-
+	// normal vbo
+	glGenBuffers(1, &gVbo_sphere_normal);
+	glBindBuffer(GL_ARRAY_BUFFER, gVbo_sphere_normal);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_normals), sphere_normals, GL_STATIC_DRAW);
+	glVertexAttribPointer(PRJ_ATRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(PRJ_ATRIBUTE_NORMAL);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// element vbo
+	glGenBuffers(1, &gVbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(sphere_elements), sphere_elements, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// unbind vao
 	glBindVertexArray(0);
 
 	// Depth Related Changes
@@ -544,13 +562,6 @@ int initialize(void)
 
 	/* Clear the  screen using blue color */
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-	// Texture Initiallization
-	if (LoadGLTexture(&texture_smiley, MAKEINTRESOURCE(IDBITMAP_SMILEY)) == FALSE)
-		return -6;
-
-	// Enabaling the texture
-	glEnable(GL_TEXTURE_2D);
 
 	perspectiveProjectionMatrix = mat4::identity();
 
@@ -604,93 +615,42 @@ void display(void)
 	// use shader program obejct
 	glUseProgram(shaderProgramObject);
 
-	// Pyramid
 	// Tranformations
 	mat4 translationMatrix = mat4::identity();
-	mat4 modelViewMatrix = mat4::identity();
-	mat4 modelViewProjectionMatrix = mat4::identity();
+	mat4 modelMatrix = mat4::identity();
+	mat4 viewMatrix = mat4::identity();
 
-	translationMatrix = vmath::translate(0.0f, 0.0f, -6.0f); // glTranslatef() is replaced by this line
+	translationMatrix = vmath::translate(0.0f, 0.0f, -2.0f); // glTranslatef() is replaced by this line
 
-	modelViewMatrix = translationMatrix; // order is very important
+	modelMatrix = translationMatrix;
 
-	modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
 
-	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
-
-	glActiveTexture(GL_TEXTURE0); //
-	glBindTexture(GL_TEXTURE_2D, texture_smiley);
-	glUniform1i(textureSamplerUniform, 0); //
-
-	glBindVertexArray(vao);
-
-	GLfloat textCoord[8];
-	if (keyPressed == 1)
+	if (bLight == TRUE)
 	{
-		textCoord[0] = 0.5f;
-		textCoord[1] = 0.5f;
-		textCoord[2] = 0.0f;
-		textCoord[3] = 0.5f;
-		textCoord[4] = 0.0f;
-		textCoord[5] = 0.0f;
-		textCoord[6] = 0.5f;
-		textCoord[7] = 0.0f;
-
-		glUniform1i(keyPressUniform, 1);
-	}
-	else if (keyPressed == 2)
-	{
-		textCoord[0] = 1.0f;
-		textCoord[1] = 1.0f;
-		textCoord[2] = 0.0f;
-		textCoord[3] = 1.0f;
-		textCoord[4] = 0.0f;
-		textCoord[5] = 0.0f;
-		textCoord[6] = 1.0f;
-		textCoord[7] = 0.0f;
-
-		glUniform1i(keyPressUniform, 1);
-	}
-	else if (keyPressed == 3)
-	{
-		textCoord[0] = 2.0f;
-		textCoord[1] = 2.0f;
-		textCoord[2] = 0.0f;
-		textCoord[3] = 2.0f;
-		textCoord[4] = 0.0f;
-		textCoord[5] = 0.0f;
-		textCoord[6] = 2.0f;
-		textCoord[7] = 0.0f;
-
-		glUniform1i(keyPressUniform, 1);
-	}
-	else if (keyPressed == 4)
-	{
-		textCoord[0] = 0.5f;
-		textCoord[1] = 0.5f;
-		textCoord[2] = 0.5f;
-		textCoord[3] = 0.5f;
-		textCoord[4] = 0.5f;
-		textCoord[5] = 0.5f;
-		textCoord[6] = 0.5f;
-		textCoord[7] = 0.5f;
-
-		glUniform1i(keyPressUniform, 1);
+		glUniform1i(lightingEnbaledUniform, 1);
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform4fv(lightPositionUniform, 1, lightPositions);
 	}
 	else
 	{
-		glUniform1i(keyPressUniform, 0);
+		glUniform1i(lightingEnbaledUniform, 0);
 	}
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Texcoord);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(textCoord), &textCoord, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// draw the desired graphics
+	// drawing code -- magic
 
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	// glDrawArrays(GL_TRIANGLES, 0, gNumElements);
 
 	glBindVertexArray(0);
-
-	glBindTexture(GL_TEXTURE_2D, 0);
 
 	// unuse the shader program object
 	glUseProgram(0);
@@ -713,30 +673,32 @@ void uninitialize(void)
 		ToggleFullScreen();
 
 	/*  */
-	if (texture_smiley)
+	// deletion of gVbo_sphere_element
+	if (gVbo_sphere_element)
 	{
-		glDeleteTextures(1, &texture_smiley);
-		texture_smiley = 0;
+		glDeleteBuffers(1, &gVbo_sphere_element);
+		gVbo_sphere_element = 0;
 	}
 
-	if (vbo_Texcoord)
+	// deletion of gVbo_sphere_normal
+	if (gVbo_sphere_normal)
 	{
-		glDeleteBuffers(1, &vbo_Texcoord);
-		vbo_Texcoord = 0;
+		glDeleteBuffers(1, &gVbo_sphere_normal);
+		gVbo_sphere_normal = 0;
 	}
 
-	// delete vbo_Cube_Position
-	if (vbo_Position)
+	// deletion of gVbo_sphere_Position
+	if (gVbo_sphere_position)
 	{
-		glDeleteBuffers(1, &vbo_Position);
-		vbo_Position = 0;
+		glDeleteBuffers(1, &gVbo_sphere_position);
+		gVbo_sphere_position = 0;
 	}
 
-	// deletion of vao_Cube
-	if (vao)
+	// deletion of gVao_sphere
+	if (gVao_sphere)
 	{
-		glDeleteVertexArrays(1, &vao);
-		vao = 0;
+		glDeleteVertexArrays(1, &gVao_sphere);
+		gVao_sphere = 0;
 	}
 
 	if (shaderProgramObject)
@@ -793,50 +755,4 @@ void uninitialize(void)
 		fclose(gpFile);
 		gpFile = NULL;
 	}
-}
-
-BOOL LoadGLTexture(GLuint *texture, TCHAR ImageResourceID[])
-{
-	// variable declartions
-	HBITMAP hBitmap = NULL;
-	BITMAP bmp;
-	BOOL bResult = FALSE;
-
-	// code
-	hBitmap = (HBITMAP)LoadImage(GetModuleHandle(NULL), ImageResourceID, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-
-	if (hBitmap)
-	{
-		bResult = TRUE;
-		GetObject(hBitmap, sizeof(BITMAP), &bmp);
-
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // 4 TO 1 FOR BETTER PERFORMANCE
-
-		glGenTextures(1, texture);
-
-		glBindTexture(GL_TEXTURE_2D, *texture);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-		// create the texture
-		glTexImage2D(GL_TEXTURE_2D,	   // Targter
-					 0,				   // MipMap Level (done by opengl)
-					 GL_RGBA,		   // Opengl Image format
-					 bmp.bmWidth,	   // Image Width
-					 bmp.bmHeight,	   // Image Height
-					 0,				   // Border Width
-					 GL_BGR,		   // Image Format
-					 GL_UNSIGNED_BYTE, // Data type of bmp.bmBits
-					 bmp.bmBits);	   //
-
-		glGenerateMipmap(GL_TEXTURE_2D); // Generate MipMap
-
-		glBindTexture(GL_TEXTURE_2D, 0); // unbind texture
-
-		// DELETE Object
-		DeleteObject(hBitmap);
-	}
-	return bResult;
 }
