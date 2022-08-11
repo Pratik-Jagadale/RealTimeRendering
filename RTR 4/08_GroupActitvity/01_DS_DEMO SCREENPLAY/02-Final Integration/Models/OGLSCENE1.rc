@@ -1,0 +1,6 @@
+#include "OGLSCENE1.h"
+
+
+IDBITMAP_SATURN_TEXTRURE BITMAP .\Models\images\Saturn.bmp
+IDBITMAP_STARS_TEXTRURE1 BITMAP .\Models\images\texture_sky_background_bmp.bmp
+IDBITMAP_SATURN_TEXTURE BITMAP .\Models\images\Saturn_Ring.bmp

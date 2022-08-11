@@ -1,0 +1,19 @@
+#include "OGLSCENE3.h"
+
+IDBITMAP_MAHAL_BASE_YELLOW_CARPET BITMAP .\Models\texture\texture_mahal_main_base.bmp
+IDBITMAP_MAHAL_RED_DESIGNE_CARPET BITMAP .\Models\texture\texture_mahal_red_designe_carpet.bmp
+IDBITMAP_MAHAL_RED_PLAN_CARPET BITMAP .\Models\texture\texture_mahal_red_plan_carpet.bmp
+IDBITMAP_MAHAL_BLUE_CARPET_YAGYA BITMAP .\Models\texture\texture_mahal_yagya_base.bmp
+IDBITMAP_MAHAL_RED_CIRCLE_DESIGNE BITMAP .\Models\texture\texture_red_circle_design.bmp
+IDBITMAP_MAHAL_BLUE_DESIGN BITMAP .\Models\texture\texture_mahal_blue_Design.bmp
+
+IDBITMAP_RANGOLI_ONE BITMAP .\Models\texture\texture_rangoli_one.bmp
+IDBITMAP_RANGOLI_TWO BITMAP .\Models\texture\texture_rangoli_two.bmp
+
+IDBITMAP_FACE BITMAP .\Models\texture\face.bmp
+IDBITMAP_RED_CLOTH BITMAP .\Models\texture\texture_red_cloth.bmp
+IDBITMAP_SKIN BITMAP .\Models\texture\texture_skin.bmp
+IDBITMAP_FACE_KING BITMAP .\Models\texture\texture_face_King.bmp
+IDBITMAP_FACE_QUEEN BITMAP .\Models\texture\texture_face_Queen.bmp
+IDBITMAP_ORG_CLOTH BITMAP .\Models\texture\texture_org_cloth.bmp
+IDBITMAP_FACE_HRUSHI BITMAP .\Models\texture\texture_face_hrushi.bmp

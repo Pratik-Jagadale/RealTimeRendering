@@ -1,0 +1,21 @@
+#include "OGLSCENE2.h"
+
+IDBITMAP_MOON_TEXTRURE BITMAP .\Models\images\Moon.bmp
+IDBITMAP_STARS_TEXTRURE BITMAP .\Models\images\texture_sky_background_bmp.bmp
+IDBITMAP_TEXTURE_GRASS BITMAP .\Models\images\grass.bmp
+IDBITMAP_BRICKSWALLPAPER BITMAP .\Models\images\texture_BricksWallpaper.bmp
+IDBITMAP_WHITEWALLPAPER BITMAP .\Models\images\texture_WhiteWallpaper.bmp
+IDBITMAP_ROOFWALLPAPER BITMAP .\Models\images\texture_roof.bmp
+IDBITMAP_HOME_DOORTEXTURE BITMAP .\Models\images\texture_home_door.bmp
+IDBITMAP_HOME_WINDOWTEXTURE BITMAP .\Models\images\texture_home_window.bmp
+IDBITMAP_HOME_BASEBRICKSTEXTURE BITMAP .\Models\images\texture_home_base.bmp
+IDBITMAP_WOODTEXTURE BITMAP .\Models\images\texture_wood_tbl.bmp
+IDBITMAP_BOOKTEXTURE BITMAP .\Models\images\texture_book.bmp
+IDBITMAP_GANESHWALLPAPER BITMAP .\Models\images\texture_GaneshWallpaper.bmp
+IDBITMAP_RAMSITAWALLPAPER BITMAP .\Models\images\texture_RamSita.bmp
+IDBITMAP_TRUNK BITMAP .\Models\images\trunk.bmp
+IDBITMAP_WATER BITMAP .\Models\images\texture_water.bmp
+IDBITMAP_CHOURANG_TEXTURE BITMAP .\Models\images\texture_red_circle_design.bmp
+IDBITMAP_BLANK_BOOK_PAGE BITMAP .\Models\images\texture_blank_book_Page.bmp
+IDBITMAP_LEAF BITMAP .\Models\images\leaf.bmp
+IDBITMAP_BOOK_COVER BITMAP images\texture_book_cover.bmp
