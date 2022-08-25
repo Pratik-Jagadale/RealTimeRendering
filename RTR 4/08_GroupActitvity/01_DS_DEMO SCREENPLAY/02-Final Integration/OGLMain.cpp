@@ -4,10 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "helper_timer.h"
-/*
-#define STB_IMAGE_IMPLEMENTATION
-#include "std_image.h"
-*/
 
 #include "./Models/OGLSCENE1.h"
 #include "./Models/OGLSCENE2.h"
@@ -60,8 +56,8 @@ ALuint audioSource;
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void ToggleFullScreen();
 
-BOOL bScene01Done = FALSE;
-BOOL bScene02Done = FALSE;
+BOOL bScene01Done = TRUE;
+BOOL bScene02Done = TRUE;
 BOOL bScene03Done = TRUE;
 BOOL bScene04Done = TRUE;
 BOOL bScene05Done = TRUE;
@@ -200,9 +196,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 		{
 			if (gbActiveWindow == TRUE)
 			{
-				/* Render the seen */
+				/* Render the scene */
 				display();
-				// updatetheseen
+				// update the scene
 				update();
 			}
 		}
@@ -402,7 +398,7 @@ int initialize(void)
 
 	alSourcePlay(audioSource);
 	if (alGetError() != AL_NO_ERROR)
-		return -17;
+		return -17;	
 
 	resize(WINWIDTH, WINHEIGHT); // WARMUP RESIZE CALL
 
@@ -614,7 +610,7 @@ BOOL InitializeAudio(void)
 
 	// # STEP # 6: load the wave data into audio buffer
 	// Loadf Buffer Data Into Audio Buffer
-	alBufferData(audioBuffer, AL_FORMAT_STEREO16, audioBufferData, sizeOfAudioDatainBytes, 44100); // frequency hrtz
+	alBufferData(audioBuffer, AL_FORMAT_STEREO16, audioBufferData, sizeOfAudioDatainBytes, 48000); // frequency hrtz
 	if (alGetError() != AL_NO_ERROR)
 	{
 		fprintf(gpFile, "InitalizeAudio() : alBufferData() Failed.\n");

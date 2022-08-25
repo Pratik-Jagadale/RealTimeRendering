@@ -3,6 +3,7 @@
 #include "OGLSCENE1.h"
 #include <stdio.h>
 #include <stdlib.h>
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "helper_timer.h"
@@ -12,13 +13,6 @@
 /* OpenGL Header files */
 #include <GL/gl.h>
 #include <GL/glu.h> //graphics library utillity
-/*
-typedef unsigned char stbi_uc;
-typedef unsigned short stbi_us;
-
-void stbi_image_free(void *retval_from_stbi_load);
-stbi_uc *stbi_load(char const *filename, int *x, int *y, int *comp, int req_comp);
-*/
 
 /* Global Function Declartion */
 BOOL LoadGLTexture(GLuint *texture, TCHAR ImageResourceID[]);
@@ -114,28 +108,6 @@ const GLfloat angle2[] = {3.0f};
 
 BOOL initializeSceneOne(void)
 {
-
-    // Ligth related
-    /*
-        glLightfv(GL_LIGHT1, GL_AMBIENT, gfLightAmbiant);
-        glLightfv(GL_LIGHT1, GL_DIFFUSE, gfLightDeffuse);
-        glLightfv(GL_LIGHT1, GL_POSITION, gfLightPositions);
-        glLightfv(GL_LIGHT1, GL_SPECULAR, gflightSpecular);
-        glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, gfLightSpotLightDirection);
-        glLightfv(GL_LIGHT1, GL_SPOT_CUTOFF, angle1);
-        glLightfv(GL_LIGHT1, GL_SPOT_EXPONENT, angle2);
-        glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 1.5f);
-        glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.0f);
-        glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.0f);
-
-        glMaterialfv(GL_FRONT, GL_AMBIENT, materialAmbiant);
-        glMaterialfv(GL_FRONT, GL_DIFFUSE, materialDefuse);
-        glMaterialfv(GL_FRONT, GL_SPECULAR, materialSpecular);
-        glMaterialf(GL_FRONT, GL_SHININESS, materialShininess);
-    */
-    // Ligth related Changes
-
-    // glEnable(GL_LIGHT1);
 
     // texture
 
@@ -300,14 +272,9 @@ void displaySceneOne(void)
     void fadeOut(void);
 
     /* Code */
-    //    glLightfv(GL_FRONT, GL_POSITION, gfLightPositions);
 
     elapsedTime_S1 = sdkGetTimerValue(&pTimer_SceneOne); // THIS FUNCTION GIVES TIME IN MILLLIESECONDS
     elapsedTime_S1 = elapsedTime_S1 / 1000.0f;           // CONVERTIN TIME MILLISECONDS TO SECONDS
-    TCHAR str[100];
-    // swprintf_s(str, 100, TEXT("TIME = %4.2f ,CameraVector_S1[2] = %f ,CameraVector_S1[1] = %f , EyeVector_S1[1] = %f \n"), elapsedTime_S1, CameraVector_S1[2], CameraVector_S1[1], EyeVector_S1[1]); // "_s" for secure
-
-    // SetWindowText(ghwnd, str);
 
     if (bScene01Done_S1 == FALSE)
     {
@@ -353,16 +320,9 @@ void displaySceneOne(void)
         }
     }
 
-    // Actual Scene
-    /*gluLookAt(radius * cos(angle), yEyeVector_S1, radius * sin(angle),
-              0.0f, 0.0f, 0.0f,
-              0.0f, 1.0f, 0.0f);
-*/
-
     gluLookAt(CameraVector_S1[0], CameraVector_S1[1], CameraVector_S1[2],
               EyeVector_S1[0], EyeVector_S1[1], EyeVector_S1[2],
               0.0f, 1.0f, 0.0f);
-
     {
 
         if (sceneNumber_One == 1)
@@ -371,7 +331,6 @@ void displaySceneOne(void)
                 // Moon & Stars
                 glPushMatrix();
                 glScalef(30.0f, 30.0f, 30.0f);
-                // drawStars();
 
                 // Saturn
                 glPopMatrix();
@@ -383,7 +342,6 @@ void displaySceneOne(void)
                 glPopMatrix();
             }
 
-            // glScalef(0.75f, 0.75f, 0.75f);
             glTranslatef(0.0f, 3.0f, -9.0f);
             drawAstroMediComp();
             glPopMatrix();
@@ -395,7 +353,6 @@ void displaySceneOne(void)
                 // Moon & Stars
                 glPushMatrix();
                 glScalef(30.0f, 30.0f, 30.0f);
-                // drawStars();
 
                 // Saturn
                 glPopMatrix();
@@ -409,7 +366,6 @@ void displaySceneOne(void)
 
             glPushMatrix();
 
-            // glScalef(0.75f, 0.75f, 0.75f);
             glTranslatef(0.0f, 3.0f, -9.0f);
             drawAstroMediComp();
 
@@ -450,12 +406,6 @@ void displaySceneOne(void)
 
                 // Saturn
                 glPopMatrix();
-                // glPushMatrix();
-
-                /* glTranslatef(0.0f, -4.5f, -5.0f);
-                 drawSaturn();*/
-
-                // glPopMatrix();
             }
 
             glPushMatrix();
@@ -475,7 +425,6 @@ void displaySceneOne(void)
     if (sceneNumber_One == 1)
         glTranslatef(CameraVector_S1[0], CameraVector_S1[1], CameraVector_S1[2] - 0.1f);
     else
-        // glTranslatef(0.0f, 1.75f, 14.0f);
         glTranslatef(CameraVector_S1[0], CameraVector_S1[1], CameraVector_S1[2] - 0.5f);
 
     glScalef(100.0f, 100.0f, 100.0f);
@@ -505,12 +454,6 @@ void updateSceneOne(void)
         {
             if (CameraVector_S1[2] < 15.4f)
                 CameraVector_S1[2] = CameraVector_S1[2] + 0.012f;
-
-            //   if (CameraVector_S1[1] < 1.0f && CameraVector_S1[2] > 7.0f)
-            //     CameraVector_S1[1] = CameraVector_S1[1] + 0.00001f;
-
-            // if (EyeVector_S1[1] < 0.04f)
-            //    EyeVector_S1[1] = EyeVector_S1[1] + 0.0000000001f;
         }
     }
     else if (sceneNumber_One == 2)
@@ -542,8 +485,6 @@ void updateSceneOne(void)
 void uninitializeSceneOneSceneOne(void)
 {
     /* code */
-
-    /*  */
     if (texture_GL)
     {
         glDeleteTextures(1, &texture_GL);
@@ -1264,8 +1205,6 @@ void drawG(void)
     glPushMatrix();
     glTranslatef(0.0f, 0.75f, 0.011f);
     DrawBox(0.5f, 0.5f, 1.0f, 1.5f, 0.5f, 0.5f);
-    // glTranslatef(-0.0f, 0.75f, 0.0f);
-    // DrawBox(0.5f, 0.5f, 0.7f, 0.7f, 0.5f, 0.5f);
 
     // Right vertical
     glPopMatrix();
@@ -1279,7 +1218,6 @@ void drawG(void)
     glPushMatrix();
 
     glTranslatef(0.4f, 0.0f, 0.01f);
-    // glRotatef(90.0, 0, 0, 1);
     DrawBox(0.5f, 0.5f, 0.7f, 0.7f, 0.5f, 0.5f);
 
     // left Vertical
@@ -1309,7 +1247,6 @@ void drawG(void)
 
     glTranslatef(-0.44f, 0.71f, -0.01112f);
     glRotatef(69.0, 0, 0, 1);
-    // DrawBox(0.45f, 0.0f, 0.65f, 0.5f, 0.5f, 0.5f);
 
     // Bottom left Corner
     glPopMatrix();
@@ -1603,7 +1540,6 @@ void drawC(void)
 
     glTranslatef(-0.44f, 0.71f, -0.0045f);
     glRotatef(69.0, 0, 0, 1);
-    // DrawBox(0.45f, 0.0f, 0.65f, 0.5f, 0.5f, 0.5f);
 
     // Bottom left Corner
     glPopMatrix();
@@ -1611,7 +1547,6 @@ void drawC(void)
 
     glTranslatef(-0.44f, -0.70f, 0.00455f);
     glRotatef(-72.0, 0, 0, 1);
-    // DrawBox(0.45f, 0.0f, 0.65f, 0.65f, 0.5f, 0.5f);
 
     glPopMatrix();
 }
@@ -1775,8 +1710,6 @@ void drawR(void)
     glPopMatrix();
     glPushMatrix();
     glTranslatef(0.55f, -0.8f, -0.0143f);
-
-    // glRotatef(20.0f, 0.0f, 0.0f, 1.0f);
 
     DrawBox(0.47f, 0.47f, 0.0f, 0.6f, 0.5f, 0.5f);
 
@@ -2017,7 +1950,6 @@ void DrawBox(float leftHeight, float rightHeight, float topWidth, float bottomWi
 
     glBegin(GL_QUADS);
     // FRONT FACE
-    // colorSetcolor(242.0f, 78.0f, 41.0f);
     glColor3f(1.0f, 1.0f, 1.0f);
     glTexCoord2f(1.0f, 1.0f);
     glVertex3f(topWidth / 2, rightHeight / 2, topDepth / 2);
@@ -2049,10 +1981,6 @@ void DrawBox(float leftHeight, float rightHeight, float topWidth, float bottomWi
     materialDefuse[3] = 1.0f; // a
     glMaterialfv(GL_FRONT, GL_DIFFUSE, materialDefuse);
 
-    // shininess
-    //  materialShininess = 0.4 * 128;
-    // glMaterialf(GL_FRONT, GL_SHININESS, materialShininess);
-
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
@@ -2069,7 +1997,6 @@ void DrawBox(float leftHeight, float rightHeight, float topWidth, float bottomWi
     else
         colorSetcolor(89.0f, 29.0f, 15.0f);
 
-    // glColor3f(1.0f, 1.0f, 0.0f);
     glTexCoord2f(1.0f, 0.0f);
 
     glVertex3f(topWidth / 2, rightHeight / 2, -(topDepth / 2));
@@ -2085,7 +2012,6 @@ void DrawBox(float leftHeight, float rightHeight, float topWidth, float bottomWi
 
     // BACK FACE
     glBegin(GL_QUADS);
-    // glColor3f(0.0f, 1.0f, 0.0f);
     glTexCoord2f(1.0f, 0.0f);
     glVertex3f(-(topWidth / 2), leftHeight / 2, -(topDepth / 2));
 
@@ -2102,7 +2028,6 @@ void DrawBox(float leftHeight, float rightHeight, float topWidth, float bottomWi
 
     // LEFT FACE
     glBegin(GL_QUADS);
-    // glColor3f(0.0f, 0.0f, 1.0f);
     glTexCoord2f(0.0f, 0.0f);
     glVertex3f(-(topWidth / 2), leftHeight / 2, (topDepth / 2));
 
@@ -2118,7 +2043,6 @@ void DrawBox(float leftHeight, float rightHeight, float topWidth, float bottomWi
 
     // TOP
     glBegin(GL_QUADS);
-    // glColor3f(1.0f, 0.0f, 1.0f);
     glTexCoord2f(0.0f, 1.0f);
     glVertex3f(topWidth / 2, rightHeight / 2, topDepth / 2);
 
@@ -2133,7 +2057,6 @@ void DrawBox(float leftHeight, float rightHeight, float topWidth, float bottomWi
     glEnd();
 
     // BOTTOM FACE
-    // glColor3f(1.0f, 1.0f, 1.0f);
     glBegin(GL_QUADS);
     glTexCoord2f(1.0f, 1.0f);
     glVertex3f(bottomWidth / 2, -(rightHeight / 2), bottomDepth / 2);
@@ -2592,13 +2515,11 @@ void drawThannksToMatrixGroupMembersCredits(void)
 
 void fadeOurSirName(void)
 {
-
     static float alpha = 0.0f;
 
     alpha = alpha + 0.003f;
 
     glEnable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, alpha);
 
@@ -2609,12 +2530,7 @@ void fadeOurSirName(void)
     glVertex3f(1.0f, -1.0f, 0.0f);
     glEnd();
 
-    TCHAR str[100];
-    swprintf_s(str, 100, TEXT("Alpha = %f \n"), alpha); // "_s" for secure
-    SetWindowText(ghwnd, str);
-
     glDisable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
     glColor3f(1.0f, 1.0f, 1.0f);
 }
 
@@ -2622,11 +2538,6 @@ void Credits(void)
 {
     glDisable(GL_LIGHTING);
     static int sceneNumber_credit = 0;
-
-    TCHAR str[100];
-    swprintf_s(str, 100, TEXT("TIME = %4.2f , \n"), elapsedTime_S1); // "_s" for secure
-
-    SetWindowText(ghwnd, str);
 
     static BOOL CREDIT_1 = FALSE;
     static BOOL CREDIT_2 = FALSE;
@@ -2644,19 +2555,16 @@ void Credits(void)
 
     if (CREDIT_1 == FALSE)
     {
-
         if (elapsedTime_S1 > 7)
         {
             sceneNumber_credit++;
             sdkResetTimer(&pTimer_SceneOne);
-            resetFadeIn = TRUE;
             CREDIT_1 = FALSE;
             resetFadeIn = TRUE;
         }
     }
     else if (CREDIT_2 == FALSE)
     {
-
         if (elapsedTime_S1 > 7)
         {
             sceneNumber_credit++;
@@ -2672,7 +2580,7 @@ void Credits(void)
             sceneNumber_credit++;
             sdkResetTimer(&pTimer_SceneOne);
             CREDIT_3 = FALSE;
-            // resetFadeIn = TRUE;
+            resetFadeIn = TRUE;
         }
     }
     else if (CREDIT_4 == FALSE)
@@ -2683,7 +2591,7 @@ void Credits(void)
             sceneNumber_credit++;
             sdkResetTimer(&pTimer_SceneOne);
             CREDIT_4 = FALSE;
-            // resetFadeIn = TRUE;
+            resetFadeIn = TRUE;
         }
     }
     else if (CREDIT_5 == FALSE)
@@ -2694,7 +2602,7 @@ void Credits(void)
             sceneNumber_credit++;
             sdkResetTimer(&pTimer_SceneOne);
             CREDIT_5 = FALSE;
-            // resetFadeIn = TRUE;
+            resetFadeIn = TRUE;
         }
     }
     else if (CREDIT_6 == FALSE)
@@ -2705,7 +2613,7 @@ void Credits(void)
             sceneNumber_credit++;
             sdkResetTimer(&pTimer_SceneOne);
             CREDIT_6 = FALSE;
-            //  resetFadeIn = TRUE;
+            resetFadeIn = TRUE;
         }
     }
     else if (CREDIT_7 == FALSE)
@@ -2865,15 +2773,17 @@ void Credits(void)
         glPushMatrix();
         glTranslatef(0.0f, 0.0f, -12.0f);
         drawSirAndMadamCredits();
-        glPopMatrix();
-
-        if (elapsedTime_S1 > 5)
-        {
-            glTranslatef(0.0f, 0.0f, 5.5f);
-            fadeOurSirName();
-        }
+        glPopMatrix();      
     }
 
+    glPushMatrix();
     glTranslatef(0.0f, 0.0f, 5.5f);
     fadeIn();
+    glPopMatrix();
+
+    if (elapsedTime_S1 > 5 && sceneNumber_credit == 8)
+    {
+        glTranslatef(0.0f, 0.0f, 5.5f);
+        fadeOurSirName();
+    }
 }

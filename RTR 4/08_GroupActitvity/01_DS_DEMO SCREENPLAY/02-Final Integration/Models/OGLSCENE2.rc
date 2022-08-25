@@ -18,3 +18,4 @@ IDBITMAP_WATER BITMAP .\Models\images\texture_water.bmp
 IDBITMAP_CHOURANG_TEXTURE BITMAP .\Models\images\texture_red_circle_design.bmp
 IDBITMAP_BLANK_BOOK_PAGE BITMAP .\Models\images\texture_blank_book_Page.bmp
 IDBITMAP_LEAF BITMAP .\Models\images\leaf.bmp
+IDBITMAP_BOOK_COVER BITMAP images\texture_book_cover.bmp

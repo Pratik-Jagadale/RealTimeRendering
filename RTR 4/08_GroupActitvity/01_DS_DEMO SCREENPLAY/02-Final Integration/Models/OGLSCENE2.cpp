@@ -3,20 +3,13 @@
 #include "OGLSCENE2.h"
 #include <stdio.h>
 #include <stdlib.h>
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 
 #include "std_image.h"
 #include "Common.h"
 
-/*
-namespace img
-{
-#define STB_IMAGE_STATIC
-#define STB_IMAGE_IMPLEMENTATION
-#include "std_image.h"
-};
-*/
 #include "helper_timer.h"
 
 /* OpenGL Header files */
@@ -111,6 +104,7 @@ GLuint texture_GaneshWallpaper;
 GLuint texture_RamSitaWallpaper;
 GLuint texture_leaf;
 GLuint texture_water;
+GLuint texture_book_Cover;
 
 GLfloat anglePageOne = 10.0f;
 GLfloat anglePageTwo = 10.0f;
@@ -129,12 +123,7 @@ BOOL bTimerStarted_S2 = FALSE;
 #define SCENE_03_DURATION_S2 16
 #define SCENE_04_DURATION_S2 17
 #define SCENE_05_DURATION_S2 16
-/*
- // for home scene
-GLfloat CameraVector[3] = {0.0, 0.0f, 0.0f};
-GLfloat EyeVector[3] = {0.0f, 0.0f, -3.0f};
-GLfloat UpVector[3] = {0.0f, 1.0f, 0.0f};
-*/
+
 
 int sceneFadeIn = 0.0f;
 
@@ -212,14 +201,12 @@ void drawonceAfterinit(void)
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
                  mat_amb_diff);
 
-    // BLED
-    // glEnable(GL_BLEND);
+    // BLEND
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void displaySceneTwo(void)
 {
-    
 
     // function prototype
     void drawSeenTwo(void);
@@ -256,14 +243,6 @@ void displaySceneTwo(void)
     }
     elapsedTime_S2 = sdkGetTimerValue(&pTimer_S2); // THIS FUNCTION GIVES TIME IN MILLLIESECONDS
     elapsedTime_S2 = elapsedTime_S2 / 1000.0f;
-    // CONVERTIN TIME MILLISECONDS TO SECONDS
-    /*
-        TCHAR str[200];
-        swprintf_s(str, 200, TEXT("TIME = %4.2f ,CameraVector[0] = %f, CameraVector[1] = %f ,CameraVector[2] = %f , EyeVector[0] = %f, EyeVector[1] = %f , EyeVector[2] = %f \n"), elapsedTime_S2, CameraVector[0], CameraVector[1], CameraVector[2], EyeVector[0], EyeVector[1], EyeVector[2]); // "_s" for secure
-    */
-    // swprintf_s(str, 200, TEXT("TCameraVector[0] = %f"), angleOfCamera); // "_s" for secure
-
-    // SetWindowText(ghwnd, str);
 
     if (bScene01Done_S2 == FALSE)
     {
@@ -326,32 +305,17 @@ void displaySceneTwo(void)
             bScene02Done = FALSE;
         }
     }
-    else
-    {
-        }
-
-    /*    float angle = AngleSphere * M_PI / 180.0f;
-        gluLookAt(radius * cos(angle), yEyeVector, radius * sin(angle),
-                  0.0f, 0.0f, 0.0f,
-                  0.0f, 1.0f, 0.0f);
-    */
 
     if (sceneNumber_S2 == 2)
     {
         float angle = (angleOfCamera * M_PI) / 180.0f;
-        //float angle = 0.5f *((angleOfCamera * M_PI) / 180.0f);
 
         xCam = (14.35 * cos(angle)) - 14.35f;
-        //xCam = (28.7 * cos(angle)) - 28.7f;
         yCam = 30.35 * sin(angle);
-        //yCam = 60.7 * sin(angle);
         xEye = (14.35 * cos(angle + 5)) - 14.35f;
-        //xEye = (28.7 * cos(angle + 5)) - 28.7f;
         yEye = 30.35 * sin(angle + 5);
-        //yEye = 60.7 * sin(angle + 5);
 
         // for the 2 nd outer scene
-        //  if (angleOfCamera > 90.0f)
         gluLookAt(xCam + 3.0f, CameraVector[1] + outeCameraHeight, yCam,
                   xEye, EyeVector[1] - 2.0f + outeCameraHeight, yEye,
                   xUpVectorForOutercamera, 1.0f, 0.0f);
@@ -368,12 +332,7 @@ void displaySceneTwo(void)
     {
         if (sceneNumber_S2 == 1 && sceneFadeIn == 1)
         {
-
             drawSeenTwo();
-
-            /* else if (elapsedTime_S2 > SCENE_02_DURATION_S2 - 3.0f)
-                 fadeOutFirstScene();
-         */
         }
         else if (sceneNumber_S2 == 2 && sceneFadeIn == 2)
         {
@@ -399,20 +358,18 @@ void displaySceneTwo(void)
             fadeInFirstScene();
             sceneFadeIn = 1;
         }
-        else if (elapsedTime_S2 > SCENE_01_DURATION_S2 - 4)
-            fadeOutFirstScene();
+        /*else if (elapsedTime_S2 > SCENE_01_DURATION_S2 - 4)
+            fadeOutFirstScene();*/
     }
     else if (sceneNumber_S2 == 2)
     {
         if (elapsedTime_S2 < 5)
         {
             sceneFadeIn = 2;
-            fadeInSecondScene();
+            //fadeInSecondScene();
         }
         else if (angleOfCamera < 35.0f)
-            fadeOutSecondScene(); /*
-         else if (elapsedTime_S2 > 16.0f)
-             fadeOutSecondScene();*/
+            fadeOutSecondScene(); 
     }
     else if (sceneNumber_S2 == 3)
     {
@@ -422,11 +379,6 @@ void displaySceneTwo(void)
             fadeInThirdScene();
         }
     }
-    /*else if (sceneNumber_S2 == 5)
-    {
-        if (elapsedTime_S2 > 9)
-            fadeOutFifthScene();
-    }*/
 
     glEnable(GL_LIGHTING);
 }
@@ -442,67 +394,26 @@ void updateSceneTwo(void)
     if (angleSky_S2 > 360.0f)
         angleSky_S2 = 0.0f;
 
-    // fprintf(gpFile, "%f\n", angleMoon);
-
-    if (anglePageOne < 171.0f)
-        anglePageOne = anglePageOne + 0.5f;
-    else if (anglePageTwo < 171.0f)
-        anglePageTwo = anglePageTwo + 0.5f;
-    else if (anglePageThree < 171.0f)
-        anglePageThree = anglePageThree + 0.5f;
-    /*  else if (anglePageFour < 171.0f)
-          anglePageFour = anglePageFour + 0.5f;
-       else if (anglePageFive < 171.0f)
-           anglePageFive = anglePageFive + 0.5f;
-   */
-    if (sceneNumber_S2 == 1)
-    {
-    }
     if (sceneNumber_S2 == 2)
     {
         angleOfCamera = angleOfCamera - 0.15f;
 
         if (angleOfCamera > 70.0f)
-           // outeCameraHeight = outeCameraHeight - 0.08f;
             outeCameraHeight = outeCameraHeight - 0.022f;
         else if (angleOfCamera > 50.0f)
-            //EyeVector[1] = EyeVector[1] + 0.15f;
             EyeVector[1] = EyeVector[1] + 0.033f;
         else if (angleOfCamera > 30.0f)
-        {
-            outeCameraHeight = outeCameraHeight + 0.00f;
-            //EyeVector[1] = EyeVector[1] + 0.1f;
-            EyeVector[1] = EyeVector[1] + 0.022f;
-        }
+            EyeVector[1] = EyeVector[1] + 0.035f;
         else
-            //outeCameraHeight = outeCameraHeight + 0.1f;
-            outeCameraHeight = outeCameraHeight + 0.022f;
+            outeCameraHeight = outeCameraHeight + 0.04f;
 
         if (angleOfCamera < 80.0f && xUpVectorForOutercamera <= 0)
-            xUpVectorForOutercamera = xUpVectorForOutercamera + 0.01f;
+            xUpVectorForOutercamera = xUpVectorForOutercamera + 0.008f;
     }
     else if (sceneNumber_S2 == 3)
     {
         if (elapsedTime_S2 > 4)
         {
-            /*if (CameraVector[0] < 3.0f)
-                CameraVector[0] = CameraVector[0] + 0.03f;
-
-            if (CameraVector[1] < 0.6f)
-                CameraVector[1] = CameraVector[1] + 0.01f;
-
-            if (CameraVector[2] > 0.2f)
-                CameraVector[2] = CameraVector[2] - 0.01f;
-
-            if (EyeVector[0] < 3.0f)
-                EyeVector[0] = EyeVector[0] + 0.03f;
-
-            if (EyeVector[1] < 0.4f)
-                EyeVector[1] = EyeVector[1] + 0.01f;
-
-            if (EyeVector[2] > -5.79f)
-                EyeVector[2] = EyeVector[2] - 0.03f;*/
-
             if (CameraVector[0] < 3.39f)
                 CameraVector[0] = CameraVector[0] + 0.015f;
 
@@ -520,7 +431,6 @@ void updateSceneTwo(void)
 
             if (EyeVector[2] > -5.79f)
                 EyeVector[2] = EyeVector[2] - 0.015f;
-
         }
     }
     else if (sceneNumber_S2 == 4)
@@ -532,9 +442,12 @@ void updateSceneTwo(void)
 
             if (CameraVector[1] > -0.35f)
                 CameraVector[1] = CameraVector[1] - 0.0075f;
-
+            
             if (CameraVector[2] > -1.90f)
                 CameraVector[2] = CameraVector[2] - 0.005f;
+            else
+                if (anglePageOne < 171.0f)
+                    anglePageOne = anglePageOne + 0.7f;
 
             if (EyeVector[0] < 3.39f)
                 EyeVector[0] = EyeVector[0] + 0.002f;
@@ -544,6 +457,7 @@ void updateSceneTwo(void)
 
             if (EyeVector[2] > -1.8f)
                 EyeVector[2] = EyeVector[2] - 5.5f;
+           
         }
     }
 }
@@ -608,21 +522,9 @@ void fadeInFirstScene(void)
     glEnable(GL_BLEND);
 
     glEnable(GL_DEPTH_TEST);
-    // glDisable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, alpha1);
     cubeforfadeinfadeout();
-    /*
-        glBegin(GL_QUADS);
-
-        glVertex3f(1.0f, 1.0f, 0.0f);
-        glVertex3f(-1.0f, 1.0f, 0.0f);
-        glVertex3f(-1.0f, -1.0f, 0.0f);
-        glVertex3f(1.0f, -1.0f, 0.0f);
-        glEnd();
-    */
-    // glDisable(GL_BLEND);
-    // glEnable(GL_DEPTH_TEST);
     glPopMatrix();
 }
 
@@ -668,15 +570,6 @@ void fadeInSecondScene(void)
     glColor4f(0.0f, 0.0f, 0.0f, alpha);
 
     cubeforfadeinfadeout();
-    /*
-        glBegin(GL_QUADS);
-        glVertex3f(1.0f, 1.0f, 0.0f);
-        glVertex3f(-1.0f, 1.0f, 0.0f);
-        glVertex3f(-1.0f, -1.0f, 0.0f);
-        glVertex3f(1.0f, -1.0f, 0.0f);
-        glEnd();
-
-      */
     glDisable(GL_BLEND);
     glColor3f(1.0f, 1.0f, 1.0f);
     glPopMatrix();
@@ -748,8 +641,6 @@ void fadeOutFifthScene(void)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glColor4f(0.0f, 0.0f, 0.0f, alpha);
 
-        // cubeforfadeinfadeout();
-
         glBegin(GL_QUADS);
         glVertex3f(1.0f, 0.0f, 1.0f);
         glVertex3f(-1.0f, 0.0f, 1.0f);
@@ -812,13 +703,6 @@ BOOL LoadGLTexture_S2(GLuint *texture, TCHAR ImageResourceID[])
 }
 //-----------------------------------------------------------------------------------------------------------------------------------
 
-// Macros Constants
-
-// Global Functions Prototype
-// void drawSeenTwo(void);
-// BOOL InitSeenTwo(void);
-// void UnInitiallizeSeenTwo(void);
-
 // Function Definitions
 BOOL InitSeenTwo(void)
 {
@@ -844,52 +728,6 @@ BOOL InitSeenTwo(void)
         fprintf(gpFile, "LoadGLTexture_S2() for texture_stars_S2 Failed...\n");
         return FALSE; // write log in wndproc
     }
-    /*
-        // For Home
-        glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbinatZero_S2);
-        glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDefuseZero_S2);
-        glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecularZero_S2);
-        glLightfv(GL_LIGHT0, GL_POSITION, lightPositionZero_S2);
-        glEnable(GL_LIGHT0);
-
-        glLightfv(GL_LIGHT5, GL_AMBIENT, lightAmbinatOne_S2);
-        glLightfv(GL_LIGHT5, GL_DIFFUSE, lightDefuseOne_S2);
-        glLightfv(GL_LIGHT5, GL_SPECULAR, lightSpecularOne_S2);
-        glLightfv(GL_LIGHT5, GL_POSITION, lightPositionOne_S2);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, materialAmbiant_S2);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, materialDefuse_S2);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpecular_S2);
-        glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, materialShininess_S2);
-
-        glEnable(GL_LIGHT5);
-
-        glLightfv(GL_LIGHT2, GL_AMBIENT, lightAmbiantTwo_S2);
-        glLightfv(GL_LIGHT2, GL_DIFFUSE, lightDeffuseTwo_S2);
-        glLightfv(GL_LIGHT2, GL_SPECULAR, lightSpecularTwo_S2);
-        glLightfv(GL_LIGHT2, GL_POSITION, lightPositionsTwo_S2);
-        glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, lightSpotLightDirectionTwo_S2);
-        glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, angleSpotCutOffTwo_S2);
-        glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, angleSpotExpoTwo_S2);
-        glLightf(GL_LIGHT2, GL_CONSTANT_ATTENUATION, 1.5f);
-        glLightf(GL_LIGHT2, GL_LINEAR_ATTENUATION, 0.0f);
-        glLightf(GL_LIGHT2, GL_QUADRATIC_ATTENUATION, 0.0f);
-        glEnable(GL_LIGHT2);
-
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-        GLfloat lmodel_ambient[] = {1.0f, 1.0f, 1.0f, 1.0};
-        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
-        glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-
-        GLfloat mat_amb_diff[] = {0.2, 0.2, 0.2f, 1.0};
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE,
-                     mat_amb_diff);
-
-        // BLED
-        // glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    */
-    // Texture for terrain
 
     if (LoadGLTexture_S2(&texture_grass, MAKEINTRESOURCE(IDBITMAP_TEXTURE_GRASS)) == FALSE)
     {
@@ -998,6 +836,13 @@ BOOL InitSeenTwo(void)
         return FALSE;
     }
 
+    if (LoadGLTexture_S2(&texture_book_Cover, MAKEINTRESOURCE(IDBITMAP_BOOK_COVER)) == FALSE)
+    {
+
+        fprintf(gpFile, "LoadGLTexture failed for texture_blank_book_Page");
+        return FALSE;
+    }
+
     glEnable(GL_TEXTURE_2D);
 
     // initializeTerrainCoords
@@ -1096,6 +941,11 @@ void drawTerrain(void)
 void UnInitiallizeSeenTwo(void)
 {
     // code
+    if (texture_book_Cover)
+    {
+        glDeleteTextures(1, &texture_book_Cover);
+        texture_book_Cover = 0;
+    }
 
     if (texture_blank_book_Page)
     {
@@ -1138,13 +988,7 @@ void UnInitiallizeSeenTwo(void)
         glDeleteTextures(1, &texture_grass);
         texture_grass = 0;
     }
-    /*
-        if (image_data)
-        {
-            stbi_image_free(image_data);
-            image_data = NULL;
-        }
-    */
+
     if (texture_moon)
     {
         glDeleteTextures(1, &texture_moon);
@@ -2193,6 +2037,7 @@ void drawBook(void)
     // variable declartions
     void DrawBox(void);
     void drawPageQuad(void);
+    void DrawGeetramayan(void);
 
     // code
     glPushMatrix();
@@ -2200,11 +2045,24 @@ void drawBook(void)
     // left side pages Base
     glTranslatef(0.8f, 0.0f, 0.0f);
     glRotatef(10.0f, 0.0f, 0.0f, 1.0f);
+
     glScalef(0.9f, 0.18f, 1.5f);
-    glBindTexture(GL_TEXTURE_2D, texture_blank_book_Page);
-    DrawBox();
+
+    DrawGeetramayan();
 
     glPopMatrix();
+
+    glPushMatrix();
+
+    glTranslatef(0.0f, 0.085f, 0.0f);
+    glRotatef(anglePageOne, 0.0f, 0.0f, 1.0f);
+    glTranslatef(0.8f, 0.0f, 0.0f);
+    glScalef(0.9f, 0.1f, 1.5f);
+
+    DrawGeetramayan();
+
+    glPopMatrix();
+
     glPushMatrix();
     // Page No 1
 
@@ -2217,42 +2075,7 @@ void drawBook(void)
     drawPageQuad();
 
     glPopMatrix();
-    glPushMatrix();
-    // Page No 2
 
-    glTranslatef(0.0f, 0.085f, 0.0f);
-    glRotatef(anglePageTwo, 0.0f, 0.0f, 1.0f);
-    glTranslatef(0.8f, 0.0f, 0.0f);
-    glScalef(0.85f, 0.18f, 1.5f);
-
-    glBindTexture(GL_TEXTURE_2D, texture_blank_book_Page);
-    drawPageQuad();
-
-    glPopMatrix();
-    glPushMatrix();
-    // Page No 3
-
-    glTranslatef(0.0f, 0.085f, 0.0f);
-    glRotatef(anglePageThree, 0.0f, 0.0f, 1.0f);
-    glTranslatef(0.8f, 0.0f, 0.0f);
-    glScalef(0.85f, 0.18f, 1.5f);
-
-    glBindTexture(GL_TEXTURE_2D, texture_blank_book_Page);
-    drawPageQuad();
-
-    glPopMatrix();
-    glPushMatrix();
-    // Page No 4
-
-    glTranslatef(0.0f, 0.085f, 0.0f);
-    glRotatef(anglePageFour, 0.0f, 0.0f, 1.0f);
-    glTranslatef(0.8f, 0.0f, 0.0f);
-    glScalef(0.85f, 0.18f, 1.5f);
-
-    glBindTexture(GL_TEXTURE_2D, texture_blank_book_Page);
-    drawPageQuad();
-
-    glPopMatrix();
     glPushMatrix();
     // Page No 5
 
@@ -2265,25 +2088,11 @@ void drawBook(void)
     drawPageQuad();
 
     glPopMatrix();
-    glPushMatrix();
-
-    // Right side pages Base
-    glTranslatef(-0.8f, 0.0f, 0.00001f);
-    glRotatef(-10.0f, 0.0f, 0.0f, 1.0f);
-    glScalef(0.9f, 0.18f, 1.5f);
-    glBindTexture(GL_TEXTURE_2D, texture_blank_book_Page);
-    DrawBox();
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glPopMatrix();
 }
 
 void drawPageQuad(void)
 {
-
     glPushMatrix();
-    // glRotatef(anglePageOne, 0.0f, 0.0f, 1.0f);
-    // glTranslatef()
 
     glBegin(GL_QUADS);
     // FRONT FACE
@@ -2606,14 +2415,12 @@ void drawTree(GLfloat base, GLfloat top, GLfloat height)
         Cylinder(base, top, height);
 
         isTrunk = FALSE;
-        // glPopMatrix();
     }
     else
     {
         if (height <= 2.0f)
         {
             glEnable(GL_BLEND);
-            // glDisable(GL_DEPTH_TEST);
             glBindTexture(GL_TEXTURE_2D, texture_leaf);
             glBegin(GL_QUADS);
             glColor3f(0.0f, 0.6f, 0.0f);
@@ -2631,7 +2438,6 @@ void drawTree(GLfloat base, GLfloat top, GLfloat height)
             glColor3f(1.0f, 1.0f, 1.0f);
             glEnd();
             glBindTexture(GL_TEXTURE_2D, 0);
-            // glEnable(GL_DEPTH_TEST);
             glDisable(GL_BLEND);
         }
         else
@@ -2906,4 +2712,113 @@ void drawPat(void)
         drawChourang();
     }
     glPopMatrix();
+}
+
+void DrawGeetramayan(void)
+{
+    glBindTexture(GL_TEXTURE_2D, texture_blank_book_Page);
+    glBegin(GL_QUADS);
+    // FRONT FACE
+    glNormal3f(0.0f, 0.0f, 1.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f, 1.0f);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(1.0f, -1.0f, 1.0f);
+    glEnd();
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // RIGHT FACE
+
+    glBegin(GL_QUADS);
+    glNormal3f(1.0f, 0.0f, 0.0f);
+    glTexCoord2f(1.0f, 0.0f);
+
+    glVertex3f(1.0f, 1.0f, -1.0f);
+
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(1.0f, -1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(1.0f, -1.0f, -1.0f);
+    glEnd();
+
+    // BACK FACE
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 0.0f, -1.0f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f, 1.0f, -1.0f);
+
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f, 1.0f, -1.0f);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(1.0f, -1.0f, -1.0f);
+
+    glTexCoord2f(0.0f, 0.0f);
+
+    glVertex3f(-1.0f, -1.0f, -1.0f);
+    glEnd();
+
+    // LEFT FACE
+    glBegin(GL_QUADS);
+    glNormal3f(-1.0f, 0.0f, 0.0f);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-1.0f, 1.0f, -1.0f);
+
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(-1.0f, -1.0f, -1.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f, -1.0f, 1.0f);
+    glEnd();
+
+    // TOP
+    glBindTexture(GL_TEXTURE_2D, texture_book_Cover);
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(1.0f, 1.0f, 1.0f);
+
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f, 1.0f, -1.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f, 1.0f, -1.0f);
+
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f, 1.0f, 1.0f);
+    glEnd();
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // BOTTOM FACE
+    glBindTexture(GL_TEXTURE_2D, texture_blank_book_Page);
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f, -1.0f, 1.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(1.0f, -1.0f, -1.0f);
+
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f, -1.0f);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(-1.0f, -1.0f, 1.0f);
+
+    glEnd();
+    glBindTexture(GL_TEXTURE_2D, 0);
 }

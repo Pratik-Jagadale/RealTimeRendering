@@ -21,6 +21,7 @@
 #define IDBITMAP_CHOURANG_TEXTURE 121
 #define IDBITMAP_BLANK_BOOK_PAGE 122
 #define IDBITMAP_LEAF 123
+#define IDBITMAP_BOOK_COVER 124
 
 BOOL initializeSceneTwo(void);
 void displaySceneTwo(void);

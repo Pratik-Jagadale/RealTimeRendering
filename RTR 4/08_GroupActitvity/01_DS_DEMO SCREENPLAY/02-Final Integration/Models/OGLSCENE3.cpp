@@ -3,6 +3,7 @@
 #include "OGLSCENE3.h"
 #include <stdio.h>
 #include <stdlib.h>
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "std_image.h"
@@ -14,11 +15,6 @@
 #include <GL/glu.h> //graphics library utillity
 
 #include "Common.h"
-#include "../DataStructure/list.h"
-
-/// DATA STRUCTURE VARIABLE
-list_t *p_list = NULL;
-
 extern BOOL bScene03Done;
 
 // global variable declarations
@@ -81,8 +77,8 @@ void SetLightColorRed(void);
 void SetLightColorCyan(void);
 void SetLightColorGreen(void);
 void drawKing(void);
-void drawFemale(void);
-void drawBrahmDev(void);
+void drawQueen(void);
+void drawAgniDev(void);
 void drawCrown(GLuint);
 void drawHrushi(void);
 void drawBowl(void);
@@ -148,7 +144,8 @@ unsigned int sceneNumber_S3 = 1; // when program begins we are showing the first
 float elapsedTime_S3;
 
 GLfloat AganiDevSize = 0.5f;
-void InitCoordForChairPosition(void);
+GLfloat alpha_AgniDev = 1.0f;
+GLfloat bEnableAgniDevAlph = FALSE;
 
 BOOL initializeSceneThree(void)
 {
@@ -157,10 +154,6 @@ BOOL initializeSceneThree(void)
     void InitializeFireParticle(PARTICLE *);
 
     /* variable declartions */
-    // initizalize data Structure Variable
-    p_list = create_list();
-    InitCoordForChairPosition(); // Filling List
-
     // quadric intiallize
     // create quadric.
     quadricDisk_S3 = gluNewQuadric();
@@ -171,20 +164,6 @@ BOOL initializeSceneThree(void)
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    /*    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-        // light related
-        glLightfv(GL_LIGHT4, GL_AMBIENT, gfLightAmbiant_Four_S3);
-        glLightfv(GL_LIGHT4, GL_DIFFUSE, gfLightDeffuse_Four_S3);
-        glLightfv(GL_LIGHT4, GL_SPECULAR, gfLightSpicular_Four_S3);
-        glLightfv(GL_LIGHT4, GL_POSITION, gfLightPositions_Four_S3);
-        glEnable(GL_LIGHT4);
-
-        glMaterialfv(GL_FRONT, GL_AMBIENT, gfMaterialAmbiant_Four_S3);
-        glMaterialfv(GL_FRONT, GL_DIFFUSE, gfMeterialDeffuse_Four_S3);
-        glMaterialfv(GL_FRONT, GL_SPECULAR, gfMateralSpecular_Four_S3);
-        glMaterialf(GL_FRONT, GL_SHININESS, gfMaterialShineeness_Four_S3);
-    */
     // textures
 
     if (LoadGLTexture(&texture_mahal_main_base, MAKEINTRESOURCE(IDBITMAP_MAHAL_BASE_YELLOW_CARPET)) == FALSE)
@@ -397,7 +376,7 @@ void displaySceneThree(void)
     {
         fadeInFirstScene_S3();
     }
-    else if (sceneNumber_S3 == 5 & elapsedTime_S3 > 10.0f)
+    else if (sceneNumber_S3 == 5 && elapsedTime_S3 > 10.0f)
     {
         fadeOutFourthScene();
     }
@@ -469,12 +448,13 @@ void fadeInFirstScene_S3(void)
 
     glEnable(GL_BLEND);
 
+    glEnable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, alpha1);
     cubeforfadeinfadeout_S3();
 
-    glDisable(GL_BLEND);
     glPopMatrix();
+    glDisable(GL_BLEND);
 }
 
 void fadeInFourthScene(void)
@@ -491,13 +471,13 @@ void fadeInFourthScene(void)
 
     glEnable(GL_BLEND);
 
+    glEnable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, alpha1);
     cubeforfadeinfadeout_S3();
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    glDisable(GL_BLEND);
 
     glPopMatrix();
+    glDisable(GL_BLEND);
 }
 
 void fadeOutFourthScene(void)
@@ -512,12 +492,14 @@ void fadeOutFourthScene(void)
 
     glScalef(2.0f, 2.0f, 2.0f);
 
+    glDisable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(0.0f, 0.0f, 0.0f, alpha1);
     cubeforfadeinfadeout_S3();
 
     glDisable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
     glPopMatrix();
 }
 
@@ -572,6 +554,12 @@ void updateSceneThree(void)
         EyeVector_S3[0] = 1.3;
         EyeVector_S3[1] = 3.29f;
         EyeVector_S3[2] = 5.843f;
+
+        if (elapsedTime_S3 > 6)
+        {
+            bEnableAgniDevAlph = TRUE;
+            alpha_AgniDev = alpha_AgniDev - 0.01f;
+        }
     }
 }
 
@@ -581,9 +569,6 @@ void uninitialize_S3(void)
     /* code */
 
     /*  */
-    // Destroy the List
-    destroy_list(&p_list);
-
     // humal Model Related uninitializations
     if (texture_mahal_ceiling)
     {
@@ -943,111 +928,90 @@ void drawRajwadaBase(void)
             glBindTexture(GL_TEXTURE_2D, 0);
         }
 
-        // DATA STRUCTURE IS USED FOR THE SAVE THE TRANSLATION DATA OF THE CHAIRS
-        {
-            // chairs
-            {
-                // chair Right 1
-
-                for (node_t *p_run = p_list->next; p_run->x > 0.0f; p_run = p_run->next)
-                {
-                    glPushMatrix();
-                    // glTranslatef(8.0f, 2.0f, -2.0f);
-                    glTranslatef(p_run->x, p_run->y, p_run->z);
-                    glRotatef(90.0f, 0.0f, -1.0f, 0.0f);
-                    glScalef(0.75f, 0.75f, 0.75f);
-                    smallChair();
-                    glPopMatrix();
-                }
-
-                /*
-
-                                // chair Right 2
-                                glPushMatrix();
-
-                                glTranslatef(8.0f, 2.0f, 4.0f);
-                                glRotatef(90.0f, 0.0f, -1.0f, 0.0f);
-                                glScalef(0.75f, 0.75f, 0.75f);
-                                smallChair();
-
-                                glPopMatrix();
-                                // chair Right 3
-                                glPushMatrix();
-
-                                glTranslatef(8.0f, 2.0f, 10.0f);
-                                glRotatef(90.0f, 0.0f, -1.0f, 0.0f);
-                                glScalef(0.75f, 0.75f, 0.75f);
-                                smallChair();
-
-                                glPopMatrix();
-                                // chair Right 4
-                                glPushMatrix();
-
-                                glTranslatef(8.0f, 2.0f, 16.0f);
-                                glRotatef(90.0f, 0.0f, -1.0f, 0.0f);
-                                glScalef(0.75f, 0.75f, 0.75f);
-                                smallChair();
-
-                                glPopMatrix();*/
-            }
-
-            for (node_t *p_run = p_list->prev; p_run->x < 0; p_run = p_run->prev)
-            {
-
-                glPushMatrix();
-                glTranslatef(p_run->x, p_run->y, p_run->z);
-                glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
-                glScalef(0.75f, 0.75f, 0.75f);
-                smallChair();
-                glPopMatrix();
-            }
-            /*
-                        // chair Left 1
-                        glPushMatrix();
-
-                        glTranslatef(-8.0f, 2.0f, -2.0f);
-                        glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
-                        glScalef(0.75f, 0.75f, 0.75f);
-                        smallChair();
-
-                        glPopMatrix();
-                        // chair Left 1
-                        glPushMatrix();
-
-                        glTranslatef(-8.0f, 2.0f, 4.0f);
-                        glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
-                        glScalef(0.75f, 0.75f, 0.75f);
-                        smallChair();
-
-                        glPopMatrix();
-                        // chair Left 1
-                        glPushMatrix();
-
-                        glTranslatef(-8.0f, 2.0f, 10.0f);
-                        glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
-                        glScalef(0.75f, 0.75f, 0.75f);
-                        smallChair();
-
-                        glPopMatrix();
-                        // chair Left 1
-                        glPushMatrix();
-
-                        glTranslatef(-8.0f, 2.0f, 16.0f);
-                        glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
-                        glScalef(0.75f, 0.75f, 0.75f);
-                        smallChair();
-
-                        glPopMatrix();
-                        */
-        }
-
         // King Chair
+
         glPushMatrix();
 
         glTranslatef(0.0f, 3.5f, -12.0f);
         glScalef(0.75f, 0.75f, 0.75f);
         kingChair();
         glPopMatrix();
+
+        {
+            // chairs
+            // chair Right 1
+            glPushMatrix();
+
+            glTranslatef(8.0f, 2.0f, -2.0f);
+            glRotatef(90.0f, 0.0f, -1.0f, 0.0f);
+            glScalef(0.75f, 0.75f, 0.75f);
+            smallChair();
+
+            glPopMatrix();
+            // chair Right 2
+            glPushMatrix();
+
+            glTranslatef(8.0f, 2.0f, 4.0f);
+            glRotatef(90.0f, 0.0f, -1.0f, 0.0f);
+            glScalef(0.75f, 0.75f, 0.75f);
+            smallChair();
+
+            glPopMatrix();
+            // chair Right 3
+            glPushMatrix();
+
+            glTranslatef(8.0f, 2.0f, 10.0f);
+            glRotatef(90.0f, 0.0f, -1.0f, 0.0f);
+            glScalef(0.75f, 0.75f, 0.75f);
+            smallChair();
+
+            glPopMatrix();
+            // chair Right 4
+            glPushMatrix();
+
+            glTranslatef(8.0f, 2.0f, 16.0f);
+            glRotatef(90.0f, 0.0f, -1.0f, 0.0f);
+            glScalef(0.75f, 0.75f, 0.75f);
+            smallChair();
+
+            glPopMatrix();
+            // chair Left 1
+            glPushMatrix();
+
+            glTranslatef(-8.0f, 2.0f, -2.0f);
+            glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+            glScalef(0.75f, 0.75f, 0.75f);
+            smallChair();
+
+            glPopMatrix();
+            // chair Left 1
+            glPushMatrix();
+
+            glTranslatef(-8.0f, 2.0f, 4.0f);
+            glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+            glScalef(0.75f, 0.75f, 0.75f);
+            smallChair();
+
+            glPopMatrix();
+            // chair Left 1
+            glPushMatrix();
+
+            glTranslatef(-8.0f, 2.0f, 10.0f);
+            glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+            glScalef(0.75f, 0.75f, 0.75f);
+            smallChair();
+
+            glPopMatrix();
+            // chair Left 1
+            glPushMatrix();
+
+            glTranslatef(-8.0f, 2.0f, 16.0f);
+            glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+            glScalef(0.75f, 0.75f, 0.75f);
+            smallChair();
+
+            glPopMatrix();
+        }
 
         {
             // Polls
@@ -1179,7 +1143,7 @@ void drawRajwadaBase(void)
             glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
             glScalef(0.85f, 0.85f, 0.85f);
 
-            drawFemale();
+            drawQueen();
 
             glTranslatef(0.0f, -3.3f, 0.0f);
             SetLightColorGold();
@@ -1192,7 +1156,7 @@ void drawRajwadaBase(void)
             glTranslatef(-5.0f, 3.2f, 6.0f);
             glRotatef(120.0f, 0.0f, 1.0f, 0.0f);
             glScalef(0.85f, 0.85f, 0.85f);
-            drawFemale();
+            drawQueen();
 
             glTranslatef(0.0f, -3.3f, 0.0f);
             SetLightColorGold();
@@ -1205,7 +1169,7 @@ void drawRajwadaBase(void)
             glTranslatef(-5.0f, 3.2f, 0.0f);
             glRotatef(70.0f, 0.0f, 1.0f, 0.0f);
             glScalef(0.85f, 0.85f, 0.85f);
-            drawFemale();
+            drawQueen();
 
             glTranslatef(0.0f, -3.3f, 0.0f);
             SetLightColorGold();
@@ -1243,9 +1207,9 @@ void drawRajwadaBase(void)
             glScalef(0.85f, 0.85f, 0.85f);
             glScalef(AganiDevSize, AganiDevSize, AganiDevSize);
             if (CameraVector_S3[2] > 10.0f && sceneNumber_S3 == 1)
-                drawBrahmDev();
+                drawAgniDev();
             else if (sceneNumber_S3 > 1)
-                drawBrahmDev();
+                drawAgniDev();
         }
         glPopMatrix();
 
@@ -1304,7 +1268,6 @@ void drawRajwadaBase(void)
             // Left 1
             glPushMatrix();
             glTranslatef(-7.91f, 7.3f, -14.0f);
-            // glTranslatef(0.0f, 6.0f, 0.0f);
             glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
             glScalef(3.3f, 2.1f, 1.0f);
             drawCurtainAndFlower();
@@ -1313,7 +1276,6 @@ void drawRajwadaBase(void)
             // Left 2
             glPushMatrix();
             glTranslatef(-7.92, 7.3f, -8.0f);
-            // glTranslatef(0.0f, 6.0f, 0.0f);
             glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
             glScalef(3.3f, 2.1f, 1.0f);
             drawCurtainAndFlower();
@@ -1322,7 +1284,6 @@ void drawRajwadaBase(void)
             // Left 3
             glPushMatrix();
             glTranslatef(-7.93f, 7.3f, -2.0f);
-            // glTranslatef(0.0f, 6.0f, 0.0f);
             glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
             glScalef(3.3f, 2.1f, 1.0f);
             drawCurtainAndFlower();
@@ -1331,7 +1292,6 @@ void drawRajwadaBase(void)
             // Left 4
             glPushMatrix();
             glTranslatef(-7.92f, 7.3f, 4.0f);
-            // glTranslatef(0.0f, 6.0f, 0.0f);
             glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
             glScalef(3.3f, 2.1f, 1.0f);
             drawCurtainAndFlower();
@@ -1339,7 +1299,6 @@ void drawRajwadaBase(void)
             // Left 5
             glPushMatrix();
             glTranslatef(-7.91f, 7.3f, 10.0f);
-            // glTranslatef(0.0f, 6.0f, 0.0f);
             glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
             glScalef(3.3f, 2.1f, 1.0f);
             drawCurtainAndFlower();
@@ -1348,7 +1307,6 @@ void drawRajwadaBase(void)
             // Left 6
             glPushMatrix();
             glTranslatef(-7.90f, 7.3f, 16.0f);
-            // glTranslatef(0.0f, 6.0f, 0.0f);
             glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
             glScalef(3.3f, 2.1f, 1.0f);
             drawCurtainAndFlower();
@@ -1357,7 +1315,6 @@ void drawRajwadaBase(void)
             // Right 1
             glPushMatrix();
             glTranslatef(7.91f, 7.3f, -14.0f);
-            // glTranslatef(0.0f, 6.0f, 0.0f);
             glRotatef(90.0f, 0.0f, -1.0f, 0.0f);
             glScalef(3.3f, 2.1f, 1.0f);
             drawCurtainAndFlower();
@@ -1366,7 +1323,6 @@ void drawRajwadaBase(void)
             // Right 2
             glPushMatrix();
             glTranslatef(7.92, 7.3f, -8.0f);
-            // glTranslatef(0.0f, 6.0f, 0.0f);
             glRotatef(90.0f, 0.0f, -1.0f, 0.0f);
             glScalef(3.3f, 2.1f, 1.0f);
             drawCurtainAndFlower();
@@ -1375,7 +1331,6 @@ void drawRajwadaBase(void)
             // Right 3
             glPushMatrix();
             glTranslatef(7.93f, 7.3f, -2.0f);
-            // glTranslatef(0.0f, 6.0f, 0.0f);
             glRotatef(90.0f, 0.0f, -1.0f, 0.0f);
             glScalef(3.3f, 2.1f, 1.0f);
             drawCurtainAndFlower();
@@ -1384,7 +1339,6 @@ void drawRajwadaBase(void)
             // Right 4
             glPushMatrix();
             glTranslatef(7.92f, 7.3f, 4.0f);
-            // glTranslatef(0.0f, 6.0f, 0.0f);
             glRotatef(90.0f, 0.0f, -1.0f, 0.0f);
             glScalef(3.3f, 2.1f, 1.0f);
             drawCurtainAndFlower();
@@ -1393,7 +1347,6 @@ void drawRajwadaBase(void)
             // Right 5
             glPushMatrix();
             glTranslatef(7.91f, 7.3f, 10.0f);
-            // glTranslatef(0.0f, 6.0f, 0.0f);
             glRotatef(90.0f, 0.0f, -1.0f, 0.0f);
             glScalef(3.3f, 2.1f, 1.0f);
             drawCurtainAndFlower();
@@ -1402,7 +1355,7 @@ void drawRajwadaBase(void)
             // Right 6
             glPushMatrix();
             glTranslatef(7.90f, 7.3f, 16.0f);
-            // glTranslatef(0.0f, 6.0f, 0.0f);
+
             glRotatef(90.0f, 0.0f, -1.0f, 0.0f);
             glScalef(3.3f, 2.1f, 1.0f);
             drawCurtainAndFlower();
@@ -2195,43 +2148,7 @@ void Yagya(void)
 
     glPopMatrix();
 }
-/*
-BOOL LoadGLTexture(GLuint *texture, TCHAR ImageResourceID[])
-{
-    // variable declartions
-    HBITMAP hBitmap = NULL;
-    BITMAP bmp;
-    BOOL bResult = FALSE;
 
-    // code
-    hBitmap = (HBITMAP)LoadImage(GetModuleHandle(NULL), ImageResourceID, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-
-    if (hBitmap)
-    {
-        bResult = TRUE;
-        GetObject(hBitmap, sizeof(BITMAP), &bmp);
-
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-
-        glGenTextures(1, texture);
-
-        glBindTexture(GL_TEXTURE_2D, *texture);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-        // create the texture
-        gluBuild2DMipmaps(GL_TEXTURE_2D, 3, bmp.bmWidth, bmp.bmHeight, GL_BGR_EXT, GL_UNSIGNED_BYTE, bmp.bmBits);
-
-        glBindTexture(GL_TEXTURE_2D, 0); // unbind texture
-
-        // DELETE Object
-        DeleteObject(hBitmap);
-    }
-    return bResult;
-}
-*/
 void SetLightColorGold(void)
 {
     // changing materail color to gold
@@ -2705,56 +2622,7 @@ void drawParticleAnimation(void)
         }
     }
 }
-/*
-BOOL LoadGLPNGTexture(GLuint *texture, char *image)
-{
-    // variable declartions
-    int iWidth, iHeight, iComponents;
 
-    // code
-    // hBitmap = (HBITMAP)LoadImage(GetModuleHandle(NULL), ImageResourceID, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-
-    unsigned char *Data = stbi_load(image, &iWidth, &iHeight, &iComponents, 0);
-
-    if (!Data)
-    {
-
-        fprintf(gpFile, "Cubemap tex failed to load at path: ");
-        stbi_image_free(Data);
-    }
-    else
-    {
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-
-        glGenTextures(1, texture);
-
-        glBindTexture(GL_TEXTURE_2D, *texture);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-        // create the texture
-        // gluBuild2DMipmaps(GL_TEXTURE_2D, 3, iWidth, iHeight, GL_BGR_EXT, GL_UNSIGNED_BYTE, Data);
-
-        if (iComponents == 3)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, iWidth, iHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, Data);
-        else if (iComponents == 4)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, iWidth, iHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, Data);
-
-        glBindTexture(GL_TEXTURE_2D, 0); // unbind texture
-
-        // DELETE Object
-        stbi_image_free(Data);
-        return TRUE;
-    }
-
-    return FALSE;
-}
-*/
 void drawCurtainAndFlower(void)
 {
     glDisable(GL_LIGHTING);
@@ -2856,7 +2724,6 @@ void drawSideWalls(void)
     glPopMatrix();
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    SetLightColorWhite();
     glBindTexture(GL_TEXTURE_2D, texture_mahal_ceiling);
     glPushMatrix();
     glTranslatef(0.0f, 10.0f, 0.0f);
@@ -2873,7 +2740,6 @@ void drawKing(void)
     void S3_DrawBox(float, float, float, float, float);
     void S3_DrawBoxWithParam(float leftHeight, float rightHeight, float topWidth, float bottomWidth, float topDepth, float bottomDepth);
 
-    // glScalef(0.75f, 1.0f, 0.50f); // for female body
     // code
     glScalef(0.85f, 1.0f, 0.50f);
     // UPPER BODY
@@ -2882,7 +2748,6 @@ void drawKing(void)
         // Shoulder + neck
         glPushMatrix();
         glTranslatef(0.0f, 1.4f, 0.0f);
-        // glColor3f(1.0f, 1.0f, 1.0f); // Slin Color
         colorSetcolor(232, 176, 167);
         S3_DrawBox(0.4f, 1.3f, 1.5f, 1.3f, 1.5f);
 
@@ -2910,8 +2775,6 @@ void drawKing(void)
         glTranslatef(0.0f, 1.0f, 0.0f);
         glRotatef(50.0f, 0.0f, 0.0f, 1.0f);
         glBindTexture(GL_TEXTURE_2D, texture_red_cloth);
-        // S3_DrawBox(2.0f, 0.2f, 0.2f, 1.5f, 1.5f);
-        // glColor3f(1.0f, 1.0f, 1.0f);
         S3_DrawBoxWithParam(2.3f, 2.0f, 0.2f, 0.7f, 1.5f, 1.5f);
         glBindTexture(GL_TEXTURE_2D, 0);
         glPopMatrix();
@@ -3289,7 +3152,7 @@ void drawKing(void)
     glPopMatrix();
 }
 
-void drawFemale(void)
+void drawQueen(void)
 {
     // funnction declartions
     void S3_DrawBox(float, float, float, float, float);
@@ -3301,7 +3164,6 @@ void drawFemale(void)
     elbow = -107;
     wrist = 3;
 
-    // glScalef(0.75f, 1.0f, 0.50f); // for female body
     // code
     glScalef(0.75f, 1.0f, 0.45f);
     // UPPER BODY
@@ -3354,8 +3216,6 @@ void drawFemale(void)
         glPushMatrix();
         glTranslatef(0.0f, 0.85f, 0.0f);
         glRotatef(40.0f, 0.0f, 0.0f, 1.0f);
-        // S3_DrawBox(2.0f, 0.2f, 0.2f, 1.5f, 1.5f);
-        // glColor3f(1.0f, 1.0f, 1.0f);
         S3_DrawBoxWithParam(2.3f, 2.0f, 0.5f, 0.8f, 1.5f, 1.5f);
         glPopMatrix();
     }
@@ -3487,7 +3347,6 @@ void drawFemale(void)
             SetLightColorWhite();
         }
         glPopMatrix();
-        // S3_DrawBoxWithParam(0.25f, 0.25f, 0.15f, 0.20f, 1.3f, 1.3f);
 
         glPopMatrix();
 
@@ -3754,14 +3613,22 @@ void drawFemale(void)
     glPopMatrix();
 }
 
-void drawBrahmDev(void)
+void drawAgniDev(void)
 {
     // funnction declartions
     void S3_DrawBox(float, float, float, float, float);
     void S3_DrawBoxWithParam(float leftHeight, float rightHeight, float topWidth, float bottomWidth, float topDepth, float bottomDepth);
+    // void colorSetcolorWithalpha(GLfloat r, GLfloat g, GLfloat b);
 
     // code
     glScalef(0.75f, 1.0f, 0.50f);
+
+    if (bEnableAgniDevAlph == TRUE)
+    {
+        glDisable(GL_LIGHTING);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
     // UPPER BODY
     {
         glBindTexture(GL_TEXTURE_2D, texture_skin);
@@ -3769,7 +3636,13 @@ void drawBrahmDev(void)
         // Shoulder + neck
         glPushMatrix();
         glTranslatef(0.0f, 1.4f, 0.0f);
-        colorSetcolor(232, 176, 167);
+        glColor4f(1.0f, 1.0f, 1.0f, alpha_AgniDev);
+
+        // TCHAR str[200];
+        // swprintf_s(str, 200, TEXT("Alphs = %f \n"), alpha_AgniDev); // "_s" for secure
+
+        // SetWindowText(ghwnd, str);
+
         S3_DrawBox(0.4f, 1.3f, 1.5f, 1.3f, 1.5f);
 
         glPopMatrix();
@@ -3797,8 +3670,6 @@ void drawBrahmDev(void)
         glTranslatef(0.0f, 1.0f, 0.0f);
         glRotatef(50.0f, 0.0f, 0.0f, 1.0f);
         glBindTexture(GL_TEXTURE_2D, texture_red_cloth);
-        // S3_DrawBox(2.0f, 0.2f, 0.2f, 1.5f, 1.5f);
-        // glColor3f(1.0f, 1.0f, 1.0f);
         S3_DrawBoxWithParam(2.3f, 2.0f, 0.2f, 0.7f, 1.5f, 1.5f);
         glBindTexture(GL_TEXTURE_2D, 0);
         glPopMatrix();
@@ -3858,7 +3729,7 @@ void drawBrahmDev(void)
         // bootom
         glPushMatrix();
         glTranslatef(0.0f, -0.8f, 0.0f);
-        glColor3f(1.0f, 1.0f, 1.0f);
+        glColor4f(1.0f, 1.0f, 1.0f, alpha_AgniDev);
         S3_DrawBox(0.2f, 1.2f, 1.2f, 1.25f, 1.2f);
         glPopMatrix();
 
@@ -3871,7 +3742,7 @@ void drawBrahmDev(void)
         // Right leg
         glPushMatrix();
         glTranslatef(0.3f, -1.3f, 0.1f);
-        glColor3f(1.0f, 1.0f, 1.0f);
+        glColor4f(1.0f, 1.0f, 1.0f, alpha_AgniDev);
         glScalef(0.6f, 1.5f, 0.7f);
         glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
         gluQuadricTexture(quadric, GL_TRUE);
@@ -3881,7 +3752,7 @@ void drawBrahmDev(void)
         // Left leg
         glPushMatrix();
         glTranslatef(-0.3f, -1.3f, 0.1f);
-        glColor3f(1.0f, 1.0f, 1.0f);
+        glColor4f(1.0f, 1.0f, 1.0f, alpha_AgniDev);
         glScalef(0.6f, 1.5f, 0.7f);
         glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
         gluSphere(quadric, 1.0f, 100, 100);
@@ -3905,9 +3776,8 @@ void drawBrahmDev(void)
         glScalef(2.0f, 1.0f, 1.0f);
 
         // Draw Arm
-        glColor3f(1.0f, 1.0f, 1.0f);
+        glColor4f(1.0f, 1.0f, 1.0f, alpha_AgniDev);
         gluSphere(quadric, 0.5f, 100, 100);
-        // S3_DrawBoxWithParam(0.4f, 0.5f, 0.08f, 0.08f, 0.3f, 0.3f);
 
         SetLightColorGold();
         glScalef(0.5f, 1.1f, 1.0f);
@@ -3915,7 +3785,7 @@ void drawBrahmDev(void)
         S3_DrawBoxWithParam(1.0f, 0.95f, 0.3f, 0.3f, 1.0f, 1.0f);
         glBindTexture(GL_TEXTURE_2D, 0);
         glBindTexture(GL_TEXTURE_2D, texture_skin);
-        glColor3f(1.0f, 1.0f, 1.0f);
+        glColor4f(1.0f, 1.0f, 1.0f, alpha_AgniDev);
         glPopMatrix();
         SetLightColorWhite();
 
@@ -3932,7 +3802,6 @@ void drawBrahmDev(void)
         glScalef(2.0f, 0.7f, 0.7f);
 
         gluSphere(quadric, 0.5f, 100, 100);
-        // S3_DrawBoxWithParam(0.25f, 0.25f, 0.15f, 0.20f, 1.3f, 1.3f);
 
         glPopMatrix();
 
@@ -4033,7 +3902,6 @@ void drawBrahmDev(void)
 
         // Draw Arm
         gluSphere(quadric, 0.5f, 100, 100);
-        // S3_DrawBoxWithParam(0.4f, 0.5f, 0.08f, 0.08f, 0.3f, 0.3f);
 
         // band
         SetLightColorGold();
@@ -4059,7 +3927,6 @@ void drawBrahmDev(void)
         glScalef(2.0f, 0.7f, 1.0f);
 
         gluSphere(quadric, 0.5f, 100, 100);
-        // S3_DrawBoxWithParam(0.25f, 0.25f, 0.15f, 0.20f, 1.3f, 1.3f);
 
         glPopMatrix();
 
@@ -4143,7 +4010,8 @@ void drawBrahmDev(void)
     glPushMatrix();
     glTranslatef(0.0f, 2.0f, 0.0f);
     glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-    colorSetcolor(232, 195, 167);
+    //   colorSetcolorWithalpha(232, 195, 167);
+    glColor4f(1.0f, 1.0f, 1.0f, alpha_AgniDev);
     gluCylinder(quadricCylinder_S3, 0.3f, 0.3f, 0.5f, 10, 10);
 
     glPopMatrix();
@@ -4155,7 +4023,7 @@ void drawBrahmDev(void)
     glBindTexture(GL_TEXTURE_2D, texture_face);
 
     glTranslatef(0.0f, 2.4f, 0.0f);
-    glColor3f(1.0f, 1.0f, 1.0f);
+    glColor4f(1.0f, 1.0f, 1.0f, alpha_AgniDev);
     glRotatef(15.0f, 0.0f, 1.0f, 0.0f);
     glRotatef(90.0f, -1.0f, 0.0f, 0.0f);
     gluSphere(quadric, 0.58f, 30, 30);
@@ -4170,6 +4038,11 @@ void drawBrahmDev(void)
     drawCrown(texture_crown_2);
 
     glPopMatrix();
+
+    if (bEnableAgniDevAlph == TRUE)
+    {
+        glEnable(GL_LIGHTING);
+    }
 }
 
 void drawHrushi(void)
@@ -4182,7 +4055,6 @@ void drawHrushi(void)
     elbow = -107;
     wrist = 3;
 
-    // glScalef(0.75f, 1.0f, 0.50f); // for female body
     // code
     glScalef(0.85f, 1.0f, 0.50f);
     // UPPER BODY
@@ -4191,7 +4063,6 @@ void drawHrushi(void)
         // Shoulder + neck
         glPushMatrix();
         glTranslatef(0.0f, 1.4f, 0.0f);
-        // glColor3f(1.0f, 1.0f, 1.0f); // Slin Color
         colorSetcolor(232, 176, 167);
         S3_DrawBox(0.4f, 1.3f, 1.5f, 1.3f, 1.5f);
 
@@ -4642,6 +4513,10 @@ void drawCrown(GLuint texture)
 
     glBindTexture(GL_TEXTURE_2D, texture);
     glColor3f(1.0f, 1.0f, 0.0f);
+    if (texture == texture_crown_2)
+    {
+        glColor4f(1.0f, 1.0f, 0.0f, alpha_AgniDev);
+    }
     glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
     gluQuadricNormals(quadricCylinder_S3, GLU_FLAT);
     gluCylinder(quadricCylinder_S3, 0.4f, 0.6f, 1.0f, 30.0f, 30.0f);
@@ -4653,17 +4528,4 @@ void drawCrown(GLuint texture)
     glPopMatrix();
 
     SetLightColorWhite();
-}
-
-void InitCoordForChairPosition(void)
-{
-
-    insert_end(p_list, 8.0f, 2.0f, -2.0f);
-    insert_end(p_list, 8.0f, 2.0f, 4.0f);
-    insert_end(p_list, 8.0f, 2.0f, 10.0f);
-    insert_end(p_list, 8.0f, 2.0f, 16.0f);
-    insert_end(p_list, -8.0f, 2.0f, -2.0f);
-    insert_end(p_list, -8.0f, 2.0f, 4.0f);
-    insert_end(p_list, -8.0f, 2.0f, 10.0f);
-    insert_end(p_list, -8.0f, 2.0f, 16.0f);
 }
