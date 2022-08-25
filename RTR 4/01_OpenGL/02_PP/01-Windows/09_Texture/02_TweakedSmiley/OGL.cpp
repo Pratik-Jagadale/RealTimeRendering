@@ -240,7 +240,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		case 'F':
 			ToggleFullScreen();
 			break;
-		case 27:
+
+				case 27:
 			if (gpFile)
 			{
 				fprintf(gpFile, "Log File Successfully Closes");
@@ -632,35 +633,35 @@ void display(void)
 		textCoord[2] = 0.0f;
 		textCoord[3] = 0.5f;
 		textCoord[4] = 0.0f;
-		textCoord[5] = 0.0f;
+		textCoord[5] = 1.0f;
 		textCoord[6] = 0.5f;
-		textCoord[7] = 0.0f;
+		textCoord[7] = 1.0f;
 
 		glUniform1i(keyPressUniform, 1);
 	}
 	else if (keyPressed == 2)
 	{
 		textCoord[0] = 1.0f;
-		textCoord[1] = 1.0f;
+		textCoord[1] = 0.0f;
 		textCoord[2] = 0.0f;
-		textCoord[3] = 1.0f;
+		textCoord[3] = 0.0f;
 		textCoord[4] = 0.0f;
-		textCoord[5] = 0.0f;
+		textCoord[5] = 1.0f;
 		textCoord[6] = 1.0f;
-		textCoord[7] = 0.0f;
+		textCoord[7] = 1.0f;
 
 		glUniform1i(keyPressUniform, 1);
 	}
 	else if (keyPressed == 3)
 	{
-		textCoord[0] = 2.0f;
-		textCoord[1] = 2.0f;
-		textCoord[2] = 0.0f;
-		textCoord[3] = 2.0f;
-		textCoord[4] = 0.0f;
-		textCoord[5] = 0.0f;
-		textCoord[6] = 2.0f;
-		textCoord[7] = 0.0f;
+		textCoord[0] = 0.0f;
+		textCoord[1] = 0.0f;
+		textCoord[2] = 2.0f;
+		textCoord[3] = 0.0f;
+		textCoord[4] = 2.0f;
+		textCoord[5] = 2.0f;
+		textCoord[6] = 0.0f;
+		textCoord[7] = 2.0f;
 
 		glUniform1i(keyPressUniform, 1);
 	}
