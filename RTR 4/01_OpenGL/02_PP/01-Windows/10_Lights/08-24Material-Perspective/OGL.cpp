@@ -89,11 +89,11 @@ struct Light lights[3];
 GLfloat materialAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
 GLfloat meterialDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
 GLfloat materialSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat materialShineeness = 128.0f;
+GLfloat materialShineeness = 124.0f;
 
 GLfloat lightAngleOne = 0.0f;
-GLfloat lightAngleTwo = 0.0f;
-GLfloat lightAngleZero = 0.0f;
+GLfloat lightAngleTwo = 150.0f;
+GLfloat lightAngleZero = 300.0f;
 
 /* Entry Point Function */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
@@ -395,46 +395,26 @@ int initialize(void)
 		"\n"
 		"in vec4 a_position;"
 		"in vec3 a_normal;"
+		"uniform vec4 u_lightPosition[3];"
 		"uniform mat4 u_modelMatrix;"
 		"uniform mat4 u_viewMatrix;"
 		"uniform mat4 u_projectionMatrix;"
-		"uniform vec3 u_la[3];"
-		"uniform vec3 u_ld[3];"
-		"uniform vec3 u_ls[3];"
-		"uniform vec4 u_lightPosition[3];"
-		"uniform vec3 u_ka;"
-		"uniform vec3 u_ks;"
-		"uniform vec3 u_kd;"
-		"uniform float u_materialShininnes;"
 		"uniform int u_lightingEnabled;"
-		"out vec3 phong_ads_light;"
+		"out vec3 transformedNormals;"
+		"out vec3 lightDirection[3];"
+		"out vec3 viewerVector;"
 		"void main(void)"
 		"{"
-		"phong_ads_light = vec3(0.0,0.0,0.0);"
 		"if(u_lightingEnabled == 1)"
 		"{"
 		"vec4 eyeCoordinates = u_viewMatrix * u_modelMatrix * a_position;"
 		"mat3 normalMatrix = mat3(u_viewMatrix * u_modelMatrix);"
-		"vec3 transformedNormals = normalize(normalMatrix * a_normal);"
-		"vec3 viewerVector = normalize(-eyeCoordinates.xyz);"
-		"vec3 ambiant[3];"
-		"vec3 lightDirection[3];"
-		"vec3 diffuse[3];"
-		"vec3 reflectionVector[3];"
-		"vec3 specular[3];"
+		"transformedNormals = normalize(normalMatrix * a_normal);"
+		"viewerVector = normalize(-eyeCoordinates.xyz);"
 		"for(int i = 0 ; i < 3 ; i++)"
 		"{"
-		"ambiant[i] = u_la[i] * u_ka;"
 		"lightDirection[i] = normalize(vec3(u_lightPosition[i]) - eyeCoordinates.xyz);" // Swizaling
-		"diffuse[i] = u_ld[i] * u_kd * max(dot(lightDirection[i] ,transformedNormals),0.0);"
-		"reflectionVector[i] = reflect(-lightDirection[i],transformedNormals);"
-		"specular[i] = u_ls[i] * u_ks * pow(max(dot(reflectionVector[i], viewerVector), 0.0), u_materialShininnes);"
-		"phong_ads_light = phong_ads_light + ambiant[i] + diffuse[i] +  specular[i];"
 		"}"
-		"}"
-		"else"
-		"{"
-		"phong_ads_light = vec3(1.0,1.0,1.0);"
 		"}"
 		"gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;"
 		"}";
@@ -476,10 +456,42 @@ int initialize(void)
 	const GLchar *fragmentShaderSourceCode =
 		"#version 460 core"
 		"\n"
-		"in vec3 phong_ads_light;"
+		"in vec3 transformedNormals;"
+		"in vec3 lightDirection[3];"
+		"in vec3 viewerVector;"
+		"uniform vec3 u_la[3];"
+		"uniform vec3 u_ld[3];"
+		"uniform vec3 u_ls[3];"
+		"uniform vec4 u_lightPosition[3];"
+		"uniform vec3 u_ka;"
+		"uniform vec3 u_ks;"
+		"uniform vec3 u_kd;"
+		"uniform float u_materialShininnes;"
+		"uniform int u_lightingEnabled;"
 		"out vec4 FragColor;"
+		"vec3 phong_ads_light;"
 		"void main(void)"
 		"{"
+		"phong_ads_light = vec3(0.0,0.0,0.0);"
+		"if(u_lightingEnabled == 1)"
+		"{"
+		"vec3 ambiant[3];"
+		"vec3 diffuse[3];"
+		"vec3 reflectionVector[3];"
+		"vec3 specular[3];"
+		"for(int i = 0 ; i < 3 ; i++)"
+		"{"
+		"ambiant[i] = u_la[i] * u_ka;"
+		"diffuse[i] = u_ld[i] * u_kd * max(dot(lightDirection[i] ,transformedNormals),0.0);"
+		"reflectionVector[i] = reflect(-lightDirection[i],transformedNormals);"
+		"specular[i] = u_ls[i] * u_ks * pow(max(dot(reflectionVector[i], viewerVector), 0.0), u_materialShininnes);"
+		"phong_ads_light = phong_ads_light + ambiant[i] + diffuse[i] +  specular[i];"
+		"}"
+		"}"
+		"else"
+		"{"
+		"phong_ads_light = vec3(1.0,1.0,1.0);"
+		"}"
 		"FragColor = vec4(phong_ads_light, 1.0);"
 		"}";
 
@@ -621,7 +633,7 @@ int initialize(void)
 
 	glShadeModel(GL_SMOOTH);
 
-	/* Clear the  screen using blue color */
+	/* Clear the  screen using black color */
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	lights[0].lightAmbiant = vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -753,11 +765,10 @@ void display(void)
 
 	glBindVertexArray(gVao_sphere);
 
-	// *** draw, either by glDrawTriangles() or glDrawArrays() or glDrawElements()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-	// glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
 
-	glDrawArrays(GL_TRIANGLES, 0, gNumElements);
+	// glDrawArrays(GL_TRIANGLES, 0, gNumElements);
 
 	glBindVertexArray(0);
 
@@ -770,7 +781,7 @@ void display(void)
 void update(void)
 {
 	/* code */
-	lightAngleZero = lightAngleZero + 1.1f;
+	lightAngleZero = lightAngleZero + 1.0f;
 	if (lightAngleZero > 360.0f)
 		lightAngleZero = lightAngleZero - 360.0f;
 
