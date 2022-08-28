@@ -86,14 +86,14 @@ int gNumElements;
 
 Bool bLight = False;
 
-GLfloat lightAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
+GLfloat lightAmbiant[] = {0.1f, 0.1f, 0.1f, 1.0f};
 GLfloat lightDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
 GLfloat lightSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
 GLfloat lightPositions[] = {100.0f, 100.0f, 100.0f, 1.0f};
 
 GLfloat materialAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat meterialDeffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat materialSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat meterialDeffuse[] = {0.5f, 0.2f, 0.7f, 1.0f};
+GLfloat materialSpecular[] = {0.7f, 0.7f, 0.7f, 1.0f};
 GLfloat materialShineeness = 120.0f;
 
 // Entry Point Function

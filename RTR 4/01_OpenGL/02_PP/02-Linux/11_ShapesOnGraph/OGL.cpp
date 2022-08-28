@@ -13,10 +13,8 @@
 #include <GL/gl.h>	// for OpenGL Functionality
 #include <GL/glx.h> // for briding API
 #include "vmath.h"
-#include "Sphere.h"
 
-// Texture library header
-#include <SOIL/SOIL.h>
+#include "Pratik3DLibrary.h"
 
 using namespace vmath;
 
@@ -54,47 +52,30 @@ enum
 	PRJ_ATRIBUTE_TEXTURE0
 };
 
-GLuint gVao_sphere;			 // Vertex Array Object
-GLuint gVbo_sphere_position; // Vertex Buffer Object
-GLuint gVbo_sphere_normal;
-GLuint gVbo_sphere_element;
-
-GLuint modelMatrixUniform;
-GLuint viewMatrixUniform;
-GLuint projectionMatrixUniform;
-
-GLuint laUniform;			// light Ambiant
-GLuint ldUniform;			// light Diffuse
-GLuint lsUniform;			// light Spec
-GLuint lighPositionUniform; // light Position
-
-GLuint kaUniform; // material amb
-GLuint kdUniform; // mat diff
-GLuint ksUniform; // mat specular
-GLuint materialShininessUniform;
-
-GLuint lightingEnabledUniform;
-
+GLuint mvpMatrixUniform; // model View Projection
 mat4 perspectiveProjectionMatrix;
 
-float sphere_vertices[1146];
-float sphere_normals[1146];
-float sphere_textures[764];
-unsigned short sphere_elements[2280];
-int gNumVertices;
-int gNumElements;
+GLuint vao_Square;			// Vertex Array Object - Square
+GLuint vbo_Square_Position; // Vertex Buffer Object - Square- Position
 
-Bool bLight = False;
+GLuint vao_Triangle;
+GLuint vbo_Triangle_Position;
 
-GLfloat lightAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat lightSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat lightPositions[] = {100.0f, 100.0f, 100.0f, 1.0f};
+GLuint vao_Circle;
+GLuint vbo_Circle_Position;
 
-GLfloat materialAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat meterialDeffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat materialSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat materialShineeness = 120.0f;
+GLuint vao_Line;
+GLuint vbo_Line_Position;
+
+GLuint uniform_Color;
+
+Bool bCircle = False;
+Bool bTriangle = False;
+Bool bSquare = False;
+
+// GLfloat *CircleVertexdata = NULL;
+GLfloat CircleVertexdata[1080];
+GLuint numberOfVerticesOfCircle = 0;
 
 // Entry Point Function
 int main(void)
@@ -333,15 +314,39 @@ int main(void)
 					}
 					break;
 
-				case 'L':
-				case 'l':
-					if (bLight == False)
+				case 'C':
+				case 'c':
+					if (bCircle == False)
 					{
-						bLight = True;
+						bCircle = True;
 					}
 					else
 					{
-						bLight = False;
+						bCircle = False;
+					}
+					break;
+
+				case 'S':
+				case 's':
+					if (bSquare == False)
+					{
+						bSquare = True;
+					}
+					else
+					{
+						bSquare = False;
+					}
+					break;
+
+				case 'T':
+				case 't':
+					if (bTriangle == False)
+					{
+						bTriangle = True;
+					}
+					else
+					{
+						bTriangle = False;
 					}
 					break;
 				}
@@ -360,7 +365,6 @@ int main(void)
 		}
 		if (bActiveWindow == True)
 		{
-			update();
 			draw();
 		}
 	}
@@ -460,40 +464,10 @@ int initiallize(void)
 		"#version 460 core"
 		"\n"
 		"in vec4 a_position;"
-		"in vec3 a_normal;"
-		"uniform mat4 u_modelMatrix;"
-		"uniform mat4 u_viewMatrix;"
-		"uniform mat4 u_projectionMatrix;"
-		"uniform vec3 u_la;"
-		"uniform vec3 u_ld;"
-		"uniform vec3 u_ls;"
-		"uniform vec4 u_lightPosition;"
-		"uniform vec3 u_ka;"
-		"uniform vec3 u_ks;"
-		"uniform vec3 u_kd;"
-		"uniform float u_materialShininnes;"
-		"uniform int u_lightingEnabled;"
-		"out vec3 phong_ads_out;"
+		"uniform mat4 u_mvpMatrix;"
 		"void main(void)"
 		"{"
-		"if(u_lightingEnabled == 1)"
-		"{"
-		"vec3 ambiant = u_la * u_ka;"
-		"vec4 eyeCoordinates = u_viewMatrix * u_modelMatrix * a_position;"
-		"mat3 normalMatrix = mat3(u_viewMatrix * u_modelMatrix);"
-		"vec3 transformedNormals = normalize(normalMatrix * a_normal);"
-		"vec3 lightDirection = normalize(vec3(u_lightPosition) - eyeCoordinates.xyz);" // Swizaling
-		"vec3 diffuse = u_ld * u_kd * max(dot(lightDirection ,transformedNormals),0.0);"
-		"vec3 reflectionVector = reflect(-lightDirection,transformedNormals);"
-		"vec3 viewerVector = normalize(-eyeCoordinates.xyz);"
-		"vec3 specular = u_ls * u_ks * pow(max(dot(reflectionVector , viewerVector), 0.0), u_materialShininnes);"
-		"phong_ads_out = ambiant + diffuse +  specular;"
-		"}"
-		"else"
-		"{"
-		"phong_ads_out = vec3(1.0,1.0,1.0);"
-		"}"
-		"gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;"
+		"gl_Position = u_mvpMatrix * a_position;"
 		"}";
 
 	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
@@ -533,11 +507,11 @@ int initiallize(void)
 	const GLchar *fragmentShaderSourceCode =
 		"#version 460 core"
 		"\n"
-		"in vec3 phong_ads_out;"
+		"uniform vec3 u_Color;"
 		"out vec4 FragColor;"
 		"void main(void)"
 		"{"
-		"FragColor = vec4(phong_ads_out, 1.0);"
+		"FragColor = vec4(u_Color, 1);"
 		"}";
 
 	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
@@ -574,8 +548,8 @@ int initiallize(void)
 	glAttachShader(shaderProgramObject, fragmentShaderObject);
 
 	// prelinked binding
+	// Binding Position Array
 	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_POSITION, "a_position");
-	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_NORMAL, "a_normal");
 
 	// link
 	glLinkProgram(shaderProgramObject);
@@ -604,63 +578,92 @@ int initiallize(void)
 	}
 
 	// post link - getting
-	modelMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_modelMatrix");
-	viewMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_viewMatrix");
-	projectionMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_projectionMatrix");
+	mvpMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_mvpMatrix");
+	uniform_Color = glGetUniformLocation(shaderProgramObject, "u_Color");
 
-	laUniform = glGetUniformLocation(shaderProgramObject, "u_la");
-	ldUniform = glGetUniformLocation(shaderProgramObject, "u_ld");
-	lsUniform = glGetUniformLocation(shaderProgramObject, "u_ls");
-	lighPositionUniform = glGetUniformLocation(shaderProgramObject, "u_lightPosition");
-
-	kaUniform = glGetUniformLocation(shaderProgramObject, "u_ka");
-	kdUniform = glGetUniformLocation(shaderProgramObject, "u_kd");
-	ksUniform = glGetUniformLocation(shaderProgramObject, "u_ks");
-
-	materialShininessUniform = glGetUniformLocation(shaderProgramObject, "u_materialShininnes");
-
-	lightingEnabledUniform = glGetUniformLocation(shaderProgramObject, "u_lightingEnabled");
-
-	// gVao_sphere and vba related code
+	// vao_Triangle and vba related code
 	// declartions of vertex Data array
-	getSphereVertexData(sphere_vertices, sphere_normals, sphere_textures, sphere_elements);
-	gNumVertices = getNumberOfSphereVertices();
-	gNumElements = getNumberOfSphereElements();
+	const GLfloat SquarePosition[] = {
+		1.0f, 1.0f, 0.0f,
+		-1.0f, 1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f};
 
-	// vao vbo reelated code
-	// vao
-	glGenVertexArrays(1, &gVao_sphere);
-	glBindVertexArray(gVao_sphere);
+	const GLfloat trianglePosition[] = {
+		0.0f, 1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f};
 
-	// position vbo
-	glGenBuffers(1, &gVbo_sphere_position);
-	glBindBuffer(GL_ARRAY_BUFFER, gVbo_sphere_position);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_vertices), sphere_vertices, GL_STATIC_DRAW);
+	const GLfloat LinePosition[] = {
+		0.0f, 1.0f, 0.0f,
+		0.0f, -1.0f, 0.0f};
 
+	numberOfVerticesOfCircle = getNumberOfCircleVertices();
+	getCircleVertexData(CircleVertexdata);
+
+	// vao and vbo related code
+	// vao for Square
+	glGenVertexArrays(1, &vao_Square);
+	glBindVertexArray(vao_Square);
+
+	// vbo for position
+	glGenBuffers(1, &vbo_Square_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Square_Position);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(SquarePosition), SquarePosition, GL_STATIC_DRAW);
 	glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
 	glEnableVertexAttribArray(PRJ_ATRIBUTE_POSITION);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// normal vbo
-	glGenBuffers(1, &gVbo_sphere_normal);
-	glBindBuffer(GL_ARRAY_BUFFER, gVbo_sphere_normal);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_normals), sphere_normals, GL_STATIC_DRAW);
+	glBindVertexArray(0); // ubind vao for Square
 
-	glVertexAttribPointer(PRJ_ATRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	// vao for Circle
+	glGenVertexArrays(1, &vao_Circle);
+	glBindVertexArray(vao_Circle);
 
-	glEnableVertexAttribArray(PRJ_ATRIBUTE_NORMAL);
+	// vbo for position
+	glGenBuffers(1, &vbo_Circle_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Circle_Position);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(CircleVertexdata), CircleVertexdata, GL_STATIC_DRAW);
+	glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(PRJ_ATRIBUTE_POSITION);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// element vbo
-	glGenBuffers(1, &gVbo_sphere_element);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(sphere_elements), sphere_elements, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0); // ubind vao for Square
 
-	// unbind vao
+	// vao for Line
+	glGenVertexArrays(1, &vao_Line);
+	glBindVertexArray(vao_Line);
+
+	// vbo for position
+	glGenBuffers(1, &vbo_Line_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Line_Position);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(LinePosition), LinePosition, GL_STATIC_DRAW);
+	glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(PRJ_ATRIBUTE_POSITION);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindVertexArray(0);
+
+	// vao for Triangle
+	glGenVertexArrays(1, &vao_Triangle);
+	glBindVertexArray(vao_Triangle);
+
+	// vbo for position
+	glGenBuffers(1, &vbo_Triangle_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Triangle_Position);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(trianglePosition), trianglePosition, GL_STATIC_DRAW);
+	glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(PRJ_ATRIBUTE_POSITION);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
 	glBindVertexArray(0);
 
 	/* Here start OpeGL Code */
@@ -705,32 +708,60 @@ void uninitiallize(void)
 	GLXContext currentContext;
 	currentContext = glXGetCurrentContext();
 	/*  */
-	// deletion of gVbo_sphere_element
-	if (gVbo_sphere_element)
+	// delete vbo_Line_Position
+	if (vbo_Line_Position)
 	{
-		glDeleteBuffers(1, &gVbo_sphere_element);
-		gVbo_sphere_element = 0;
+		glDeleteBuffers(1, &vbo_Line_Position);
+		vbo_Line_Position = 0;
 	}
 
-	// deletion of gVbo_sphere_normal
-	if (gVbo_sphere_normal)
+	// deletion of vao_Line
+	if (vao_Line)
 	{
-		glDeleteBuffers(1, &gVbo_sphere_normal);
-		gVbo_sphere_normal = 0;
+		glDeleteVertexArrays(1, &vao_Line);
+		vao_Line = 0;
 	}
 
-	// deletion of gVbo_sphere_Position
-	if (gVbo_sphere_position)
+	// delete vbo_Triangle_Position
+	if (vbo_Triangle_Position)
 	{
-		glDeleteBuffers(1, &gVbo_sphere_position);
-		gVbo_sphere_position = 0;
+		glDeleteBuffers(1, &vbo_Triangle_Position);
+		vbo_Triangle_Position = 0;
 	}
 
-	// deletion of gVao_sphere
-	if (gVao_sphere)
+	// deletion of vao_Triangle
+	if (vao_Triangle)
 	{
-		glDeleteVertexArrays(1, &gVao_sphere);
-		gVao_sphere = 0;
+		glDeleteVertexArrays(1, &vao_Triangle);
+		vao_Triangle = 0;
+	}
+
+	// delete vbo_Circle_Position
+	if (vbo_Circle_Position)
+	{
+		glDeleteBuffers(1, &vbo_Circle_Position);
+		vbo_Circle_Position = 0;
+	}
+
+	// deletion of vao_Square
+	if (vao_Circle)
+	{
+		glDeleteVertexArrays(1, &vao_Circle);
+		vao_Circle = 0;
+	}
+
+	// delete vbo_Square_Position
+	if (vbo_Square_Position)
+	{
+		glDeleteBuffers(1, &vbo_Square_Position);
+		vbo_Square_Position = 0;
+	}
+
+	// deletion of vao_Square
+	if (vao_Square)
+	{
+		glDeleteVertexArrays(1, &vao_Square);
+		vao_Square = 0;
 	}
 
 	if (shaderProgramObject)
@@ -822,58 +853,175 @@ void printfGLInfo(void)
 
 void draw(void)
 {
+	// Function Prototype
+	void drawGraph(void);
+	void drawTriangle(void);
+	void drawCircle(void);
+	void drawsquare(void);
+
 	/* Code */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// use shader program obejct
 	glUseProgram(shaderProgramObject);
 
-	// Tranformations
-	mat4 translationMatrix = mat4::identity();
-	mat4 modelMatrix = mat4::identity();
-	mat4 viewMatrix = mat4::identity();
+	drawGraph();
 
-	translationMatrix = vmath::translate(0.0f, 0.0f, -2.0f); // glTranslatef() is replaced by this line
+	if (bSquare == True)
+		drawsquare();
 
-	modelMatrix = translationMatrix;
+	if (bCircle == True)
+		drawCircle();
 
-	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
-	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
-	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
-
-	if (bLight == True)
-	{
-		glUniform1i(lightingEnabledUniform, 1);
-
-		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
-		glUniform3fv(ldUniform, 1, lightDiffuse);
-		glUniform3fv(lsUniform, 1, lightSpecular);
-		glUniform4fv(lighPositionUniform, 1, lightPositions);
-
-		glUniform3fv(kaUniform, 1, materialAmbiant);
-		glUniform3fv(kdUniform, 1, meterialDeffuse);
-		glUniform3fv(ksUniform, 1, materialSpecular);
-		glUniform1f(materialShininessUniform, materialShineeness);
-	}
-	else
-	{
-		glUniform1i(lightingEnabledUniform, 0);
-	}
-
-	// draw the desired graphics
-	// drawing code -- magic
-
-	glBindVertexArray(gVao_sphere);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
-
-	// glDrawArrays(GL_TRIANGLES, 0, gNumElements);
-
-	glBindVertexArray(0);
+	if (bTriangle == True)
+		drawTriangle();
 
 	// unuse the shader program object
 	glUseProgram(0);
 
 	glXSwapBuffers(display, window);
+}
+
+void drawGraph(void)
+{
+	mat4 translationMatrix = mat4::identity();
+	mat4 modelViewMatrix = mat4::identity();
+	mat4 modelViewProjectionMatrix = mat4::identity();
+	mat4 scaleMatrix = mat4::identity();
+	mat4 rotationMatrix = mat4::identity();
+
+	// Verticle Lines
+	translationMatrix = vmath::translate(0.0f, 0.0f, -4.1f);
+	scaleMatrix = vmath::scale(1.0f, 1.5f, 0.0f);
+
+	for (float i = -1.5; i < 1.5; i = i + 0.05f)
+	{
+		translationMatrix = vmath::translate(i, 0.0f, -4.0f);
+		modelViewMatrix = translationMatrix * scaleMatrix;
+
+		modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
+
+		glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
+
+		GLfloat ColorArray[3] = {0.0f, 0.0f, 1.0f};
+		if (i > -0.02 && i < 0.02)
+		{
+			ColorArray[1] = 1.0f;
+			ColorArray[2] = 0.0f;
+		}
+
+		glBindVertexArray(vao_Line);
+
+		glUniform3fv(uniform_Color, 1, ColorArray);
+
+		glDrawArrays(GL_LINES, 0, 2);
+
+		glBindVertexArray(0);
+	}
+
+	// Horizontal Lines
+	scaleMatrix = vmath::scale(1.0f, 1.5f, 1.0f);
+	rotationMatrix = vmath::rotate(90.0f, 0.0f, 0.0f, 1.0f);
+
+	for (float i = -1.5; i < 1.5; i = i + 0.05f)
+	{
+		translationMatrix = vmath::translate(0.0f, i, -4.0f);
+		modelViewMatrix = translationMatrix * rotationMatrix * scaleMatrix;
+
+		modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
+
+		glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
+
+		GLfloat ColorArray[3] = {0.0f, 0.0f, 1.0f};
+		if (i > -0.02 && i < 0.02)
+		{
+			ColorArray[0] = 1.0f;
+			ColorArray[2] = 0.0f;
+		}
+
+		glBindVertexArray(vao_Line);
+
+		glUniform3fv(uniform_Color, 1, ColorArray);
+
+		glDrawArrays(GL_LINES, 0, 2);
+
+		glBindVertexArray(0);
+	}
+}
+
+void drawTriangle(void)
+{
+	mat4 translationMatrix = mat4::identity();
+	mat4 modelViewMatrix = mat4::identity();
+	mat4 modelViewProjectionMatrix = mat4::identity();
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -4.0f);
+
+	modelViewMatrix = translationMatrix;
+
+	modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
+
+	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
+
+	GLfloat ColorArray[] = {1.0f, 1.0f, 0.0f};
+
+	glBindVertexArray(vao_Triangle);
+
+	glUniform3fv(uniform_Color, 1, ColorArray);
+
+	glDrawArrays(GL_LINE_LOOP, 0, 3);
+
+	glBindVertexArray(0);
+}
+
+void drawCircle(void)
+{
+	// Tranformations
+	mat4 translationMatrix = mat4::identity();
+	mat4 modelViewMatrix = mat4::identity();
+	mat4 modelViewProjectionMatrix = mat4::identity();
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -4.0f);
+
+	modelViewMatrix = translationMatrix;
+
+	modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
+
+	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
+
+	GLfloat ColorArray[] = {1.0f, 1.0f, 0.0f};
+
+	glBindVertexArray(vao_Circle);
+
+	glUniform3fv(uniform_Color, 1, ColorArray);
+
+	glDrawArrays(GL_LINE_STRIP, 0, numberOfVerticesOfCircle);
+
+	glBindVertexArray(0);
+}
+
+void drawsquare(void)
+{
+	// Tranformations
+	mat4 translationMatrix = mat4::identity();
+	mat4 modelViewMatrix = mat4::identity();
+	mat4 modelViewProjectionMatrix = mat4::identity();
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -4.0f); // glTranslatef() is replaced by this line
+
+	modelViewMatrix = translationMatrix;
+
+	modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
+
+	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
+
+	GLfloat ColorArray[] = {1.0f, 1.0f, 0.0f};
+
+	glBindVertexArray(vao_Square);
+
+	glUniform3fv(uniform_Color, 1, ColorArray);
+
+	glDrawArrays(GL_LINE_LOOP, 0, 4);
+
+	glBindVertexArray(0);
 }
