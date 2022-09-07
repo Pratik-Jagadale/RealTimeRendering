@@ -6,7 +6,7 @@ del OGL.obj
 
 del OGL.res
 
-cl.exe /D UNICODE /c /EHsc /I C:\glew\include OGL.cpp
+cl.exe  /c /EHsc /I C:\glew\include OGL.cpp
 
 rc.exe OGL.rc
 

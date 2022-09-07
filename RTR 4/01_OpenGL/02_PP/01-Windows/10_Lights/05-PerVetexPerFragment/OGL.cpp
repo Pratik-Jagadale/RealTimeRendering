@@ -479,7 +479,6 @@ int initialize(void)
 		}
 
 		// fragment Shader
-
 		status = 0;
 		infoLogLength = 0;
 
@@ -571,11 +570,12 @@ int initialize(void)
 		ksUniform_PV = glGetUniformLocation(shaderProgramObject_PV, "u_ks");
 
 		materialShininessUniform_PV = glGetUniformLocation(shaderProgramObject_PV, "u_materialShininnes");
+
+		lightingEnabledUniform_PV = glGetUniformLocation(shaderProgramObject_PV, "u_lightingEnabled");
 	}
 
 	// Per Fragment
 	{
-
 		// vartex Shader
 		const GLchar *vertexShaderSourceCode_PF =
 			"#version 460 core"
@@ -633,7 +633,6 @@ int initialize(void)
 		}
 
 		// fragment Shader
-
 		status = 0;
 		infoLogLength = 0;
 
@@ -754,9 +753,6 @@ int initialize(void)
 
 		lightingEnabledUniform_PF = glGetUniformLocation(shaderProgramObject_PF, "u_lightingEnabled");
 	}
-
-	lightingEnabledUniform_PV = glGetUniformLocation(shaderProgramObject_PV, "u_lightingEnabled");
-	lightingEnabledUniform_PF = glGetUniformLocation(shaderProgramObject_PF, "u_lightingEnabled");
 
 	// gVao_sphere and vba related code
 	// declartions of vertex Data array

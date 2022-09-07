@@ -656,8 +656,6 @@ void uninitialize(void)
 		ToggleFullScreen();
 
 	/*  */
-	deleteCircleVertexData(CircleVertexdata);
-
 	// delete vbo_Line_Position
 	if (vbo_Line_Position)
 	{
