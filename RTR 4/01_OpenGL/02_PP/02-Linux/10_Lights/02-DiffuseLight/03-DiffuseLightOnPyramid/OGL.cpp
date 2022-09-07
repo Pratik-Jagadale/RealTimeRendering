@@ -60,37 +60,17 @@ GLuint modelMatrixUniform;
 GLuint viewMatrixUniform;
 GLuint projectionMatrixUniform;
 mat4 perspectiveProjectionMatrix;
-
-GLuint laUniform[2];		   // light Ambiant
-GLuint ldUniform[2];		   // light Diffuse
-GLuint lsUniform[2];		   // light Spec
-GLuint lighPositionUniform[2]; // light Position
-
-GLuint kaUniform; // material amb
-GLuint kdUniform; // mat diff
-GLuint ksUniform; // mat specular
-GLuint materialShininessUniform;
-
-GLuint lightingEnabledUniform;
+GLuint lDUniform; //
+GLuint kDUniform; //
+GLuint lightPositionUniform;
+GLuint lightingEnableUniform;
 
 Bool bLight = False;
+GLfloat angleCube = 0.0f;
 
-struct Light
-{
-	vmath::vec4 lightAmbiant;
-	vmath::vec4 lightDiffuse;
-	vmath::vec4 lightSpecular;
-	vmath::vec4 lightPositions;
-};
-
-struct Light lights[2];
-
-GLfloat materialAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat meterialDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat materialSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat materialShineeness = 50.0f;
-
-GLfloat anglePyramid = 0.0f;
+GLfloat lightDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat materialDiffuse[] = {0.5f, 0.5f, 0.5f, 1.0f};
+GLfloat lightPositions[] = {0.0f, 0.0f, 2.0f, 1.0f};
 
 // Entry Point Function
 int main(void)
@@ -460,45 +440,22 @@ int initiallize(void)
 		"uniform mat4 u_modelMatrix;"
 		"uniform mat4 u_viewMatrix;"
 		"uniform mat4 u_projectionMatrix;"
-		"uniform vec3 u_la[2];"
-		"uniform vec3 u_ld[2];"
-		"uniform vec3 u_ls[2];"
-		"uniform vec4 u_lightPosition[2];"
-		"uniform vec3 u_ka;"
-		"uniform vec3 u_ks;"
+		"uniform vec3 u_ld;"
 		"uniform vec3 u_kd;"
-		"uniform float u_materialShininnes;"
+		"uniform vec4 u_lightPosition;"
 		"uniform int u_lightingEnabled;"
-		"out vec3 phong_ads_light;"
+		"out vec3 diffuse_light_color;"
 		"void main(void)"
 		"{"
-		"phong_ads_light = vec3(0.0,0.0,0.0);"
 		"if(u_lightingEnabled == 1)"
 		"{"
-		"vec4 eyeCoordinates = u_viewMatrix * u_modelMatrix * a_position;"
-		"mat3 normalMatrix = mat3(u_viewMatrix * u_modelMatrix);"
+		"vec4 eyeCoordinate = u_viewMatrix * u_modelMatrix * a_position;"
+		"mat3 normalMatrix = mat3(transpose(inverse(u_viewMatrix * u_modelMatrix)));"
 		"vec3 transformedNormals = normalize(normalMatrix * a_normal);"
-		"vec3 viewerVector = normalize(-eyeCoordinates.xyz);"
-		"vec3 ambiant[2];"
-		"vec3 lightDirection[2];"
-		"vec3 diffuse[2];"
-		"vec3 reflectionVector[2];"
-		"vec3 specular[2];"
-		"for(int i = 0 ; i < 2 ; i++)"
-		"{"
-		"ambiant[i] = u_la[i] * u_ka;"
-		"lightDirection[i] = normalize(vec3(u_lightPosition[i]) - eyeCoordinates.xyz);" // Swizaling
-		"diffuse[i] = u_ld[i] * u_kd * max(dot(lightDirection[i] ,transformedNormals),0.0);"
-		"reflectionVector[i] = reflect(-lightDirection[i],transformedNormals);"
-		"specular[i] = u_ls[i] * u_ks * pow(max(dot(reflectionVector[i], viewerVector), 0.0), u_materialShininnes);"
-		"phong_ads_light = phong_ads_light + ambiant[i] + diffuse[i] +  specular[i];"
+		"vec3 lightDirection = vec3(normalize(u_lightPosition - eyeCoordinate));"
+		"diffuse_light_color = u_ld * u_kd * max(dot(lightDirection,transformedNormals),0.0);"
 		"}"
-		"}"
-		"else"
-		"{"
-		"phong_ads_light = vec3(1.0,1.0,1.0);"
-		"}"
-		"gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;"
+		"gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix  * a_position;"
 		"}";
 
 	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
@@ -538,11 +495,19 @@ int initiallize(void)
 	const GLchar *fragmentShaderSourceCode =
 		"#version 460 core"
 		"\n"
-		"in vec3 phong_ads_light;"
+		"in vec3 diffuse_light_color;"
+		"uniform int u_lightingEnabled;"
 		"out vec4 FragColor;"
 		"void main(void)"
 		"{"
-		"FragColor = vec4(phong_ads_light, 1.0);"
+		"if(u_lightingEnabled == 1)"
+		"{"
+		"FragColor = vec4(diffuse_light_color, 1.0);"
+		"}"
+		"else"
+		"{"
+		"FragColor = vec4(1.0f,1.0f,1.0f,1.0f);"
+		"}"
 		"}";
 
 	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
@@ -614,22 +579,10 @@ int initiallize(void)
 	viewMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_viewMatrix");
 	projectionMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_projectionMatrix");
 
-	laUniform[0] = glGetUniformLocation(shaderProgramObject, "u_la[0]");
-	ldUniform[0] = glGetUniformLocation(shaderProgramObject, "u_ld[0]");
-	lsUniform[0] = glGetUniformLocation(shaderProgramObject, "u_ls[0]");
-	lighPositionUniform[0] = glGetUniformLocation(shaderProgramObject, "u_lightPosition[0]");
-
-	laUniform[1] = glGetUniformLocation(shaderProgramObject, "u_la[1]");
-	ldUniform[1] = glGetUniformLocation(shaderProgramObject, "u_ld[1]");
-	lsUniform[1] = glGetUniformLocation(shaderProgramObject, "u_ls[1]");
-	lighPositionUniform[1] = glGetUniformLocation(shaderProgramObject, "u_lightPosition[1]");
-
-	kaUniform = glGetUniformLocation(shaderProgramObject, "u_ka");
-	kdUniform = glGetUniformLocation(shaderProgramObject, "u_kd");
-	ksUniform = glGetUniformLocation(shaderProgramObject, "u_ks");
-	materialShininessUniform = glGetUniformLocation(shaderProgramObject, "u_materialShininnes");
-
-	lightingEnabledUniform = glGetUniformLocation(shaderProgramObject, "u_lightingEnabled");
+	lDUniform = glGetUniformLocation(shaderProgramObject, "u_ld");
+	kDUniform = glGetUniformLocation(shaderProgramObject, "u_kd");
+	lightPositionUniform = glGetUniformLocation(shaderProgramObject, "u_lightPosition");
+	lightingEnableUniform = glGetUniformLocation(shaderProgramObject, "u_lightingEnabled");
 
 	// vao_Pyramid and vba related code
 	// declartions of vertex Data array
@@ -709,18 +662,6 @@ int initiallize(void)
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 
-	// Light Related
-
-	lights[0].lightAmbiant = vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	lights[0].lightDiffuse = vmath::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	lights[0].lightSpecular = vmath::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	lights[0].lightPositions = vmath::vec4(-2.0f, 0.0f, 0.0f, 1.0f);
-
-	lights[1].lightAmbiant = vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	lights[1].lightDiffuse = vmath::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-	lights[1].lightSpecular = vmath::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-	lights[1].lightPositions = vmath::vec4(2.0f, 0.0f, 0.0f, 1.0f);
-
 	perspectiveProjectionMatrix = mat4::identity();
 
 	resize(WIN_WIDTH, WIN_HEIGHT); // WARMUP RESIZE CALL
@@ -746,9 +687,9 @@ void resize(int width, int height)
 void update(void)
 {
 	// code
-	anglePyramid = anglePyramid + 3.0f;
-	if (anglePyramid >= 360.0f)
-		anglePyramid = anglePyramid - 360.0f;
+	angleCube = angleCube + 1.0f;
+	if (angleCube >= 360.0f)
+		angleCube = angleCube - 360.0f;
 }
 
 void uninitiallize(void)
@@ -757,7 +698,7 @@ void uninitiallize(void)
 	GLXContext currentContext;
 	currentContext = glXGetCurrentContext();
 	/*  */
-	// deletion of vbo_Pyramid_Position
+	// delete vbo_normal
 	if (vbo_Pyramid_Position)
 	{
 		glDeleteBuffers(1, &vbo_Pyramid_Position);
@@ -872,47 +813,38 @@ void draw(void)
 	// use shader program obejct
 	glUseProgram(shaderProgramObject);
 
-	// Pyramid
+	// Cube
 	// Tranformations
 	mat4 translationMatrix = mat4::identity();
-	mat4 rotationMatrix_X = mat4::identity();
 	mat4 rotationMatrix_Y = mat4::identity();
-	mat4 rotationMatrix_Z = mat4::identity();
 	mat4 rotationMatrix = mat4::identity();
-	mat4 scaleMatrix = mat4::identity();
 
 	mat4 modelMatrix = mat4::identity();
 	mat4 viewMatrix = mat4::identity();
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -6.0f); // glTranslatef() is replaced by this line
-	rotationMatrix = vmath::rotate(anglePyramid, 0.0f, 1.0f, 0.0f);
 
-	modelMatrix = translationMatrix * rotationMatrix; // order is very important
+	rotationMatrix_Y = vmath::rotate(angleCube, 0.0f, 1.0f, 0.0f);
+
+	rotationMatrix = rotationMatrix_Y;
+
+	modelMatrix = translationMatrix * rotationMatrix;
 
 	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
 	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
 	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
 
+	// Sending Light Related uniforms
 	if (bLight == True)
 	{
-		glUniform1i(lightingEnabledUniform, 1);
-
-		for (int i = 0; i < 2; i++)
-		{
-			glUniform3fv(laUniform[i], 1, lights[i].lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
-			glUniform3fv(ldUniform[i], 1, lights[i].lightDiffuse);
-			glUniform3fv(lsUniform[i], 1, lights[i].lightSpecular);
-			glUniform4fv(lighPositionUniform[i], 1, lights[i].lightPositions);
-		}
-
-		glUniform3fv(kaUniform, 1, materialAmbiant);
-		glUniform3fv(kdUniform, 1, meterialDiffuse);
-		glUniform3fv(ksUniform, 1, materialSpecular);
-		glUniform1f(materialShininessUniform, materialShineeness);
+		glUniform1i(lightingEnableUniform, 1);
+		glUniform3fv(lDUniform, 1, lightDiffuse);
+		glUniform3fv(kDUniform, 1, materialDiffuse);
+		glUniform4fv(lightPositionUniform, 1, lightPositions);
 	}
 	else
 	{
-		glUniform1i(lightingEnabledUniform, 0);
+		glUniform1i(lightingEnableUniform, 0);
 	}
 
 	glBindVertexArray(vao_Pyramid);

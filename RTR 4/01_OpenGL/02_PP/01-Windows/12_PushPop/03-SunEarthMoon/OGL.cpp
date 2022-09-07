@@ -261,13 +261,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case 27:
-			if (gpFile)
-			{
-				fprintf(gpFile, "Log File Successfully Closes");
-				fclose(gpFile);
-				gpFile = NULL;
-			}
-			PostQuitMessage(0);
+			DestroyWindow(hwnd);
+			break;
 		}
 		break;
 
@@ -534,18 +529,7 @@ int initialize(void)
 	glEnableVertexAttribArray(PRJ_ATRIBUTE_POSITION);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	/*
-		// Color vbo
-		glGenBuffers(1, &gVbo_sphere_position);
-		glBindBuffer(GL_ARRAY_BUFFER, NULL);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_vertices), NULL, GL_DYNAMIC_DRAW);
 
-		glVertexAttribPointer(PRJ_ATRIBUTE_COLOR, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-		glEnableVertexAttribArray(PRJ_ATRIBUTE_COLOR);
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-	*/
 	// normal vbo
 	glGenBuffers(1, &gVbo_sphere_normal);
 	glBindBuffer(GL_ARRAY_BUFFER, gVbo_sphere_normal);
@@ -885,11 +869,160 @@ void uninitialize(void)
 
 	if (wglGetCurrentContext() == ghrc)
 	{
-		wglMakeCurrent(NULL, NULL);
-	}
+		void initializeMatrixStack(void)
+		{
+			// code
+			matrixStackTop = 0;
+			for (int i = matrixStackTop; i < MODEL_VIEW_MATRIX_STACK; i++)
+				matrixStack[i] = mat4::identity();
+		}
 
-	if (ghrc)
-	{
+		void pushMatrix(mat4 matrix)
+		{
+			// Function Prototype
+			void uninitialize(void);
+
+			//	Code
+			fprintf(gpFile, "Before Push Stack Top = %d\n", matrixStackTop);
+
+			if (matrixStackTop > (MODEL_VIEW_MATRIX_STACK - 1))
+			{
+				fprintf(gpFile, "ERROR - EXCEEDED MATRIX STACK LIMIT:\n");
+				uninitialize();
+			}
+
+			matrixStack[matrixStackTop] = matrix;
+			matrixStackTop++;
+
+			fprintf(gpFile, "After Push Stack Top = %d\n", matrixStackTop);
+		}
+
+		mat4 popMatrix(void)
+		{
+			// function ptototype
+			void uninitialize(void);
+
+			// variable declartions
+			mat4 matrix;
+
+			// code
+			fprintf(gpFile, "Before Pop Staqck Top = %d\n", matrixStackTop);
+
+			if (matrixStackTop < 0)
+			{
+				fprintf(gpFile, "ERROR : MATRIX STACK EMPTY!\n");
+				uninitialize();
+			}
+
+			matrixStack[matrixStackTop] = mat4::identity();
+			matrixStackTop--;
+
+			matrix = matrixStack[matrixStackTop];
+
+			fprintf(gpFile, "After Pop Staqck Top = %d\n", matrixStackTop);
+
+			return (matrix);
+		}
+
+		void update(void)
+		{
+			/* code */
+		}
+
+		void uninitialize(void)
+		{
+			/* function declarations */
+			void ToggleFullScreen(void);
+
+			/* code */
+			if (gbFullScreen)
+				ToggleFullScreen();
+
+			/*  */
+			// deletion of gVbo_sphere_element
+			if (gVbo_sphere_element)
+			{
+				glDeleteBuffers(1, &gVbo_sphere_element);
+				gVbo_sphere_element = 0;
+			}
+
+			// deletion of gVbo_sphere_normal
+			if (gVbo_sphere_normal)
+			{
+				glDeleteBuffers(1, &gVbo_sphere_normal);
+				gVbo_sphere_normal = 0;
+			}
+
+			// deletion of gVbo_sphere_Position
+			if (gVbo_sphere_position)
+			{
+				glDeleteBuffers(1, &gVbo_sphere_position);
+				gVbo_sphere_position = 0;
+			}
+
+			// deletion of gVao_sphere
+			if (gVao_sphere)
+			{
+				glDeleteVertexArrays(1, &gVao_sphere);
+				gVao_sphere = 0;
+			}
+
+			if (shaderProgramObject)
+			{
+				glUseProgram(shaderProgramObject);
+
+				GLsizei numAttachedShaders;
+
+				glGetProgramiv(shaderProgramObject, GL_ATTACHED_SHADERS, &numAttachedShaders);
+
+				GLuint *shaderObject = NULL;
+				shaderObject = (GLuint *)malloc(numAttachedShaders * sizeof(GLuint));
+				glGetAttachedShaders(shaderProgramObject, numAttachedShaders, &numAttachedShaders, shaderObject);
+
+				for (GLsizei i = 0; i < numAttachedShaders; i++)
+				{
+					glDetachShader(shaderProgramObject, shaderObject[i]);
+					glDeleteShader(shaderObject[i]);
+					shaderObject[i] = 0;
+				}
+				free(shaderObject);
+				shaderObject = NULL;
+				glUseProgram(0);
+				glDeleteProgram(shaderProgramObject);
+				shaderProgramObject = 0;
+			}
+
+			if (wglGetCurrentContext() == ghrc)
+			{
+				wglMakeCurrent(NULL, NULL);
+			}
+
+			if (ghrc)
+			{
+				wglDeleteContext(ghrc);
+				ghrc = NULL;
+			}
+
+			if (ghdc)
+			{
+				ReleaseDC(ghwnd, ghdc);
+				ghwnd = NULL;
+				ghdc = NULL;
+			}
+
+			if (ghwnd)
+			{
+				DestroyWindow(ghwnd);
+			}
+
+			if (gpFile)
+			{
+				fprintf(gpFile, "Log File Successfully Closes");
+				fclose(gpFile);
+				gpFile = NULL;
+			}
+		}
+
 		wglDeleteContext(ghrc);
 		ghrc = NULL;
 	}
