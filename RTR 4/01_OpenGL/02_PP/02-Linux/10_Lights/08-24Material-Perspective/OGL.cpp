@@ -21,8 +21,8 @@
 using namespace vmath;
 
 // MACROS
-#define WIN_WIDTH 800
-#define WIN_HEIGHT 600
+#define WIN_WIDTH 960
+#define WIN_HEIGHT 540
 
 #define MODEL_VIEW_MATRIX_STACK 32
 mat4 matrixStack[MODEL_VIEW_MATRIX_STACK]; //
@@ -35,6 +35,7 @@ Colormap colormap;
 Window window;
 XEvent event;
 Bool fullscreen = False;
+int winWidth, winHeight;
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display *, GLXFBConfig, GLXContext, Bool, const int *);
 
@@ -128,7 +129,6 @@ int main(void)
 	KeySym keysym;
 	int screenWidth;
 	int screenHeight;
-	static int winWidth, winHeight;
 	char keys[26];
 
 	static int frameBufferAtribute[] =
@@ -278,6 +278,8 @@ int main(void)
 	screenHeight = XHeightOfScreen(XScreenOfDisplay(display, defaultScreen));
 
 	XMoveWindow(display, window, (screenWidth / 2) - (WIN_WIDTH / 2), (screenHeight / 2) - (WIN_HEIGHT / 2));
+	toggleFullscreen();
+	fullscreen = True;
 
 	// intiallizw
 	int ret = initiallize();
@@ -735,7 +737,7 @@ void resize(int width, int height)
 	if (height == 0) // To AVOID DEVIDED BY ZERO
 		height = 1;
 
-	// glViewport(0, 0, (GLsizei)width, (GLsizei)height);
+	glViewport(0, 0, (GLsizei)(width), (GLsizei)height);
 
 	perspectiveProjectionMatrix = vmath::perspective(
 		45.0f,
@@ -902,14 +904,15 @@ void draw24Sphere(void)
 	mat4 scaleMatrix = mat4::identity();
 
 	// Code
-	scaleMatrix = vmath::scale(1.5f, 1.5f, 1.5f);
+	scaleMatrix = vmath::scale(0.7f, 0.7f, 0.7f);
 
 	// ***** 1st sphere on 1st column, emerald *****
 	// translationMatrix = vmath::translate(-9.0f, 6.0f, -21.0f); // glTranslatef() is replaced by this line
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
 
-	glViewport(0.0f, 120 * 5.5, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(0.0f, 120 * 5.5, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
+	printf("%d\n", winWidth);
 
 	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
 	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
@@ -987,8 +990,8 @@ void draw24Sphere(void)
 
 	// 2
 	// ***** 2nd sphere on 1st column, jade *****
-	//	glViewport(0.0f, (GLsizei)(WIN_HEIGHT) - (WIN_HEIGHT) / 4, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
-	glViewport(0.0f, 120 * 4.4, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	//	glViewport(0.0f, (GLsizei)(WIN_HEIGHT) - (WIN_HEIGHT) / 4, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
+	glViewport(0.0f, 120 * 4.4, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1069,8 +1072,8 @@ void draw24Sphere(void)
 
 	// ***** 3rd sphere on 1st column, obsidian *****
 	// 3
-	// glViewport(0.0f, (GLsizei)(WIN_HEIGHT) - ((WIN_HEIGHT) / 2), (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
-	glViewport(0.0f, 120 * 3.3, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	// glViewport(0.0f, (GLsizei)(WIN_HEIGHT) - ((WIN_HEIGHT) / 2), (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
+	glViewport(0.0f, 120 * 3.3, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1151,8 +1154,8 @@ void draw24Sphere(void)
 
 	// 4
 	// ***** 4th sphere on 1st column, pearl *****
-	// glViewport(0.0f, (GLsizei)(WIN_HEIGHT) - ((WIN_HEIGHT) / 1.3f), (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
-	glViewport(0.0f, 120 * 2.2, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	// glViewport(0.0f, (GLsizei)(WIN_HEIGHT) - ((WIN_HEIGHT) / 1.3f), (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
+	glViewport(0.0f, 120 * 2.2, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, -0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1233,7 +1236,7 @@ void draw24Sphere(void)
 
 	// 5
 	// ***** 5th sphere on 1st column, ruby *****
-	glViewport(0.0f, 120 * 1.1, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(0.0f, 120 * 1.1, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1314,7 +1317,7 @@ void draw24Sphere(void)
 
 	// 6
 	// ***** 6th sphere on 1st column, turquoise *****
-	glViewport(0.0f, 0.0f, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(0.0f, 0.0f, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1400,7 +1403,7 @@ void draw24Sphere(void)
 	// ***** 1st sphere on 2nd column, brass *****
 	// ambient material
 	// 6
-	glViewport(425.0f, 120 * 5.5, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(425.0f, 120 * 5.5, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1480,7 +1483,7 @@ void draw24Sphere(void)
 
 	// 7
 	// ***** 2nd sphere on 2nd column, bronze *****
-	glViewport(425.0f, 120 * 4.4, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(425.0f, 120 * 4.4, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1561,7 +1564,7 @@ void draw24Sphere(void)
 
 	// 8
 	// ***** 3rd sphere on 2nd column, chrome *****
-	glViewport(425.0f, 120 * 3.3, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(425.0f, 120 * 3.3, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1642,7 +1645,7 @@ void draw24Sphere(void)
 
 	// 9
 	// ***** 4th sphere on 2nd column, copper *****
-	glViewport(425.0f, 120 * 2.2, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(425.0f, 120 * 2.2, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1723,7 +1726,7 @@ void draw24Sphere(void)
 
 	// 10
 	// ***** 5th sphere on 2nd column, gold *****
-	glViewport(425.0f, 120 * 1.1, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(425.0f, 120 * 1.1, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1804,7 +1807,7 @@ void draw24Sphere(void)
 
 	// 11
 	// ***** 6th sphere on 2nd column, silver *****
-	glViewport(425.0f, 0, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(425.0f, 0, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1889,7 +1892,7 @@ void draw24Sphere(void)
 	// *******************************************************
 
 	// ***** 1st sphere on 3rd column, black *****
-	glViewport(850.0f, 120 * 5.5, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(850.0f, 120 * 5.5, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1970,7 +1973,7 @@ void draw24Sphere(void)
 
 	// ***** 2nd sphere on 3rd column, cyan *****
 	// 13
-	glViewport(850.0f, 120 * 4.4, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(850.0f, 120 * 4.4, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2051,7 +2054,7 @@ void draw24Sphere(void)
 
 	// 14
 	// ***** 3rd sphere on 2nd column, green *****
-	glViewport(850.0f, 120 * 3.3, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(850.0f, 120 * 3.3, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2132,7 +2135,7 @@ void draw24Sphere(void)
 
 	// 15
 	// ***** 4th sphere on 3rd column, red *****
-	glViewport(850.0f, 120 * 2.2, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(850.0f, 120 * 2.2, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2213,7 +2216,7 @@ void draw24Sphere(void)
 
 	// 16
 	// ***** 5th sphere on 3rd column, white *****
-	glViewport(850.0f, 120 * 1.1, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(850.0f, 120 * 1.1, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2294,7 +2297,7 @@ void draw24Sphere(void)
 
 	// 17
 	// ***** 6th sphere on 3rd column, yellow plastic *****
-	glViewport(850.0f, 0, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(850.0f, 0, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2380,7 +2383,7 @@ void draw24Sphere(void)
 
 	// ***** 1st sphere on 4th column, black *****
 	// ambient material
-	glViewport(1300.0f, 120 * 5.5, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(1300.0f, 120 * 5.5, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2460,7 +2463,7 @@ void draw24Sphere(void)
 
 	// 19
 	// ***** 2nd sphere on 4th column, cyan *****
-	glViewport(1300.0f, 120 * 4.4, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(1300.0f, 120 * 4.4, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2541,7 +2544,7 @@ void draw24Sphere(void)
 
 	// 20
 	// ***** 3rd sphere on 4th column, green *****
-	glViewport(1300.0f, 120 * 3.3, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(1300.0f, 120 * 3.3, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2622,7 +2625,7 @@ void draw24Sphere(void)
 
 	// 21
 	// ***** 4th sphere on 4th column, red *****
-	glViewport(1300.0f, 120 * 2.2, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(1300.0f, 120 * 2.2, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2703,7 +2706,7 @@ void draw24Sphere(void)
 
 	// 22
 	// ***** 5th sphere on 4th column, white *****
-	glViewport(1300.0f, 120 * 1.1, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(1300.0f, 120 * 1.1, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2784,7 +2787,7 @@ void draw24Sphere(void)
 
 	// 23
 	// ***** 6th sphere on 4th column, yellow rubber *****
-	glViewport(1300.0f, 0, (GLsizei)(WIN_WIDTH / 3), (GLsizei)(WIN_HEIGHT / 3));
+	glViewport(1300.0f, 0, (GLsizei)(1920 / 3), (GLsizei)(1080 / 3));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
