@@ -63,18 +63,6 @@ GLuint modelMatrixUniform;
 GLuint viewMatrixUniform;
 GLuint projectionMatrixUniform;
 
-GLuint laUniform;			// light Ambiant
-GLuint ldUniform;			// light Diffuse
-GLuint lsUniform;			// light Spec
-GLuint lighPositionUniform; // light Position
-
-GLuint kaUniform; // material amb
-GLuint kdUniform; // mat diff
-GLuint ksUniform; // mat specular
-GLuint materialShininessUniform;
-
-GLuint lightingEnabledUniform;
-
 mat4 perspectiveProjectionMatrix;
 
 float sphere_vertices[1146];
@@ -83,18 +71,6 @@ float sphere_textures[764];
 unsigned short sphere_elements[2280];
 int gNumVertices;
 int gNumElements;
-
-Bool bLight = False;
-
-GLfloat lightAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat lightDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat lightSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat lightPositions[] = {100.0f, 100.0f, 100.0f, 1.0f};
-
-GLfloat materialAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat meterialDeffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat materialSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat materialShineeness = 120.0f;
 
 // Entry Point Function
 int main(void)
@@ -332,18 +308,6 @@ int main(void)
 						fullscreen = False;
 					}
 					break;
-
-				case 'L':
-				case 'l':
-					if (bLight == False)
-					{
-						bLight = True;
-					}
-					else
-					{
-						bLight = False;
-					}
-					break;
 				}
 				break;
 
@@ -460,25 +424,12 @@ int initiallize(void)
 		"#version 460 core"
 		"\n"
 		"in vec4 a_position;"
-		"in vec3 a_normal;"
+		"in vec4 a_normal;"
 		"uniform mat4 u_modelMatrix;"
 		"uniform mat4 u_viewMatrix;"
 		"uniform mat4 u_projectionMatrix;"
-		"uniform vec4 u_lightPosition;"
-		"uniform int u_lightingEnabled;"
-		"out vec3 transformedNormals;"
-		"out vec3 lightDirection;"
-		"out vec3 viewerVector;"
 		"void main(void)"
 		"{"
-		"if(u_lightingEnabled == 1)"
-		"{"
-		"vec4 eyeCoordinates = u_viewMatrix * u_modelMatrix * a_position;"
-		"mat3 normalMatrix = mat3(u_viewMatrix * u_modelMatrix);"
-		"transformedNormals = normalMatrix * a_normal;"
-		"lightDirection = vec3(u_lightPosition) - eyeCoordinates.xyz;" // Swizaling
-		"viewerVector = -eyeCoordinates.xyz;"
-		"}"
 		"gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;"
 		"}";
 
@@ -519,37 +470,10 @@ int initiallize(void)
 	const GLchar *fragmentShaderSourceCode =
 		"#version 460 core"
 		"\n"
-		"in vec3 transformedNormals;"
-		"in vec3 lightDirection;"
-		"in vec3 viewerVector;"
-		"uniform vec3 u_la;"
-		"uniform vec3 u_ld;"
-		"uniform vec3 u_ls;"
-		"uniform vec3 u_ka;"
-		"uniform vec3 u_ks;"
-		"uniform vec3 u_kd;"
-		"uniform float u_materialShininnes;"
-		"uniform int u_lightingEnabled;"
 		"out vec4 FragColor;"
 		"void main(void)"
 		"{"
-		"vec3 phong_ads_color;"
-		"if(u_lightingEnabled == 1)"
-		"{"
-		"vec3 ambiant = u_la * u_ka;"
-		"vec3 normalized_transformed_normals = normalize(transformedNormals);"
-		"vec3 normalized_light_direction = normalize(lightDirection);"
-		"vec3 diffuse = u_ld * u_kd * max(dot(normalized_light_direction ,normalized_transformed_normals),0.0);"
-		"vec3 reflectionVector = reflect(-normalized_light_direction,normalized_transformed_normals);"
-		"vec3 normalized_view_vector = normalize(viewerVector);"
-		"vec3 specular = u_ls * u_ks * pow(max(dot(reflectionVector , normalized_view_vector), 0.0), u_materialShininnes);"
-		"phong_ads_color = ambiant + diffuse +  specular;"
-		"}"
-		"else"
-		"{"
-		"phong_ads_color = vec3(1.0,1.0,1.0);"
-		"}"
-		"FragColor = vec4(phong_ads_color, 1.0);"
+		"FragColor = vec4(1.0f,1.0f,1.0f, 1.0);"
 		"}";
 
 	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
@@ -619,19 +543,6 @@ int initiallize(void)
 	modelMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_modelMatrix");
 	viewMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_viewMatrix");
 	projectionMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_projectionMatrix");
-
-	laUniform = glGetUniformLocation(shaderProgramObject, "u_la");
-	ldUniform = glGetUniformLocation(shaderProgramObject, "u_ld");
-	lsUniform = glGetUniformLocation(shaderProgramObject, "u_ls");
-	lighPositionUniform = glGetUniformLocation(shaderProgramObject, "u_lightPosition");
-
-	kaUniform = glGetUniformLocation(shaderProgramObject, "u_ka");
-	kdUniform = glGetUniformLocation(shaderProgramObject, "u_kd");
-	ksUniform = glGetUniformLocation(shaderProgramObject, "u_ks");
-
-	materialShininessUniform = glGetUniformLocation(shaderProgramObject, "u_materialShininnes");
-
-	lightingEnabledUniform = glGetUniformLocation(shaderProgramObject, "u_lightingEnabled");
 
 	// gVao_sphere and vba related code
 	// declartions of vertex Data array
@@ -852,25 +763,6 @@ void draw(void)
 	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
 	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
 	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
-
-	if (bLight == True)
-	{
-		glUniform1i(lightingEnabledUniform, 1);
-
-		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
-		glUniform3fv(ldUniform, 1, lightDiffuse);
-		glUniform3fv(lsUniform, 1, lightSpecular);
-		glUniform4fv(lighPositionUniform, 1, lightPositions);
-
-		glUniform3fv(kaUniform, 1, materialAmbiant);
-		glUniform3fv(kdUniform, 1, meterialDeffuse);
-		glUniform3fv(ksUniform, 1, materialSpecular);
-		glUniform1f(materialShininessUniform, materialShineeness);
-	}
-	else
-	{
-		glUniform1i(lightingEnabledUniform, 0);
-	}
 
 	// draw the desired graphics
 	// drawing code -- magic
