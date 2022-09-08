@@ -458,22 +458,22 @@ int initiallize(void)
 		"uniform mat4 u_modelMatrix;"
 		"uniform mat4 u_viewMatrix;"
 		"uniform mat4 u_projectionMatrix;"
+		"uniform vec3 u_ld;"
+		"uniform vec3 u_kd;"
 		"uniform vec4 u_lightPosition;"
 		"uniform int u_lightingEnabled;"
-		"out vec3 transformedNormals;"
-		"out vec3 lightDirection;"
-		"out vec3 viewerVector;"
+		"out vec3 diffuse_light_color;"
 		"void main(void)"
 		"{"
 		"if(u_lightingEnabled == 1)"
 		"{"
-		"vec4 eyeCoordinates = u_viewMatrix * u_modelMatrix * a_position;"
-		"mat3 normalMatrix = mat3(u_viewMatrix * u_modelMatrix);"
-		"transformedNormals = normalMatrix * a_normal;"
-		"lightDirection = vec3(u_lightPosition) - eyeCoordinates.xyz;" // Swizaling
-		"viewerVector = -eyeCoordinates.xyz;"
+		"vec4 eyeCoordinate = u_viewMatrix * u_modelMatrix * a_position;"
+		"mat3 normalMatrix = mat3(transpose(inverse(u_viewMatrix * u_modelMatrix)));"
+		"vec3 transformedNormals = normalize(normalMatrix * a_normal);"
+		"vec3 lightDirection = vec3(normalize(u_lightPosition - eyeCoordinate));"
+		"diffuse_light_color = u_ld * u_kd * max(dot(lightDirection,transformedNormals),0.0);"
 		"}"
-		"gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;"
+		"gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix  * a_position;"
 		"}";
 
 	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
@@ -513,37 +513,19 @@ int initiallize(void)
 	const GLchar *fragmentShaderSourceCode =
 		"#version 460 core"
 		"\n"
-		"in vec3 transformedNormals;"
-		"in vec3 lightDirection;"
-		"in vec3 viewerVector;"
-		"uniform vec3 u_la;"
-		"uniform vec3 u_ld;"
-		"uniform vec3 u_ls;"
-		"uniform vec3 u_ka;"
-		"uniform vec3 u_ks;"
-		"uniform vec3 u_kd;"
-		"uniform float u_materialShininnes;"
+		"in vec3 diffuse_light_color;"
 		"uniform int u_lightingEnabled;"
 		"out vec4 FragColor;"
 		"void main(void)"
 		"{"
-		"vec3 phong_ads_color;"
 		"if(u_lightingEnabled == 1)"
 		"{"
-		"vec3 ambiant = u_la * u_ka;"
-		"vec3 normalized_transformed_normals = normalize(transformedNormals);"
-		"vec3 normalized_light_direction = normalize(lightDirection);"
-		"vec3 diffuse = u_ld * u_kd * max(dot(normalized_light_direction ,normalized_transformed_normals),0.0);"
-		"vec3 reflectionVector = reflect(-normalized_light_direction,normalized_transformed_normals);"
-		"vec3 normalized_view_vector = normalize(viewerVector);"
-		"vec3 specular = u_ls * u_ks * pow(max(dot(reflectionVector , normalized_view_vector), 0.0), u_materialShininnes);"
-		"phong_ads_color = ambiant + diffuse +  specular;"
+		"FragColor = vec4(diffuse_light_color, 1.0);"
 		"}"
 		"else"
 		"{"
-		"phong_ads_color = vec3(1.0,1.0,1.0);"
+		"FragColor = vec4(1.0f,1.0f,1.0f,1.0f);"
 		"}"
-		"FragColor = vec4(phong_ads_color, 1.0);"
 		"}";
 
 	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
@@ -580,6 +562,7 @@ int initiallize(void)
 	glAttachShader(shaderProgramObject, fragmentShaderObject);
 
 	// prelinked binding
+	// Binding Position Array
 	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_POSITION, "a_position");
 	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_NORMAL, "a_normal");
 
@@ -614,17 +597,9 @@ int initiallize(void)
 	viewMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_viewMatrix");
 	projectionMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_projectionMatrix");
 
-	laUniform = glGetUniformLocation(shaderProgramObject, "u_la");
 	ldUniform = glGetUniformLocation(shaderProgramObject, "u_ld");
-	lsUniform = glGetUniformLocation(shaderProgramObject, "u_ls");
-	lighPositionUniform = glGetUniformLocation(shaderProgramObject, "u_lightPosition");
-
-	kaUniform = glGetUniformLocation(shaderProgramObject, "u_ka");
 	kdUniform = glGetUniformLocation(shaderProgramObject, "u_kd");
-	ksUniform = glGetUniformLocation(shaderProgramObject, "u_ks");
-
-	materialShininessUniform = glGetUniformLocation(shaderProgramObject, "u_materialShininnes");
-
+	lighPositionUniform = glGetUniformLocation(shaderProgramObject, "u_lightPosition");
 	lightingEnabledUniform = glGetUniformLocation(shaderProgramObject, "u_lightingEnabled");
 
 	// gVao_sphere and vba related code
@@ -850,16 +825,9 @@ void draw(void)
 	if (bLight == True)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
-
-		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
 		glUniform3fv(ldUniform, 1, lightDiffuse);
-		glUniform3fv(lsUniform, 1, lightSpecular);
 		glUniform4fv(lighPositionUniform, 1, lightPositions);
-
-		glUniform3fv(kaUniform, 1, materialAmbiant);
-		glUniform3fv(kdUniform, 1, meterialDeffuse);
-		glUniform3fv(ksUniform, 1, materialSpecular);
-		glUniform1f(materialShininessUniform, materialShineeness);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
 	}
 	else
 	{
