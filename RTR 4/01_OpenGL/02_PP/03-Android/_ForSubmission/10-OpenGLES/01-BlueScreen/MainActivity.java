@@ -9,7 +9,9 @@ import android.graphics.Color;
 import android.content.pm.ActivityInfo;
 
 // For Full Screen
-import andoidx.core.view.WindowCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,12 +27,11 @@ public class MainActivity extends AppCompatActivity {
         // FullScreen
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
-        // Hiddning Systrem BAR and IME(INPUT METHOD TERITORY)
-        WindowInsetsCotrolerCompat windowInsetsCotrolerCompat;
+        // Hidding System BAR and IME(INPUT METHOD TERITORY)
+        WindowInsetsControllerCompat windowInsetsControllerCompat = WindowCompat.getInsetsController(getWindow(),
+                getWindow().getDecorView());
 
-        windowInsetsCotrolerCompat = viewCompat.getWindowInsetsControler(getWindow.getDecorView);
-
-        windowInsetsCotrolerCompat.hide(windowInsetsCotrolerCompat.Type.systemBar | windowInsetsCotrolerCompat.Ine);
+        windowInsetsControllerCompat.hide(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.ime());
 
         // Forced Landscape Orientation
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);

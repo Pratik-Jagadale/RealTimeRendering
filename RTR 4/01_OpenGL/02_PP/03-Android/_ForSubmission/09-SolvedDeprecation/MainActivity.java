@@ -6,19 +6,24 @@ import android.os.Bundle;
 
 import android.graphics.Color;
 
+import android.content.pm.ActivityInfo;
+
 // For Full Screen
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.view.WindowInsetsCompat;
-
+import androidx.core.view.ViewCompat;
 
 public class MainActivity extends AppCompatActivity {
 
-    private MyView myView;
+    private GLESView glesView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) { // OnResume OnPause OnStart OnRestart OnStop OnDestroy
         super.onCreate(savedInstanceState);
+
+        // Hide Action Bar and Title
+        getSupportActionBar().hide();
 
         // FullScreen
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
@@ -29,10 +34,24 @@ public class MainActivity extends AppCompatActivity {
 
         windowInsetsControllerCompat.hide(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.ime());
 
+        // Forced Landscape Orientation
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+
         getWindow().getDecorView().setBackgroundColor(Color.rgb(0, 0, 0));
 
-        myView = new MyView(this);
+        glesView = new GLESView(this);
 
-        setContentView(myView); // Telling Android to set parameter view as window view
+        setContentView(glesView); // Telling Android to set parameter view as window view
     }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
 }
