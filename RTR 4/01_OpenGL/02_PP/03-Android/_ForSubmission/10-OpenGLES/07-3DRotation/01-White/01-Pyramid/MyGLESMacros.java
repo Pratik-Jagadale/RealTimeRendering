@@ -1,0 +1,9 @@
+package com.pratik.window;
+
+public class MyGLESMacros {
+    public static final int PRJ_ATRIBUTE_POSITION = 0;
+    public static final int PRJ_ATRIBUTE_COLOR = 1;
+    public static final int PRJ_ATRIBUTE_NORMAL = 2;
+    public static final int PRJ_ATRIBUTE_TEXTURE0 = 3;
+
+}
