@@ -199,7 +199,7 @@ public class GLESView extends GLSurfaceView implements OnDoubleTapListener, OnGe
                         "uniform vec3 u_ks;" +
                         "uniform vec3 u_kd;" +
                         "uniform float u_materialShininnes;" +
-                        "uniform int u_lightingEnabled;" +
+                        "uniform mediump int u_lightingEnabled;" +
                         "out vec3 phong_ads_out;" +
                         "void main(void)" +
                         "{" +
