@@ -37,6 +37,9 @@ XEvent event;
 Bool fullscreen = False;
 int winWidth, winHeight;
 
+int currentWindowWidth = 0;
+int currentWindowHeight = 0;
+
 typedef GLXContext (*glXCreateContextAttribsARBProc)(Display *, GLXFBConfig, GLXContext, Bool, const int *);
 
 glXCreateContextAttribsARBProc glXCreateContextAttribsARB = NULL;
@@ -744,6 +747,9 @@ void resize(int width, int height)
 		(GLfloat)width / (GLfloat)height,
 		0.1f,
 		100.0f);
+
+	currentWindowWidth = width;
+	currentWindowHeight = height;
 }
 
 void update(void)
@@ -754,6 +760,27 @@ void update(void)
 		angleForRotation = angleForRotation + 1.0f;
 		if (angleForRotation > 360.0f)
 			angleForRotation = angleForRotation - 360.0f;
+
+		// Set Light Zero Position - rotating  light
+		GLfloat angle = (angleForRotation * M_PI) / 180.0f;
+		GLfloat x = 10.0f * cos(angle);
+		GLfloat y = 10.0f * sin(angle);
+
+		if (keyPressed == 1)
+		{
+			lightPositions[1] = x;
+			lightPositions[2] = y;
+		}
+		if (keyPressed == 2)
+		{
+			lightPositions[0] = x;
+			lightPositions[2] = y;
+		}
+		if (keyPressed == 3)
+		{
+			lightPositions[0] = x;
+			lightPositions[1] = y;
+		}
 	}
 }
 
@@ -895,6 +922,1445 @@ void draw(void)
 	glXSwapBuffers(display, window);
 }
 
+void draw24Sphere(void)
+{
+	// Variable Declartions
+	mat4 translationMatrix = mat4::identity();
+	mat4 modelMatrix = mat4::identity();
+	mat4 viewMatrix = mat4::identity();
+	mat4 scaleMatrix = mat4::identity();
+
+	// Code
+
+	int horDistance = currentWindowWidth / 6;
+	int verDistance = currentWindowHeight / 7;
+
+	scaleMatrix = vmath::scale(1.3f, 1.3f, 1.3f);
+
+	// ***** 1st sphere on 1st column, emerald *****
+	// translationMatrix = vmath::translate(-9.0f, 6.0f, -21.0f); // glTranslatef() is replaced by this line
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glViewport(0.0f, verDistance * 5, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.0215; // r
+	materialAmbiant[1] = 0.1745; // g
+	materialAmbiant[2] = 0.0215; // b
+	materialAmbiant[3] = 1.0f;	 // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.07568; // r
+	materialDiffuse[1] = 0.61424; // g
+	materialDiffuse[2] = 0.07568; // b
+	materialDiffuse[3] = 1.0f;	  // a
+
+	// specular material
+	materialSpecular[0] = 0.633;	// r
+	materialSpecular[1] = 0.727811; // g
+	materialSpecular[2] = 0.633;	// b
+	materialSpecular[3] = 1.0f;		// a
+
+	// shininess
+	materialShinniness = 0.6 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 2
+	// ***** 2nd sphere on 1st column, jade *****
+	//	glViewport(0.0f, (GLsizei)(WINHEIGHT) - (WINHEIGHT) / 4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	// glViewport(0.0f, 120 * 4.4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(0.0f, verDistance * 4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.135;	 // r
+	materialAmbiant[1] = 0.2225; // g
+	materialAmbiant[2] = 0.1575; // b
+	materialAmbiant[3] = 1.0f;	 // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.54; // r
+	materialDiffuse[1] = 0.89; // g
+	materialDiffuse[2] = 0.63; // b
+	materialDiffuse[3] = 1.0f; // a
+
+	// specular material
+	materialSpecular[0] = 0.316228; // r
+	materialSpecular[1] = 0.316228; // g
+	materialSpecular[2] = 0.316228; // b
+	materialSpecular[3] = 1.0f;		// a
+
+	// shininess
+	materialShinniness = 0.1 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// ***** 3rd sphere on 1st column, obsidian *****
+	// 3
+	// glViewport(0.0f, (GLsizei)(WINHEIGHT) - ((WINHEIGHT) / 2), (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	// glViewport(0.0f, verDistance * 4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(0.0f, verDistance * 3, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.05375; // r
+	materialAmbiant[1] = 0.05;	  // g
+	materialAmbiant[2] = 0.06625; // b
+	materialAmbiant[3] = 1.0f;	  // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.18275; // r
+	materialDiffuse[1] = 0.17;	  // g
+	materialDiffuse[2] = 0.22525; // b
+	materialDiffuse[3] = 1.0f;	  // a
+
+	// specular material
+	materialSpecular[0] = 0.332741; // r
+	materialSpecular[1] = 0.328634; // g
+	materialSpecular[2] = 0.346435; // b
+	materialSpecular[3] = 1.0f;		// a
+
+	// shininess
+	materialShinniness = 0.3 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 4
+	// ***** 4th sphere on 1st column, pearl *****
+	// glViewport(0.0f, (GLsizei)(WINHEIGHT) - ((WINHEIGHT) / 1.3f), (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	// glViewport(0.0f, verDistance * 3, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(0.0f, verDistance * 2, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, -0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.25;	  // r
+	materialAmbiant[1] = 0.20725; // g
+	materialAmbiant[2] = 0.20725; // b
+	materialAmbiant[3] = 1.0f;	  // a
+
+	// diffuse material
+	materialDiffuse[0] = 1.0;	// r
+	materialDiffuse[1] = 0.829; // g
+	materialDiffuse[2] = 0.829; // b
+	materialDiffuse[3] = 1.0f;	// a
+
+	// specular material
+	materialSpecular[0] = 0.296648; // r
+	materialSpecular[1] = 0.296648; // g
+	materialSpecular[2] = 0.296648; // b
+	materialSpecular[3] = 1.0f;		// a
+
+	// shininess
+	materialShinniness = 0.088 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 5
+	// ***** 5th sphere on 1st column, ruby *****
+	glViewport(0.0f, verDistance, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.1745;  // r
+	materialAmbiant[1] = 0.01175; // g
+	materialAmbiant[2] = 0.01175; // b
+	materialAmbiant[3] = 1.0f;	  // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.61424; // r
+	materialDiffuse[1] = 0.04136; // g
+	materialDiffuse[2] = 0.04136; // b
+	materialDiffuse[3] = 1.0f;	  // a
+
+	// specular material
+	materialSpecular[0] = 0.727811; // r
+	materialSpecular[1] = 0.626959; // g
+	materialSpecular[2] = 0.626959; // b
+	materialSpecular[3] = 1.0f;		// a
+
+	// shininess
+	materialShinniness = 0.6 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 6
+	// ***** 6th sphere on 1st column, turquoise *****
+	//	glViewport(0.0f, 0.0f, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(0.0f, 0, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.1;	  // r
+	materialAmbiant[1] = 0.18725; // g
+	materialAmbiant[2] = 0.1745;  // b
+	materialAmbiant[3] = 1.0f;	  // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.396;	  // r
+	materialDiffuse[1] = 0.74151; // g
+	materialDiffuse[2] = 0.69102; // b
+	materialDiffuse[3] = 1.0f;	  // a
+
+	// specular material
+	materialSpecular[0] = 0.297254; // r
+	materialSpecular[1] = 0.30829;	// g
+	materialSpecular[2] = 0.306678; // b
+	materialSpecular[3] = 1.0f;		// a
+
+	// shininess
+	materialShinniness = 0.1 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// *******************************************************
+	// *******************************************************
+	// *******************************************************
+
+	// ***** 1st sphere on 2nd column, brass *****
+	// ambient material
+	// 6
+	// glViewport(425.0f, 120 * 5.5, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 1.5, verDistance * 5, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	materialAmbiant[0] = 0.329412; // r
+	materialAmbiant[1] = 0.223529; // g
+	materialAmbiant[2] = 0.027451; // b
+	materialAmbiant[3] = 1.0f;	   // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.780392; // r
+	materialDiffuse[1] = 0.568627; // g
+	materialDiffuse[2] = 0.113725; // b
+	materialDiffuse[3] = 1.0f;	   // a
+
+	// specular material
+	materialSpecular[0] = 0.992157; // r
+	materialSpecular[1] = 0.941176; // g
+	materialSpecular[2] = 0.807843; // b
+	materialSpecular[3] = 1.0f;		// a
+
+	// shininess
+	materialShinniness = 0.21794872 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 7
+	// ***** 2nd sphere on 2nd column, bronze *****
+	// glViewport(425.0f, 120 * 4.4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	glViewport(horDistance * 1.5, verDistance * 4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.2125; // r
+	materialAmbiant[1] = 0.1275; // g
+	materialAmbiant[2] = 0.054;	 // b
+	materialAmbiant[3] = 1.0f;	 // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.714;	  // r
+	materialDiffuse[1] = 0.4284;  // g
+	materialDiffuse[2] = 0.18144; // b
+	materialDiffuse[3] = 1.0f;	  // a
+
+	// specular material
+	materialSpecular[0] = 0.393548; // r
+	materialSpecular[1] = 0.271906; // g
+	materialSpecular[2] = 0.166721; // b
+	materialSpecular[3] = 1.0f;		// a
+
+	// shininess
+	materialShinniness = 0.2 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 8
+	// ***** 3rd sphere on 2nd column, chrome *****
+	// glViewport(425.0f, 120 * 3.3, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 1.5, verDistance * 3, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.25; // r
+	materialAmbiant[1] = 0.25; // g
+	materialAmbiant[2] = 0.25; // b
+	materialAmbiant[3] = 1.0f; // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.4;  // r
+	materialDiffuse[1] = 0.4;  // g
+	materialDiffuse[2] = 0.4;  // b
+	materialDiffuse[3] = 1.0f; // a
+
+	// specular material
+	materialSpecular[0] = 0.774597; // r
+	materialSpecular[1] = 0.774597; // g
+	materialSpecular[2] = 0.774597; // b
+	materialSpecular[3] = 1.0f;		// a
+
+	// shininess
+	materialShinniness = 0.6 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 9
+	// ***** 4th sphere on 2nd column, copper *****
+	// glViewport(425.0f, 120 * 2.2, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 1.5, verDistance * 2, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.19125; // r
+	materialAmbiant[1] = 0.0735;  // g
+	materialAmbiant[2] = 0.0225;  // b
+	materialAmbiant[3] = 1.0f;	  // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.7038;  // r
+	materialDiffuse[1] = 0.27048; // g
+	materialDiffuse[2] = 0.0828;  // b
+	materialDiffuse[3] = 1.0f;	  // a
+
+	// specular material
+	materialSpecular[0] = 0.256777; // r
+	materialSpecular[1] = 0.137622; // g
+	materialSpecular[2] = 0.086014; // b
+	materialSpecular[3] = 1.0f;		// a
+
+	// shininess
+	materialShinniness = 0.1 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 10
+	// ***** 5th sphere on 2nd column, gold *****
+	//	glViewport(425.0f, 120 * 1.1, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 1.5, verDistance, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.24725; // r
+	materialAmbiant[1] = 0.1995;  // g
+	materialAmbiant[2] = 0.0745;  // b
+	materialAmbiant[3] = 1.0f;	  // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.75164; // r
+	materialDiffuse[1] = 0.60648; // g
+	materialDiffuse[2] = 0.22648; // b
+	materialDiffuse[3] = 1.0f;	  // a
+
+	// specular material
+	materialSpecular[0] = 0.628281; // r
+	materialSpecular[1] = 0.555802; // g
+	materialSpecular[2] = 0.366065; // b
+	materialSpecular[3] = 1.0f;		// a
+
+	// shininess
+	materialShinniness = 0.4 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 11
+	// ***** 6th sphere on 2nd column, silver *****
+	// glViewport(425.0f, 0, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 1.5, 0, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.19225; // r
+	materialAmbiant[1] = 0.19225; // g
+	materialAmbiant[2] = 0.19225; // b
+	materialAmbiant[3] = 1.0f;	  // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.50754; // r
+	materialDiffuse[1] = 0.50754; // g
+	materialDiffuse[2] = 0.50754; // b
+	materialDiffuse[3] = 1.0f;	  // a
+
+	// specular material
+	materialSpecular[0] = 0.508273; // r
+	materialSpecular[1] = 0.508273; // g
+	materialSpecular[2] = 0.508273; // b
+	materialSpecular[3] = 1.0f;		// a
+
+	// shininess
+	materialShinniness = 0.4 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 12
+	// *******************************************************
+	// *******************************************************
+	// *******************************************************
+
+	// ***** 1st sphere on 3rd column, black *****
+	// glViewport(850.0f, 120 * 5.5, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 3, verDistance * 5, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.0;  // r
+	materialAmbiant[1] = 0.0;  // g
+	materialAmbiant[2] = 0.0;  // b
+	materialAmbiant[3] = 1.0f; // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.01; // r
+	materialDiffuse[1] = 0.01; // g
+	materialDiffuse[2] = 0.01; // b
+	materialDiffuse[3] = 1.0f; // a
+
+	// specular material
+	materialSpecular[0] = 0.50; // r
+	materialSpecular[1] = 0.50; // g
+	materialSpecular[2] = 0.50; // b
+	materialSpecular[3] = 1.0f; // a
+
+	// shininess
+	materialShinniness = 0.25 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// ***** 2nd sphere on 3rd column, cyan *****
+	// 13
+	glViewport(850.0f, 120 * 4.4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 3, verDistance * 4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.0;  // r
+	materialAmbiant[1] = 0.1;  // g
+	materialAmbiant[2] = 0.06; // b
+	materialAmbiant[3] = 1.0f; // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.0;		 // r
+	materialDiffuse[1] = 0.50980392; // g
+	materialDiffuse[2] = 0.50980392; // b
+	materialDiffuse[3] = 1.0f;		 // a
+
+	// specular material
+	materialSpecular[0] = 0.50185078; // r
+	materialSpecular[1] = 0.50185078; // g
+	materialSpecular[2] = 0.50185078; // b
+	materialSpecular[3] = 1.0f;		  // a
+
+	// shininess
+	materialShinniness = 0.25 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 14
+	// ***** 3rd sphere on 2nd column, green *****
+	glViewport(horDistance * 3, verDistance * 3, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.0;  // r
+	materialAmbiant[1] = 0.0;  // g
+	materialAmbiant[2] = 0.0;  // b
+	materialAmbiant[3] = 1.0f; // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.1;  // r
+	materialDiffuse[1] = 0.35; // g
+	materialDiffuse[2] = 0.1;  // b
+	materialDiffuse[3] = 1.0f; // a
+
+	// specular material
+	materialSpecular[0] = 0.45; // r
+	materialSpecular[1] = 0.55; // g
+	materialSpecular[2] = 0.45; // b
+	materialSpecular[3] = 1.0f; // a
+
+	// shininess
+	materialShinniness = 0.25 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 15
+	// ***** 4th sphere on 3rd column, red *****
+	// glViewport(850.0f, 120 * 2.2, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 3, verDistance * 2, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.0;  // r
+	materialAmbiant[1] = 0.0;  // g
+	materialAmbiant[2] = 0.0;  // b
+	materialAmbiant[3] = 1.0f; // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.5;  // r
+	materialDiffuse[1] = 0.0;  // g
+	materialDiffuse[2] = 0.0;  // b
+	materialDiffuse[3] = 1.0f; // a
+
+	// specular material
+	materialSpecular[0] = 0.7;	// r
+	materialSpecular[1] = 0.6;	// g
+	materialSpecular[2] = 0.6;	// b
+	materialSpecular[3] = 1.0f; // a
+
+	// shininess
+	materialShinniness = 0.25 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 16
+	// ***** 5th sphere on 3rd column, white *****
+	// glViewport(850.0f, 120 * 1.1, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 3, verDistance, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.0;  // r
+	materialAmbiant[1] = 0.0;  // g
+	materialAmbiant[2] = 0.0;  // b
+	materialAmbiant[3] = 1.0f; // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.55; // r
+	materialDiffuse[1] = 0.55; // g
+	materialDiffuse[2] = 0.55; // b
+	materialDiffuse[3] = 1.0f; // a
+
+	// specular material
+	materialSpecular[0] = 0.70; // r
+	materialSpecular[1] = 0.70; // g
+	materialSpecular[2] = 0.70; // b
+	materialSpecular[3] = 1.0f; // a
+
+	// shininess
+	materialShinniness = 0.25 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 17
+	// ***** 6th sphere on 3rd column, yellow plastic *****
+	glViewport(horDistance * 3, 0, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.0;  // r
+	materialAmbiant[1] = 0.0;  // g
+	materialAmbiant[2] = 0.0;  // b
+	materialAmbiant[3] = 1.0f; // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.5;  // r
+	materialDiffuse[1] = 0.5;  // g
+	materialDiffuse[2] = 0.0;  // b
+	materialDiffuse[3] = 1.0f; // a
+
+	// specular material
+	materialSpecular[0] = 0.60; // r
+	materialSpecular[1] = 0.60; // g
+	materialSpecular[2] = 0.50; // b
+	materialSpecular[3] = 1.0f; // a
+
+	// shininess
+	materialShinniness = 0.25 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 18
+	// *******************************************************
+	// *******************************************************
+	// *******************************************************
+
+	// ***** 1st sphere on 4th column, black *****
+	// ambient material
+	glViewport(horDistance * 4.5, verDistance * 5, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	materialAmbiant[0] = 0.02; // r
+	materialAmbiant[1] = 0.02; // g
+	materialAmbiant[2] = 0.02; // b
+	materialAmbiant[3] = 1.0f; // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.01; // r
+	materialDiffuse[1] = 0.01; // g
+	materialDiffuse[2] = 0.01; // b
+	materialDiffuse[3] = 1.0f; // a
+
+	// specular material
+	materialSpecular[0] = 0.4;	// r
+	materialSpecular[1] = 0.4;	// g
+	materialSpecular[2] = 0.4;	// b
+	materialSpecular[3] = 1.0f; // a
+
+	// shininess
+	materialShinniness = 0.078125 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 19
+	// ***** 2nd sphere on 4th column, cyan *****
+	glViewport(horDistance * 4.5, verDistance * 4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.0;  // r
+	materialAmbiant[1] = 0.05; // g
+	materialAmbiant[2] = 0.05; // b
+	materialAmbiant[3] = 1.0f; // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.4;  // r
+	materialDiffuse[1] = 0.5;  // g
+	materialDiffuse[2] = 0.5;  // b
+	materialDiffuse[3] = 1.0f; // a
+
+	// specular material
+	materialSpecular[0] = 0.04; // r
+	materialSpecular[1] = 0.7;	// g
+	materialSpecular[2] = 0.7;	// b
+	materialSpecular[3] = 1.0f; // a
+
+	// shininess
+	materialShinniness = 0.078125 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 20
+	// ***** 3rd sphere on 4th column, green *****
+	glViewport(horDistance * 4.5, verDistance * 3, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.0;  // r
+	materialAmbiant[1] = 0.05; // g
+	materialAmbiant[2] = 0.0;  // b
+	materialAmbiant[3] = 1.0f; // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.4;  // r
+	materialDiffuse[1] = 0.5;  // g
+	materialDiffuse[2] = 0.4;  // b
+	materialDiffuse[3] = 1.0f; // a
+
+	// specular material
+	materialSpecular[0] = 0.04; // r
+	materialSpecular[1] = 0.7;	// g
+	materialSpecular[2] = 0.04; // b
+	materialSpecular[3] = 1.0f; // a
+
+	// shininess
+	materialShinniness = 0.078125 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 21
+	// ***** 4th sphere on 4th column, red *****
+	glViewport(horDistance * 4.5, verDistance * 2, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.05; // r
+	materialAmbiant[1] = 0.0;  // g
+	materialAmbiant[2] = 0.0;  // b
+	materialAmbiant[3] = 1.0f; // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.5;  // r
+	materialDiffuse[1] = 0.4;  // g
+	materialDiffuse[2] = 0.4;  // b
+	materialDiffuse[3] = 1.0f; // a
+
+	// specular material
+	materialSpecular[0] = 0.7;	// r
+	materialSpecular[1] = 0.04; // g
+	materialSpecular[2] = 0.04; // b
+	materialSpecular[3] = 1.0f; // a
+
+	// shininess
+	materialShinniness = 0.078125 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 22
+	// ***** 5th sphere on 4th column, white *****
+	glViewport(horDistance * 4.5, verDistance, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.05; // r
+	materialAmbiant[1] = 0.05; // g
+	materialAmbiant[2] = 0.05; // b
+	materialAmbiant[3] = 1.0f; // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.5;  // r
+	materialDiffuse[1] = 0.5;  // g
+	materialDiffuse[2] = 0.5;  // b
+	materialDiffuse[3] = 1.0f; // a
+
+	// specular material
+	materialSpecular[0] = 0.7;	// r
+	materialSpecular[1] = 0.7;	// g
+	materialSpecular[2] = 0.7;	// b
+	materialSpecular[3] = 1.0f; // a
+
+	// shininess
+	materialShinniness = 0.078125 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	// 23
+	// ***** 6th sphere on 4th column, yellow rubber *****
+	glViewport(horDistance * 4.5, 0, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+
+	// ambient material
+	materialAmbiant[0] = 0.05; // r
+	materialAmbiant[1] = 0.05; // g
+	materialAmbiant[2] = 0.0;  // b
+	materialAmbiant[3] = 1.0f; // a
+
+	// diffuse material
+	materialDiffuse[0] = 0.5;  // r
+	materialDiffuse[1] = 0.5;  // g
+	materialDiffuse[2] = 0.4;  // b
+	materialDiffuse[3] = 1.0f; // a
+
+	// specular material
+	materialSpecular[0] = 0.7;	// r
+	materialSpecular[1] = 0.7;	// g
+	materialSpecular[2] = 0.04; // b
+	materialSpecular[3] = 1.0f; // a
+
+	// shininess
+	materialShinniness = 0.078125 * 128;
+
+	if (bLight == True)
+	{
+		glUniform1i(lightingEnabledUniform, 1);
+
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
+
+		glUniform3fv(kaUniform, 1, materialAmbiant);
+		glUniform3fv(kdUniform, 1, materialDiffuse);
+		glUniform3fv(ksUniform, 1, materialSpecular);
+		glUniform1f(materialShininessUniform, materialShinniness);
+	}
+	else
+	{
+		glUniform1i(lightingEnabledUniform, 0);
+	}
+
+	glBindVertexArray(gVao_sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+}
+
+/*
 void draw24Sphere(void)
 {
 	// Variable Declartions
@@ -2866,3 +4332,4 @@ void draw24Sphere(void)
 
 	glBindVertexArray(0);
 }
+*/
