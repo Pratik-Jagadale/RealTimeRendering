@@ -638,7 +638,7 @@ int initialize(void)
 	lights[1].lightAmbiant = vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	lights[1].lightDiffuse = vmath::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 	lights[1].lightSpecular = vmath::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-	lights[1].lightPositions = vmath::vec4(2.0f, 0.0f, 0.0f, 1.0f);
+	lights[1].lightPositions = vmath::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 
 	perspectiveProjectionMatrix = mat4::identity();
 

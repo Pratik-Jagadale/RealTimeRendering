@@ -91,6 +91,9 @@ GLfloat angleForRotation = 0.0f;
 
 GLint keyPressed = 0;
 
+int currentWindowWidth = 0;
+int currentWindowHeight = 0;
+
 /* Entry Point Function */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
 {
@@ -683,10 +686,12 @@ void resize(int width, int height)
 	if (height == 0) // to avoid devided by zero
 		height = 1;
 
-	// glViewport(0, 0, width, height);
-	// glViewport(0.0f, 0.0f, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	glViewport(0, 0, width, height);
 
 	perspectiveProjectionMatrix = vmath::perspective(45.0f, (GLfloat)width / (GLfloat)height, 0.1f, 100.0f);
+
+	currentWindowWidth = width;
+	currentWindowHeight = height;
 }
 
 void display(void)
@@ -714,6 +719,27 @@ void update(void)
 		angleForRotation = angleForRotation + 1.0f;
 		if (angleForRotation > 360.0f)
 			angleForRotation = angleForRotation - 360.0f;
+
+		// Set Light Zero Position - rotating  light
+		GLfloat angle = (angleForRotation * M_PI) / 180.0f;
+		GLfloat x = 10.0f * cos(angle);
+		GLfloat y = 10.0f * sin(angle);
+
+		if (keyPressed == 1)
+		{
+			lightPositions[1] = x;
+			lightPositions[2] = y;
+		}
+		if (keyPressed == 2)
+		{
+			lightPositions[0] = x;
+			lightPositions[2] = y;
+		}
+		if (keyPressed == 3)
+		{
+			lightPositions[0] = x;
+			lightPositions[1] = y;
+		}
 	}
 }
 
@@ -820,14 +846,18 @@ void draw24Sphere(void)
 	mat4 scaleMatrix = mat4::identity();
 
 	// Code
-	scaleMatrix = vmath::scale(1.5f, 1.5f, 1.5f);
+
+	int horDistance = currentWindowWidth / 6;
+	int verDistance = currentWindowHeight / 7;
+
+	scaleMatrix = vmath::scale(1.3f, 1.3f, 1.3f);
 
 	// ***** 1st sphere on 1st column, emerald *****
 	// translationMatrix = vmath::translate(-9.0f, 6.0f, -21.0f); // glTranslatef() is replaced by this line
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
 
-	glViewport(0.0f, 120 * 5.5, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	glViewport(0.0f, verDistance * 5, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
 	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
@@ -853,29 +883,6 @@ void draw24Sphere(void)
 
 	// shininess
 	materialShinniness = 0.6 * 128;
-
-	// Set Light Zero Position - rotating  light
-	GLfloat angle = (angleForRotation * M_PI) / 180.0f;
-	GLfloat x = 30.0f * cos(angle);
-	GLfloat y = 30.0f * sin(angle);
-	GLfloat z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
 
 	if (bLight == TRUE)
 	{
@@ -905,8 +912,9 @@ void draw24Sphere(void)
 
 	// 2
 	// ***** 2nd sphere on 1st column, jade *****
-	//	glViewport(0.0f, (GLsizei)(WINHEIGHT) - (WINHEIGHT) / 4, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
-	glViewport(0.0f, 120 * 4.4, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	//	glViewport(0.0f, (GLsizei)(WINHEIGHT) - (WINHEIGHT) / 4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	// glViewport(0.0f, 120 * 4.4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(0.0f, verDistance * 4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -936,29 +944,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.1 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -987,8 +972,9 @@ void draw24Sphere(void)
 
 	// ***** 3rd sphere on 1st column, obsidian *****
 	// 3
-	// glViewport(0.0f, (GLsizei)(WINHEIGHT) - ((WINHEIGHT) / 2), (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
-	glViewport(0.0f, 120 * 3.3, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	// glViewport(0.0f, (GLsizei)(WINHEIGHT) - ((WINHEIGHT) / 2), (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	// glViewport(0.0f, verDistance * 4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(0.0f, verDistance * 3, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1018,29 +1004,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.3 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -1069,8 +1032,9 @@ void draw24Sphere(void)
 
 	// 4
 	// ***** 4th sphere on 1st column, pearl *****
-	// glViewport(0.0f, (GLsizei)(WINHEIGHT) - ((WINHEIGHT) / 1.3f), (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
-	glViewport(0.0f, 120 * 2.2, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	// glViewport(0.0f, (GLsizei)(WINHEIGHT) - ((WINHEIGHT) / 1.3f), (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	// glViewport(0.0f, verDistance * 3, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(0.0f, verDistance * 2, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, -0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1100,29 +1064,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.088 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -1151,7 +1092,7 @@ void draw24Sphere(void)
 
 	// 5
 	// ***** 5th sphere on 1st column, ruby *****
-	glViewport(0.0f, 120 * 1.1, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	glViewport(0.0f, verDistance, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1181,29 +1122,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.6 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -1232,7 +1150,8 @@ void draw24Sphere(void)
 
 	// 6
 	// ***** 6th sphere on 1st column, turquoise *****
-	glViewport(0.0f, 0.0f, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	//	glViewport(0.0f, 0.0f, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(0.0f, 0, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1261,29 +1180,6 @@ void draw24Sphere(void)
 
 	// shininess
 	materialShinniness = 0.1 * 128;
-
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
 
 	if (bLight == TRUE)
 	{
@@ -1318,7 +1214,8 @@ void draw24Sphere(void)
 	// ***** 1st sphere on 2nd column, brass *****
 	// ambient material
 	// 6
-	glViewport(425.0f, 120 * 5.5, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	// glViewport(425.0f, 120 * 5.5, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 1.5, verDistance * 5, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1346,29 +1243,6 @@ void draw24Sphere(void)
 
 	// shininess
 	materialShinniness = 0.21794872 * 128;
-
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
 
 	if (bLight == TRUE)
 	{
@@ -1398,7 +1272,9 @@ void draw24Sphere(void)
 
 	// 7
 	// ***** 2nd sphere on 2nd column, bronze *****
-	glViewport(425.0f, 120 * 4.4, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	// glViewport(425.0f, 120 * 4.4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+
+	glViewport(horDistance * 1.5, verDistance * 4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1428,29 +1304,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.2 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -1479,7 +1332,8 @@ void draw24Sphere(void)
 
 	// 8
 	// ***** 3rd sphere on 2nd column, chrome *****
-	glViewport(425.0f, 120 * 3.3, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	// glViewport(425.0f, 120 * 3.3, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 1.5, verDistance * 3, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1509,29 +1363,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.6 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -1560,7 +1391,8 @@ void draw24Sphere(void)
 
 	// 9
 	// ***** 4th sphere on 2nd column, copper *****
-	glViewport(425.0f, 120 * 2.2, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	// glViewport(425.0f, 120 * 2.2, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 1.5, verDistance * 2, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1590,29 +1422,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.1 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -1641,7 +1450,8 @@ void draw24Sphere(void)
 
 	// 10
 	// ***** 5th sphere on 2nd column, gold *****
-	glViewport(425.0f, 120 * 1.1, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	//	glViewport(425.0f, 120 * 1.1, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 1.5, verDistance, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1671,29 +1481,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.4 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -1722,7 +1509,8 @@ void draw24Sphere(void)
 
 	// 11
 	// ***** 6th sphere on 2nd column, silver *****
-	glViewport(425.0f, 0, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	// glViewport(425.0f, 0, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 1.5, 0, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1751,29 +1539,6 @@ void draw24Sphere(void)
 
 	// shininess
 	materialShinniness = 0.4 * 128;
-
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
 
 	if (bLight == TRUE)
 	{
@@ -1807,7 +1572,8 @@ void draw24Sphere(void)
 	// *******************************************************
 
 	// ***** 1st sphere on 3rd column, black *****
-	glViewport(850.0f, 120 * 5.5, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	// glViewport(850.0f, 120 * 5.5, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 3, verDistance * 5, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1837,29 +1603,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.25 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -1888,7 +1631,8 @@ void draw24Sphere(void)
 
 	// ***** 2nd sphere on 3rd column, cyan *****
 	// 13
-	glViewport(850.0f, 120 * 4.4, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	glViewport(850.0f, 120 * 4.4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 3, verDistance * 4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1918,29 +1662,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.25 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -1969,7 +1690,7 @@ void draw24Sphere(void)
 
 	// 14
 	// ***** 3rd sphere on 2nd column, green *****
-	glViewport(850.0f, 120 * 3.3, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	glViewport(horDistance * 3, verDistance * 3, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -1999,29 +1720,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.25 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -2050,7 +1748,8 @@ void draw24Sphere(void)
 
 	// 15
 	// ***** 4th sphere on 3rd column, red *****
-	glViewport(850.0f, 120 * 2.2, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	// glViewport(850.0f, 120 * 2.2, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 3, verDistance * 2, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2080,29 +1779,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.25 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -2131,7 +1807,8 @@ void draw24Sphere(void)
 
 	// 16
 	// ***** 5th sphere on 3rd column, white *****
-	glViewport(850.0f, 120 * 1.1, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	// glViewport(850.0f, 120 * 1.1, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
+	glViewport(horDistance * 3, verDistance, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2161,29 +1838,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.25 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -2212,7 +1866,7 @@ void draw24Sphere(void)
 
 	// 17
 	// ***** 6th sphere on 3rd column, yellow plastic *****
-	glViewport(850.0f, 0, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	glViewport(horDistance * 3, 0, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2241,29 +1895,6 @@ void draw24Sphere(void)
 
 	// shininess
 	materialShinniness = 0.25 * 128;
-
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
 
 	if (bLight == TRUE)
 	{
@@ -2298,7 +1929,7 @@ void draw24Sphere(void)
 
 	// ***** 1st sphere on 4th column, black *****
 	// ambient material
-	glViewport(1300.0f, 120 * 5.5, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	glViewport(horDistance * 4.5, verDistance * 5, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2326,29 +1957,6 @@ void draw24Sphere(void)
 
 	// shininess
 	materialShinniness = 0.078125 * 128;
-
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
 
 	if (bLight == TRUE)
 	{
@@ -2378,7 +1986,7 @@ void draw24Sphere(void)
 
 	// 19
 	// ***** 2nd sphere on 4th column, cyan *****
-	glViewport(1300.0f, 120 * 4.4, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	glViewport(horDistance * 4.5, verDistance * 4, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2407,29 +2015,6 @@ void draw24Sphere(void)
 
 	// shininess
 	materialShinniness = 0.078125 * 128;
-
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
 
 	if (bLight == TRUE)
 	{
@@ -2459,7 +2044,7 @@ void draw24Sphere(void)
 
 	// 20
 	// ***** 3rd sphere on 4th column, green *****
-	glViewport(1300.0f, 120 * 3.3, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	glViewport(horDistance * 4.5, verDistance * 3, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2489,29 +2074,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.078125 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -2540,7 +2102,7 @@ void draw24Sphere(void)
 
 	// 21
 	// ***** 4th sphere on 4th column, red *****
-	glViewport(1300.0f, 120 * 2.2, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	glViewport(horDistance * 4.5, verDistance * 2, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2570,29 +2132,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.078125 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -2621,7 +2160,7 @@ void draw24Sphere(void)
 
 	// 22
 	// ***** 5th sphere on 4th column, white *****
-	glViewport(1300.0f, 120 * 1.1, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	glViewport(horDistance * 4.5, verDistance, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2651,29 +2190,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.078125 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -2702,7 +2218,7 @@ void draw24Sphere(void)
 
 	// 23
 	// ***** 6th sphere on 4th column, yellow rubber *****
-	glViewport(1300.0f, 0, (GLsizei)(WINWIDTH / 3), (GLsizei)(WINHEIGHT / 3));
+	glViewport(horDistance * 4.5, 0, (GLsizei)(currentWindowWidth / 4), (GLsizei)(currentWindowHeight / 4));
 
 	translationMatrix = vmath::translate(0.0f, 0.0f, -3.0f); // glTranslatef() is replaced by this line
 	modelMatrix = translationMatrix * scaleMatrix;
@@ -2732,29 +2248,6 @@ void draw24Sphere(void)
 	// shininess
 	materialShinniness = 0.078125 * 128;
 
-	// Set Light Zero Position - rotating  light
-	angle = (angleForRotation * M_PI) / 180.0f;
-	x = 30.0f * cos(angle);
-	y = 30.0f * sin(angle);
-	z = -3.0f;
-
-	if (keyPressed == 1)
-	{
-		lightPositions[1] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 2)
-	{
-		lightPositions[0] = x;
-		lightPositions[2] = y + z;
-	}
-	if (keyPressed == 3)
-	{
-		lightPositions[0] = x;
-		lightPositions[1] = y;
-		lightPositions[2] = z;
-	}
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
@@ -2780,82 +2273,4 @@ void draw24Sphere(void)
 	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
 
 	glBindVertexArray(0);
-	/*
-		// 24
-		translationMatrix = vmath::translate(0.0f, 0.0f, -21.0f); // glTranslatef() is replaced by this line
-		modelMatrix = translationMatrix * scaleMatrix;
-
-		glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
-		glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
-		glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
-
-		// ambient material
-		materialAmbiant[0] = 0.0215; // r
-		materialAmbiant[1] = 0.1745; // g
-		materialAmbiant[2] = 0.0215; // b
-		materialAmbiant[3] = 1.0f;	 // a
-
-		// diffuse material
-		materialDiffuse[0] = 0.07568; // r
-		materialDiffuse[1] = 0.61424; // g
-		materialDiffuse[2] = 0.07568; // b
-		materialDiffuse[3] = 1.0f;	  // a
-
-		// specular material
-		materialSpecular[0] = 0.633;	// r
-		materialSpecular[1] = 0.727811; // g
-		materialSpecular[2] = 0.633;	// b
-		materialSpecular[3] = 1.0f;		// a
-
-		// shininess
-		materialShinniness = 0.6 * 128;
-
-		// Set Light Zero Position - rotating  light
-		GLfloat angle = (angleForRotation * M_PI) / 180.0f;
-		GLfloat x = 30.0f * cos(angle);
-		GLfloat y = 30.0f * sin(angle);
-		GLfloat z = -3.0f;
-
-		if (keyPressed == 1)
-		{
-			lightPositions[1] = x;
-			lightPositions[2] = y + z;
-		}
-		if (keyPressed == 2)
-		{
-			lightPositions[0] = x;
-			lightPositions[2] = y + z;
-		}
-		if (keyPressed == 3)
-		{
-			lightPositions[0] = x;
-			lightPositions[1] = y;
-			lightPositions[2] = z;
-		}
-
-		if (bLight == TRUE)
-		{
-			glUniform1i(lightingEnabledUniform, 1);
-
-			glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
-			glUniform3fv(ldUniform, 1, lightDiffuse);
-			glUniform3fv(lsUniform, 1, lightSpecular);
-			glUniform4fv(lighPositionUniform, 1, lightPositions);
-
-			glUniform3fv(kaUniform, 1, materialAmbiant);
-			glUniform3fv(kdUniform, 1, materialDiffuse);
-			glUniform3fv(ksUniform, 1, materialSpecular);
-			glUniform1f(materialShininessUniform, materialShinniness);
-		}
-		else
-		{
-			glUniform1i(lightingEnabledUniform, 0);
-		}
-
-		glBindVertexArray(gVao_sphere);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-		glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
-
-		glBindVertexArray(0);*/
 }
