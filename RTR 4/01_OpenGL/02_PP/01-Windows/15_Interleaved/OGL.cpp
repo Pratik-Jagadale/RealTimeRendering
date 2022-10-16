@@ -8,14 +8,12 @@
 #include <GL/glew.h> // This must be before gl.h
 #include <GL/gl.h>
 #include "vmath.h"
-#include "Sphere.h"
 
 using namespace vmath;
 
 /* OpenGL libraries */
 #pragma comment(lib, "glew32.lib")
 #pragma comment(lib, "OpenGL32.lib")
-#pragma comment(lib, "Sphere.lib")
 
 #define WINWIDTH 800
 #define WINHEIGHT 600
@@ -43,29 +41,20 @@ enum
 	PRJ_ATRIBUTE_TEXTURE0
 };
 
-GLuint gVao_sphere;			 // Vertex Array Object
-GLuint gVbo_sphere_position; // Vertex Buffer Object
-GLuint gVbo_sphere_normal;
-GLuint gVbo_sphere_element;
+GLuint vao_Cube; // Vertex Array Object - Cube
+GLuint vbo_Cube; // Vertex Buffer Object - Cube
 
 GLuint modelMatrixUniform;
 GLuint viewMatrixUniform;
 GLuint projectionMatrixUniform;
+GLuint textureSamplerUniform;
 
-mat4 perspectiveProjectionMatrix;
+GLuint texture_marble;
 
-float sphere_vertices[1146];
-float sphere_normals[1146];
-float sphere_textures[764];
-unsigned short sphere_elements[2280];
-int gNumVertices;
-int gNumElements;
-
-// For Three Light on Sphere
-GLuint laUniform[3];		   // light Ambiant
-GLuint ldUniform[3];		   // light Diffuse
-GLuint lsUniform[3];		   // light Spec
-GLuint lighPositionUniform[3]; // light Position
+GLuint laUniform;			// light Ambiant
+GLuint ldUniform;			// light Diffuse
+GLuint lsUniform;			// light Spec
+GLuint lighPositionUniform; // light Position
 
 GLuint kaUniform; // material amb
 GLuint kdUniform; // mat diff
@@ -74,26 +63,21 @@ GLuint materialShininessUniform;
 
 GLuint lightingEnabledUniform;
 
-BOOL bLight;
+mat4 perspectiveProjectionMatrix;
 
-struct Light
-{
-	vmath::vec4 lightAmbiant;
-	vmath::vec4 lightDiffuse;
-	vmath::vec4 lightSpecular;
-	vmath::vec4 lightPositions;
-};
+BOOL bLight = FALSE;
 
-struct Light lights[3];
+GLfloat lightAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
+GLfloat lightDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat lightSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat lightPositions[] = {0.0f, 0.0f, 5.0f, 1.0f};
 
 GLfloat materialAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat meterialDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
+GLfloat meterialDeffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
 GLfloat materialSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat materialShineeness = 124.0f;
+GLfloat materialShineeness = 120.0f;
 
-GLfloat lightAngleOne = 0.0f;
-GLfloat lightAngleTwo = 150.0f;
-GLfloat lightAngleZero = 300.0f;
+GLfloat angleCube = 0.0f;
 
 /* Entry Point Function */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
@@ -271,8 +255,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case 27:
-			DestroyWindow(hwnd);
-			break;
+			if (gpFile)
+			{
+				fprintf(gpFile, "Log File Successfully Closes");
+				fclose(gpFile);
+				gpFile = NULL;
+			}
+			PostQuitMessage(0);
 		}
 		break;
 
@@ -339,6 +328,7 @@ int initialize(void)
 	void resize(int, int);
 	void printfGLInfo(void);
 	void uninitialize(void);
+	BOOL LoadGLTexture(GLuint * texture, TCHAR ImageResourceID[]);
 
 	/* variable declartions */
 	PIXELFORMATDESCRIPTOR pfd;
@@ -394,29 +384,32 @@ int initialize(void)
 		"#version 460 core"
 		"\n"
 		"in vec4 a_position;"
+		"in vec4 a_color;"
 		"in vec3 a_normal;"
-		"uniform vec4 u_lightPosition[3];"
+		"in vec2 a_texcoord;"
 		"uniform mat4 u_modelMatrix;"
 		"uniform mat4 u_viewMatrix;"
 		"uniform mat4 u_projectionMatrix;"
+		"uniform vec4 u_lightPosition;"
 		"uniform int u_lightingEnabled;"
 		"out vec3 transformedNormals;"
-		"out vec3 lightDirection[3];"
+		"out vec3 lightDirection;"
 		"out vec3 viewerVector;"
+		"out vec4 a_color_out;"
+		"out vec2 a_texcoord_out;"
 		"void main(void)"
 		"{"
 		"if(u_lightingEnabled == 1)"
 		"{"
 		"vec4 eyeCoordinates = u_viewMatrix * u_modelMatrix * a_position;"
 		"mat3 normalMatrix = mat3(u_viewMatrix * u_modelMatrix);"
-		"transformedNormals = normalize(normalMatrix * a_normal);"
-		"viewerVector = normalize(-eyeCoordinates.xyz);"
-		"for(int i = 0 ; i < 3 ; i++)"
-		"{"
-		"lightDirection[i] = normalize(vec3(u_lightPosition[i]) - eyeCoordinates.xyz);" // Swizaling
-		"}"
+		"transformedNormals = normalMatrix * a_normal;"
+		"lightDirection = vec3(u_lightPosition) - eyeCoordinates.xyz;" // Swizaling
+		"viewerVector = -eyeCoordinates.xyz;"
 		"}"
 		"gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;"
+		"a_color_out = a_color;"
+		"a_texcoord_out = a_texcoord;"
 		"}";
 
 	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
@@ -457,42 +450,41 @@ int initialize(void)
 		"#version 460 core"
 		"\n"
 		"in vec3 transformedNormals;"
-		"in vec3 lightDirection[3];"
+		"in vec3 lightDirection;"
 		"in vec3 viewerVector;"
-		"uniform vec3 u_la[3];"
-		"uniform vec3 u_ld[3];"
-		"uniform vec3 u_ls[3];"
-		"uniform vec4 u_lightPosition[3];"
+		"in vec4 a_color_out;"
+		"in vec2 a_texcoord_out;"
+		"uniform vec3 u_la;"
+		"uniform vec3 u_ld;"
+		"uniform vec3 u_ls;"
 		"uniform vec3 u_ka;"
 		"uniform vec3 u_ks;"
 		"uniform vec3 u_kd;"
 		"uniform float u_materialShininnes;"
 		"uniform int u_lightingEnabled;"
+		"uniform sampler2D u_textureSampler;"
 		"out vec4 FragColor;"
-		"vec3 phong_ads_light;"
 		"void main(void)"
 		"{"
-		"phong_ads_light = vec3(0.0,0.0,0.0);"
+		"vec3 phong_ads_color;"
+		"vec3 tex;"
+		"tex = texture(u_textureSampler, a_texcoord_out).xyz;"
 		"if(u_lightingEnabled == 1)"
 		"{"
-		"vec3 ambiant[3];"
-		"vec3 diffuse[3];"
-		"vec3 reflectionVector[3];"
-		"vec3 specular[3];"
-		"for(int i = 0 ; i < 3 ; i++)"
-		"{"
-		"ambiant[i] = u_la[i] * u_ka;"
-		"diffuse[i] = u_ld[i] * u_kd * max(dot(lightDirection[i] ,transformedNormals),0.0);"
-		"reflectionVector[i] = reflect(-lightDirection[i],transformedNormals);"
-		"specular[i] = u_ls[i] * u_ks * pow(max(dot(reflectionVector[i], viewerVector), 0.0), u_materialShininnes);"
-		"phong_ads_light = phong_ads_light + ambiant[i] + diffuse[i] +  specular[i];"
-		"}"
+		"vec3 ambiant = u_la * u_ka;"
+		"vec3 normalized_transformed_normals = normalize(transformedNormals);"
+		"vec3 normalized_light_direction = normalize(lightDirection);"
+		"vec3 diffuse = u_ld * u_kd * max(dot(normalized_light_direction ,normalized_transformed_normals),0.0);"
+		"vec3 reflectionVector = reflect(-normalized_light_direction,normalized_transformed_normals);"
+		"vec3 normalized_view_vector = normalize(viewerVector);"
+		"vec3 specular = u_ls * u_ks * pow(max(dot(reflectionVector , normalized_view_vector), 0.0), u_materialShininnes);"
+		"phong_ads_color =  ambiant + diffuse + specular;"
 		"}"
 		"else"
 		"{"
-		"phong_ads_light = vec3(1.0,1.0,1.0);"
+		"phong_ads_color = vec3(1.0 , 1.0 , 1.0);"
 		"}"
-		"FragColor = vec4(phong_ads_light, 1.0);"
+		"FragColor = vec4(tex * phong_ads_color * vec3(a_color_out), 1.0);"
 		"}";
 
 	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
@@ -530,6 +522,8 @@ int initialize(void)
 
 	// prelinked binding
 	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_POSITION, "a_position");
+	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_COLOR, "a_color");
+	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_TEXTURE0, "a_texcoord");
 	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_NORMAL, "a_normal");
 
 	// link
@@ -563,69 +557,87 @@ int initialize(void)
 	viewMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_viewMatrix");
 	projectionMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_projectionMatrix");
 
-	laUniform[0] = glGetUniformLocation(shaderProgramObject, "u_la[0]");
-	ldUniform[0] = glGetUniformLocation(shaderProgramObject, "u_ld[0]");
-	lsUniform[0] = glGetUniformLocation(shaderProgramObject, "u_ls[0]");
-	lighPositionUniform[0] = glGetUniformLocation(shaderProgramObject, "u_lightPosition[0]");
-
-	laUniform[1] = glGetUniformLocation(shaderProgramObject, "u_la[1]");
-	ldUniform[1] = glGetUniformLocation(shaderProgramObject, "u_ld[1]");
-	lsUniform[1] = glGetUniformLocation(shaderProgramObject, "u_ls[1]");
-	lighPositionUniform[1] = glGetUniformLocation(shaderProgramObject, "u_lightPosition[1]");
-
-	laUniform[2] = glGetUniformLocation(shaderProgramObject, "u_la[2]");
-	ldUniform[2] = glGetUniformLocation(shaderProgramObject, "u_ld[2]");
-	lsUniform[2] = glGetUniformLocation(shaderProgramObject, "u_ls[2]");
-	lighPositionUniform[2] = glGetUniformLocation(shaderProgramObject, "u_lightPosition[2]");
+	laUniform = glGetUniformLocation(shaderProgramObject, "u_la");
+	ldUniform = glGetUniformLocation(shaderProgramObject, "u_ld");
+	lsUniform = glGetUniformLocation(shaderProgramObject, "u_ls");
+	lighPositionUniform = glGetUniformLocation(shaderProgramObject, "u_lightPosition");
 
 	kaUniform = glGetUniformLocation(shaderProgramObject, "u_ka");
 	kdUniform = glGetUniformLocation(shaderProgramObject, "u_kd");
 	ksUniform = glGetUniformLocation(shaderProgramObject, "u_ks");
+
 	materialShininessUniform = glGetUniformLocation(shaderProgramObject, "u_materialShininnes");
 
 	lightingEnabledUniform = glGetUniformLocation(shaderProgramObject, "u_lightingEnabled");
+	textureSamplerUniform = glGetUniformLocation(shaderProgramObject, "u_textureSampler");
 
-	// gVao_sphere and vba related code
-	// declartions of vertex Data array
-	getSphereVertexData(sphere_vertices, sphere_normals, sphere_textures, sphere_elements);
-	gNumVertices = getNumberOfSphereVertices();
-	gNumElements = getNumberOfSphereElements();
+	const GLfloat cubepcnt[] =
+		{
+			// front             //color-red         //normal-front      //texture-front
+			1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+			-1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+			-1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
+			1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
 
-	// vao vbo reelated code
-	// vao
-	glGenVertexArrays(1, &gVao_sphere);
-	glBindVertexArray(gVao_sphere);
+			// right             //color-green       //normal-right      //texture-right
+			1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+			1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+			1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+			1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
 
-	// position vbo
-	glGenBuffers(1, &gVbo_sphere_position);
-	glBindBuffer(GL_ARRAY_BUFFER, gVbo_sphere_position);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_vertices), sphere_vertices, GL_STATIC_DRAW);
+			// back              //color-blue        //normal-back       //texture-back
+			-1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,
+			1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f,
+			1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
+			-1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,
 
-	glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+			// left              //color-cyan        //normal-left       //texture-back
+			-1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+			-1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+			-1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+			-1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,
 
+			// top               //color-magenta     //normal-top        //texture-top
+			1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+			-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
+			-1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+			1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+
+			// bottom            //color-yellow      //normal-bottom     //texture-bottom
+			1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+			-1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+			-1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+			1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f};
+
+	// vao for Cube
+	glGenVertexArrays(1, &vao_Cube);
+	glBindVertexArray(vao_Cube);
+
+	// vbo for position
+	glGenBuffers(1, &vbo_Cube);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Cube);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cubepcnt), cubepcnt, GL_STATIC_DRAW); // sizeof(cubepcnt) is nothing but 11 * 24 * sizeof(float)
+
+	// POSITION
+	glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (void *)(0));
 	glEnableVertexAttribArray(PRJ_ATRIBUTE_POSITION);
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// COLOR
+	glVertexAttribPointer(PRJ_ATRIBUTE_COLOR, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (void *)(3 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(PRJ_ATRIBUTE_COLOR);
 
-	// normal vbo
-	glGenBuffers(1, &gVbo_sphere_normal);
-	glBindBuffer(GL_ARRAY_BUFFER, gVbo_sphere_normal);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_normals), sphere_normals, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(PRJ_ATRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
+	// NORMAL
+	glVertexAttribPointer(PRJ_ATRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (void *)(6 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(PRJ_ATRIBUTE_NORMAL);
 
+	// TEXCOORD
+	glVertexAttribPointer(PRJ_ATRIBUTE_TEXTURE0, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (void *)(9 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(PRJ_ATRIBUTE_TEXTURE0);
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// element vbo
-	glGenBuffers(1, &gVbo_sphere_element);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(sphere_elements), sphere_elements, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	// unbind vao
-	glBindVertexArray(0);
+	glBindVertexArray(0); // ubind vao for Cube
 
 	// Depth Related Changes
 	glEnable(GL_DEPTH_TEST);
@@ -633,23 +645,15 @@ int initialize(void)
 
 	glShadeModel(GL_SMOOTH);
 
-	/* Clear the  screen using black color */
+	/* Clear the  screen using blue color */
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-	lights[0].lightAmbiant = vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	lights[0].lightDiffuse = vmath::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	lights[0].lightSpecular = vmath::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	lights[0].lightPositions = vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	// Texture Initiallization
+	if (LoadGLTexture(&texture_marble, MAKEINTRESOURCE(IDBITMAP_MARBLE)) == FALSE)
+		return -6;
 
-	lights[1].lightAmbiant = vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	lights[1].lightDiffuse = vmath::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-	lights[1].lightSpecular = vmath::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-	lights[1].lightPositions = vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-
-	lights[2].lightAmbiant = vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	lights[2].lightDiffuse = vmath::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-	lights[2].lightSpecular = vmath::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-	lights[2].lightPositions = vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	// Enabaling the texture
+	glEnable(GL_TEXTURE_2D);
 
 	perspectiveProjectionMatrix = mat4::identity();
 
@@ -700,8 +704,6 @@ void display(void)
 	/* Code */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
 	// use shader program obejct
 	glUseProgram(shaderProgramObject);
 
@@ -709,54 +711,34 @@ void display(void)
 	mat4 translationMatrix = mat4::identity();
 	mat4 modelMatrix = mat4::identity();
 	mat4 viewMatrix = mat4::identity();
+	mat4 rotationMatrix_X = mat4::identity();
+	mat4 rotationMatrix_Y = mat4::identity();
+	mat4 rotationMatrix_Z = mat4::identity();
+	mat4 rotationMatrix = mat4::identity();
 
-	translationMatrix = vmath::translate(0.0f, 0.0f, -2.0f); // glTranslatef() is replaced by this line
+	translationMatrix = vmath::translate(0.0f, 0.0f, -6.0f); // glTranslatef() is replaced by this line
+	rotationMatrix_X = vmath::rotate(angleCube, 1.0f, 0.0f, 0.0f);
+	rotationMatrix_Y = vmath::rotate(angleCube, 0.0f, 1.0f, 0.0f);
+	rotationMatrix_Z = vmath::rotate(angleCube, 0.0f, 0.0f, 1.0f);
+	rotationMatrix = rotationMatrix_X * rotationMatrix_Y * rotationMatrix_Z;
 
-	modelMatrix = translationMatrix;
+	modelMatrix = translationMatrix * rotationMatrix;
 
 	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
 	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
 	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
 
-	// draw the desired graphics
-	// drawing code -- magic
-
-	// Light Related Code
-	// Set Light Zero Position - rotating zero light - x Around
-	float angle = lightAngleZero * (M_PI / 180.0f);
-	float x = 5.0f * cos(angle);
-	float y = 5.0f * sin(angle);
-	lights[0].lightPositions[1] = x;
-	lights[0].lightPositions[2] = y;
-
-	// Set Light One Position  rotating One Light - Y Rotation
-	angle = (lightAngleOne * M_PI) / 180.0f;
-	x = 5.0f * cos(angle);
-	y = 5.0f * sin(angle);
-	lights[1].lightPositions[0] = x;
-	lights[1].lightPositions[2] = y;
-
-	// Set Light Two Position rotating Two Light Z Rotation
-	angle = (lightAngleTwo * M_PI) / 180.0f;
-	x = 5.0f * cos(angle);
-	y = 5.0f * sin(angle);
-	lights[2].lightPositions[0] = x;
-	lights[2].lightPositions[1] = y;
-
 	if (bLight == TRUE)
 	{
 		glUniform1i(lightingEnabledUniform, 1);
 
-		for (int i = 0; i < 3; i++)
-		{
-			glUniform3fv(laUniform[i], 1, lights[i].lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
-			glUniform3fv(ldUniform[i], 1, lights[i].lightDiffuse);
-			glUniform3fv(lsUniform[i], 1, lights[i].lightSpecular);
-			glUniform4fv(lighPositionUniform[i], 1, lights[i].lightPositions);
-		}
+		glUniform3fv(laUniform, 1, lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
+		glUniform3fv(ldUniform, 1, lightDiffuse);
+		glUniform3fv(lsUniform, 1, lightSpecular);
+		glUniform4fv(lighPositionUniform, 1, lightPositions);
 
 		glUniform3fv(kaUniform, 1, materialAmbiant);
-		glUniform3fv(kdUniform, 1, meterialDiffuse);
+		glUniform3fv(kdUniform, 1, meterialDeffuse);
 		glUniform3fv(ksUniform, 1, materialSpecular);
 		glUniform1f(materialShininessUniform, materialShineeness);
 	}
@@ -764,15 +746,26 @@ void display(void)
 	{
 		glUniform1i(lightingEnabledUniform, 0);
 	}
+	glActiveTexture(GL_TEXTURE0); //
+	glBindTexture(GL_TEXTURE_2D, texture_marble);
+	glUniform1i(textureSamplerUniform, 0); //
 
-	glBindVertexArray(gVao_sphere);
+	glBindVertexArray(vao_Cube);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-	// glDrawArrays(GL_TRIANGLES, 0, gNumElements);
+	glDrawArrays(GL_TRIANGLE_FAN, 4, 4);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 8, 4);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 12, 4);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 16, 4);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 20, 4);
 
 	glBindVertexArray(0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 	// unuse the shader program object
 	glUseProgram(0);
@@ -783,17 +776,9 @@ void display(void)
 void update(void)
 {
 	/* code */
-	lightAngleZero = lightAngleZero + 1.0f;
-	if (lightAngleZero > 360.0f)
-		lightAngleZero = lightAngleZero - 360.0f;
-
-	lightAngleOne = lightAngleOne + 1.0f;
-	if (lightAngleOne > 360.0f)
-		lightAngleOne = lightAngleOne - 360.0f;
-
-	lightAngleTwo = lightAngleTwo + 1.0f;
-	if (lightAngleTwo > 360.0f)
-		lightAngleTwo = lightAngleTwo - 360.0f;
+	angleCube = angleCube + 1.0f;
+	if (angleCube >= 360.0f)
+		angleCube = angleCube - 360.0f;
 }
 
 void uninitialize(void)
@@ -806,32 +791,24 @@ void uninitialize(void)
 		ToggleFullScreen();
 
 	/*  */
-	// deletion of gVbo_sphere_element
-	if (gVbo_sphere_element)
+
+	if (texture_marble)
 	{
-		glDeleteBuffers(1, &gVbo_sphere_element);
-		gVbo_sphere_element = 0;
+		glDeleteTextures(1, &texture_marble);
+		texture_marble = 0;
+	}
+	// delete vbo_Cube
+	if (vbo_Cube)
+	{
+		glDeleteBuffers(1, &vbo_Cube);
+		vbo_Cube = 0;
 	}
 
-	// deletion of gVbo_sphere_normal
-	if (gVbo_sphere_normal)
+	// deletion of vao_Cube
+	if (vao_Cube)
 	{
-		glDeleteBuffers(1, &gVbo_sphere_normal);
-		gVbo_sphere_normal = 0;
-	}
-
-	// deletion of gVbo_sphere_Position
-	if (gVbo_sphere_position)
-	{
-		glDeleteBuffers(1, &gVbo_sphere_position);
-		gVbo_sphere_position = 0;
-	}
-
-	// deletion of gVao_sphere
-	if (gVao_sphere)
-	{
-		glDeleteVertexArrays(1, &gVao_sphere);
-		gVao_sphere = 0;
+		glDeleteVertexArrays(1, &vao_Cube);
+		vao_Cube = 0;
 	}
 
 	if (shaderProgramObject)
@@ -888,4 +865,50 @@ void uninitialize(void)
 		fclose(gpFile);
 		gpFile = NULL;
 	}
+}
+
+BOOL LoadGLTexture(GLuint *texture, TCHAR ImageResourceID[])
+{
+	// variable declartions
+	HBITMAP hBitmap = NULL;
+	BITMAP bmp;
+	BOOL bResult = FALSE;
+
+	// code
+	hBitmap = (HBITMAP)LoadImage(GetModuleHandle(NULL), ImageResourceID, IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+
+	if (hBitmap)
+	{
+		bResult = TRUE;
+		GetObject(hBitmap, sizeof(BITMAP), &bmp);
+
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // 4 TO 1 FOR BETTER PERFORMANCE
+
+		glGenTextures(1, texture);
+
+		glBindTexture(GL_TEXTURE_2D, *texture);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+		// create the texture
+		glTexImage2D(GL_TEXTURE_2D,	   // Targter
+					 0,				   // MipMap Level (done by opengl)
+					 GL_RGBA,		   // Opengl Image format
+					 bmp.bmWidth,	   // Image Width
+					 bmp.bmHeight,	   // Image Height
+					 0,				   // Border Width
+					 GL_BGR,		   // Image Format
+					 GL_UNSIGNED_BYTE, // Data type of bmp.bmBits
+					 bmp.bmBits);	   //
+
+		glGenerateMipmap(GL_TEXTURE_2D); // Generate MipMap
+
+		glBindTexture(GL_TEXTURE_2D, 0); // unbind texture
+
+		// DELETE Object
+		DeleteObject(hBitmap);
+	}
+	return bResult;
 }

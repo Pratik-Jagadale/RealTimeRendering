@@ -8,14 +8,12 @@
 #include <GL/glew.h> // This must be before gl.h
 #include <GL/gl.h>
 #include "vmath.h"
-#include "Sphere.h"
 
 using namespace vmath;
 
 /* OpenGL libraries */
 #pragma comment(lib, "glew32.lib")
 #pragma comment(lib, "OpenGL32.lib")
-#pragma comment(lib, "Sphere.lib")
 
 #define WINWIDTH 800
 #define WINHEIGHT 600
@@ -37,29 +35,23 @@ GLuint shaderProgramObject;
 
 enum
 {
-	PRJ_ATRIBUTE_POSITION = 0,
-	PRJ_ATRIBUTE_COLOR,
-	PRJ_ATRIBUTE_NORMAL,
-	PRJ_ATRIBUTE_TEXTURE0
+	AMC_ATRIBUTE_POSITION = 0,
+	AMC_ATRIBUTE_COLOR,
+	AMC_ATRIBUTE_NORMAL,
+	AMC_ATRIBUTE_TEXTURE0
 };
 
-GLuint gVao_sphere;			 // Vertex Array Object
-GLuint gVbo_sphere_position; // Vertex Buffer Object
-GLuint gVbo_sphere_normal;
-GLuint gVbo_sphere_element;
+GLuint vao;				 // Vertex Array Object
+GLuint vbo;				 // Vertex Buffer Object
+GLuint mvpMatrixUniform; //
 
-GLuint modelMatrixUniform;
-GLuint viewMatrixUniform;
-GLuint projectionMatrixUniform;
+GLuint numberOfSegmentsUniform;
+GLuint numberOfStripsUniform;
+GLuint lineColorUniform;
+
+unsigned int uiNumberOfSegments;
 
 mat4 perspectiveProjectionMatrix;
-
-float sphere_vertices[1146];
-float sphere_normals[1146];
-float sphere_textures[764];
-unsigned short sphere_elements[2280];
-int gNumVertices;
-int gNumElements;
 
 /* Entry Point Function */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
@@ -199,7 +191,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 	/* fucntion declarations */
 	// void ToggleFullScreen();
 	void resize(int, int);
-	void uninitialize(void);
 
 	// code
 	switch (iMsg)
@@ -222,8 +213,36 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		case 'F':
 			ToggleFullScreen();
 			break;
+
 		case 27:
-			DestroyWindow(hwnd);
+			if (gpFile)
+			{
+				fprintf(gpFile, "Log File Successfully Closes");
+				fclose(gpFile);
+				gpFile = NULL;
+			}
+			PostQuitMessage(0);
+			break;
+		}
+		break;
+
+	case WM_KEYDOWN:
+		switch (wParam)
+		{
+		case VK_UP:
+			uiNumberOfSegments++;
+			if (uiNumberOfSegments >= 30)
+			{
+				uiNumberOfSegments = 30;
+			}
+			break;
+
+		case VK_DOWN:
+			uiNumberOfSegments--;
+			if (uiNumberOfSegments <= 0)
+			{
+				uiNumberOfSegments = 1;
+			}
 			break;
 		}
 		break;
@@ -237,9 +256,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_DESTROY:
-		uninitialize();
 		PostQuitMessage(0);
-
 		break;
 	default:
 		break;
@@ -347,13 +364,11 @@ int initialize(void)
 	const GLchar *vertexShaderSourceCode =
 		"#version 460 core"
 		"\n"
-		"in vec4 a_position;"
-		"uniform mat4 u_modelMatrix;"
-		"uniform mat4 u_viewMatrix;"
-		"uniform mat4 u_projectionMatrix;"
+		"in vec2 a_position;"
+		//"uniform mat4 u_mvpMatrix;" // Will require latter
 		"void main(void)"
 		"{"
-		"gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;"
+		"gl_Position = vec4(a_position, 0.0, 1.0);"
 		"}";
 
 	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
@@ -385,18 +400,108 @@ int initialize(void)
 		}
 	}
 
-	// fragment Shader
+	// Tesselation Control Shader
+	const GLchar *tesselationControlShaderSourceCode =
+		"#version 460 core"
+		"\n"
+		"layout(vertices=4) out;"
+		"uniform int u_nummberOfSegments;"
+		"uniform int u_nummberOfStrips;"
+		"void main(void)"
+		"{"
+		"gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;"
+		"gl_TessLevelOuter[0] = float(u_nummberOfStrips);"
+		"gl_TessLevelOuter[1] = float(u_nummberOfSegments);"
+		"}";
+
+	GLuint tesselationControlShaderObject = glCreateShader(GL_TESS_CONTROL_SHADER);
+
+	glShaderSource(tesselationControlShaderObject, 1, (const GLchar **)&tesselationControlShaderSourceCode, NULL);
+
+	glCompileShader(tesselationControlShaderObject);
 
 	status = 0;
 	infoLogLength = 0;
+	log = NULL;
+
+	glGetShaderiv(tesselationControlShaderObject, GL_COMPILE_STATUS, &status);
+	if (status == GL_FALSE)
+	{
+		glGetShaderiv(tesselationControlShaderObject, GL_INFO_LOG_LENGTH, &infoLogLength);
+		if (infoLogLength > 0)
+		{
+			log = (char *)malloc(infoLogLength);
+			if (log != NULL)
+			{
+				GLsizei written;
+				glGetShaderInfoLog(tesselationControlShaderObject, infoLogLength, &written, log);
+				fprintf(gpFile, "TESSELATION CONTROL SHADER COMPILATION LOG : %s\n", log);
+				free(log);
+				log = NULL;
+				uninitialize();
+			}
+		}
+	}
+
+	// Tesselation Evaluation Shader
+	const GLchar *tesselationEvaluationShaderSourceCode =
+		"#version 460 core"
+		"\n"
+		"layout(isolines) in;"
+		"uniform mat4 u_mvpMatrix;"
+		"void main(void)"
+		"{"
+		"vec3 p0 = gl_in[0].gl_Position.xyz;"
+		"vec3 p1 = gl_in[1].gl_Position.xyz;"
+		"vec3 p2 = gl_in[2].gl_Position.xyz;"
+		"vec3 p3 = gl_in[3].gl_Position.xyz;"
+		"float u = gl_TessCoord.x;"
+		"vec3 p = p0 * (1 - u) * (1 - u) * (1 - u) + p1 * 3 * u * (1 - u) * (1 - u) + p2 * 3 * u * u * (1 - u) + p3 * u * u * u;"
+		"gl_Position = u_mvpMatrix * vec4(p,1.0);"
+		"}";
+
+	GLuint tesselationEvaluationShaderObject = glCreateShader(GL_TESS_EVALUATION_SHADER);
+
+	glShaderSource(tesselationEvaluationShaderObject, 1, (const GLchar **)&tesselationEvaluationShaderSourceCode, NULL);
+
+	glCompileShader(tesselationEvaluationShaderObject);
+
+	status = 0;
+	infoLogLength = 0;
+	log = NULL;
+
+	glGetShaderiv(tesselationEvaluationShaderObject, GL_COMPILE_STATUS, &status);
+	if (status == GL_FALSE)
+	{
+		glGetShaderiv(tesselationEvaluationShaderObject, GL_INFO_LOG_LENGTH, &infoLogLength);
+		if (infoLogLength > 0)
+		{
+			log = (char *)malloc(infoLogLength);
+			if (log != NULL)
+			{
+				GLsizei written;
+				glGetShaderInfoLog(tesselationEvaluationShaderObject, infoLogLength, &written, log);
+				fprintf(gpFile, "TESSELATION EVALUATION SHADER COMPILATION LOG : %s\n", log);
+				free(log);
+				log = NULL;
+				uninitialize();
+			}
+		}
+	}
+
+	// fragment Shader
+	status = 0;
+	infoLogLength = 0;
+	log = NULL;
 
 	const GLchar *fragmentShaderSourceCode =
 		"#version 460 core"
 		"\n"
+		"uniform vec4 u_line_color;"
 		"out vec4 FragColor;"
 		"void main(void)"
 		"{"
-		"FragColor = vec4(1.0,1.0,1.0,1.0);"
+		"FragColor = u_line_color;"
 		"}";
 
 	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
@@ -429,11 +534,12 @@ int initialize(void)
 	// pr
 	shaderProgramObject = glCreateProgram();
 	glAttachShader(shaderProgramObject, vertexShaderObject);
-
+	glAttachShader(shaderProgramObject, tesselationControlShaderObject);
+	glAttachShader(shaderProgramObject, tesselationEvaluationShaderObject);
 	glAttachShader(shaderProgramObject, fragmentShaderObject);
 
 	// prelinked binding
-	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_POSITION, "a_position");
+	glBindAttribLocation(shaderProgramObject, AMC_ATRIBUTE_POSITION, "a_position");
 
 	// link
 	glLinkProgram(shaderProgramObject);
@@ -462,50 +568,31 @@ int initialize(void)
 	}
 
 	// post link - getting
-	modelMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_modelMatrix");
-	viewMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_viewMatrix");
-	projectionMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_projectionMatrix");
+	mvpMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_mvpMatrix");
 
-	// gVao_sphere and vba related code
+	numberOfSegmentsUniform = glGetUniformLocation(shaderProgramObject, "u_nummberOfSegments");
+	numberOfStripsUniform = glGetUniformLocation(shaderProgramObject, "u_nummberOfStrips");
+	lineColorUniform = glGetUniformLocation(shaderProgramObject, "u_line_color");
+
+	// vao and vba related code
 	// declartions of vertex Data array
-	getSphereVertexData(sphere_vertices, sphere_normals, sphere_textures, sphere_elements);
-	gNumVertices = getNumberOfSphereVertices();
-	gNumElements = getNumberOfSphereElements();
+	const GLfloat vertices[] = {
+		-1.0f, -1.0f,
+		-0.5f, 1.0f,
+		0.5f, -1.0f,
+		1.0f, 1.0f};
 
-	// vao vbo reelated code
-	// vao
-	glGenVertexArrays(1, &gVao_sphere);
-	glBindVertexArray(gVao_sphere);
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
 
-	// position vbo
-	glGenBuffers(1, &gVbo_sphere_position);
-	glBindBuffer(GL_ARRAY_BUFFER, gVbo_sphere_position);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_vertices), sphere_vertices, GL_STATIC_DRAW);
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-	glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-	glEnableVertexAttribArray(PRJ_ATRIBUTE_POSITION);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(AMC_ATRIBUTE_POSITION, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(AMC_ATRIBUTE_POSITION);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	// normal vbo
-	glGenBuffers(1, &gVbo_sphere_normal);
-	glBindBuffer(GL_ARRAY_BUFFER, gVbo_sphere_normal);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_normals), sphere_normals, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(PRJ_ATRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-	glEnableVertexAttribArray(PRJ_ATRIBUTE_NORMAL);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	// element vbo
-	glGenBuffers(1, &gVbo_sphere_element);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(sphere_elements), sphere_elements, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	// unbind vao
 	glBindVertexArray(0);
 
 	// Depth Related Changes
@@ -515,8 +602,9 @@ int initialize(void)
 	glShadeModel(GL_SMOOTH);
 
 	/* Clear the  screen using blue color */
-	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
+	uiNumberOfSegments = 1; // because we want ot draw one line
 	perspectiveProjectionMatrix = mat4::identity();
 
 	// warmup resize call
@@ -571,26 +659,34 @@ void display(void)
 
 	// Tranformations
 	mat4 translationMatrix = mat4::identity();
-	mat4 modelMatrix = mat4::identity();
-	mat4 viewMatrix = mat4::identity();
+	mat4 modelViewMatrix = mat4::identity();
+	mat4 modelViewProjectionMatrix = mat4::identity();
 
-	translationMatrix = vmath::translate(0.0f, 0.0f, -2.0f); // glTranslatef() is replaced by this line
+	translationMatrix = vmath::translate(0.0f, 0.0f, -4.0f); // glTranslatef() is replaced by this line
 
-	modelMatrix = translationMatrix;
+	modelViewMatrix = translationMatrix;
 
-	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
-	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
-	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+	modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
+
+	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
+
+	TCHAR str[255];
+
+	wsprintf(str, TEXT("OpenGL -  Pratik Rajendra Jagadale | Number of Segments : %d"), uiNumberOfSegments);
+
+	SetWindowText(ghwnd, str);
+
+	glUniform1i(numberOfSegmentsUniform, uiNumberOfSegments);
+	glUniform1i(numberOfStripsUniform, 1);
+	glUniform4fv(lineColorUniform, 1, vmath::vec4(1.0, 1.0, 0.0, 1.0));
+
+	glBindVertexArray(vao);
 
 	// draw the desired graphics
 	// drawing code -- magic
+	glPatchParameteri(GL_PATCH_VERTICES, 4);
 
-	glBindVertexArray(gVao_sphere);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
-
-	// glDrawArrays(GL_TRIANGLES, 0, gNumElements);
+	glDrawArrays(GL_PATCHES, 0, 4);
 
 	glBindVertexArray(0);
 
@@ -615,32 +711,18 @@ void uninitialize(void)
 		ToggleFullScreen();
 
 	/*  */
-	// deletion of gVbo_sphere_element
-	if (gVbo_sphere_element)
+	// deletion of vbo
+	if (vbo)
 	{
-		glDeleteBuffers(1, &gVbo_sphere_element);
-		gVbo_sphere_element = 0;
+		glDeleteBuffers(1, &vbo);
+		vbo = 0;
 	}
 
-	// deletion of gVbo_sphere_normal
-	if (gVbo_sphere_normal)
+	// deletion of vao
+	if (vao)
 	{
-		glDeleteBuffers(1, &gVbo_sphere_normal);
-		gVbo_sphere_normal = 0;
-	}
-
-	// deletion of gVbo_sphere_Position
-	if (gVbo_sphere_position)
-	{
-		glDeleteBuffers(1, &gVbo_sphere_position);
-		gVbo_sphere_position = 0;
-	}
-
-	// deletion of gVao_sphere
-	if (gVao_sphere)
-	{
-		glDeleteVertexArrays(1, &gVao_sphere);
-		gVao_sphere = 0;
+		glDeleteVertexArrays(1, &vao);
+		vao = 0;
 	}
 
 	if (shaderProgramObject)

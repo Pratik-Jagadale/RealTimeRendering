@@ -58,7 +58,7 @@ GLfloat angleCube = 0.0f;
 
 GLfloat lightDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
 GLfloat materialDiffuse[] = {0.5f, 0.5f, 0.5f, 1.0f};
-GLfloat lightPositions[] = {0.0f, 0.0f, 2.0f, 1.0f};
+GLfloat lightPositions[] = {0.0f, 0.0f, 10.0f, 1.0f};
 
 /* Entry Point Function */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)

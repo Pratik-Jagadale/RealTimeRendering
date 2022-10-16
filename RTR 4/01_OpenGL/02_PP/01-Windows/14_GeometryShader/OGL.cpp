@@ -8,14 +8,12 @@
 #include <GL/glew.h> // This must be before gl.h
 #include <GL/gl.h>
 #include "vmath.h"
-#include "Sphere.h"
 
 using namespace vmath;
 
 /* OpenGL libraries */
 #pragma comment(lib, "glew32.lib")
 #pragma comment(lib, "OpenGL32.lib")
-#pragma comment(lib, "Sphere.lib")
 
 #define WINWIDTH 800
 #define WINHEIGHT 600
@@ -37,29 +35,17 @@ GLuint shaderProgramObject;
 
 enum
 {
-	PRJ_ATRIBUTE_POSITION = 0,
-	PRJ_ATRIBUTE_COLOR,
-	PRJ_ATRIBUTE_NORMAL,
-	PRJ_ATRIBUTE_TEXTURE0
+	AMC_ATRIBUTE_POSITION = 0,
+	AMC_ATRIBUTE_COLOR,
+	AMC_ATRIBUTE_NORMAL,
+	AMC_ATRIBUTE_TEXTURE0
 };
 
-GLuint gVao_sphere;			 // Vertex Array Object
-GLuint gVbo_sphere_position; // Vertex Buffer Object
-GLuint gVbo_sphere_normal;
-GLuint gVbo_sphere_element;
-
-GLuint modelMatrixUniform;
-GLuint viewMatrixUniform;
-GLuint projectionMatrixUniform;
+GLuint vao;				 // Vertex Array Object
+GLuint vbo;				 // Vertex Buffer Object
+GLuint mvpMatrixUniform; //
 
 mat4 perspectiveProjectionMatrix;
-
-float sphere_vertices[1146];
-float sphere_normals[1146];
-float sphere_textures[764];
-unsigned short sphere_elements[2280];
-int gNumVertices;
-int gNumElements;
 
 /* Entry Point Function */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
@@ -199,7 +185,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 	/* fucntion declarations */
 	// void ToggleFullScreen();
 	void resize(int, int);
-	void uninitialize(void);
 
 	// code
 	switch (iMsg)
@@ -223,8 +208,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			ToggleFullScreen();
 			break;
 		case 27:
-			DestroyWindow(hwnd);
-			break;
+			if (gpFile)
+			{
+				fprintf(gpFile, "Log File Successfully Closes");
+				fclose(gpFile);
+				gpFile = NULL;
+			}
+			PostQuitMessage(0);
 		}
 		break;
 
@@ -237,9 +227,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_DESTROY:
-		uninitialize();
 		PostQuitMessage(0);
-
 		break;
 	default:
 		break;
@@ -348,12 +336,10 @@ int initialize(void)
 		"#version 460 core"
 		"\n"
 		"in vec4 a_position;"
-		"uniform mat4 u_modelMatrix;"
-		"uniform mat4 u_viewMatrix;"
-		"uniform mat4 u_projectionMatrix;"
+		"uniform mat4 u_mvpMatrix;"
 		"void main(void)"
 		"{"
-		"gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;"
+		"gl_Position = u_mvpMatrix * a_position;"
 		"}";
 
 	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
@@ -425,15 +411,67 @@ int initialize(void)
 		}
 	}
 
+	// Geometry Shader
+	const GLchar *geometryShaderSourceCode =
+		"#version 460 core"
+		"\n"
+		"layout(triangles)in;"
+		"layout(triangle_strip,max_vertices = 9)out;"
+		"uniform mat4 u_mvpMatrix;"
+		"void main(void)"
+		"{"
+		"for(int i = 0 ; i < 3 ; i++)"
+		"{"
+		"gl_Position = u_mvpMatrix * (gl_in[i].gl_Position + vec4(0.0, 1.0 , 0.0, 1.0));"
+		"EmitVertex();"
+		"gl_Position = u_mvpMatrix * (gl_in[i].gl_Position + vec4(-1.0, -1.0 , 0.0, 1.0));"
+		"EmitVertex();"
+		"gl_Position = u_mvpMatrix * (gl_in[i].gl_Position + vec4(1.0, -1.0 , 0.0, 1.0));"
+		"EmitVertex();"
+		"EndPrimitive();"
+		"}"
+		"}";
+
+	GLuint geometryShaderObject = glCreateShader(GL_GEOMETRY_SHADER);
+
+	glShaderSource(geometryShaderObject, 1, (const GLchar **)&geometryShaderSourceCode, NULL);
+
+	glCompileShader(geometryShaderObject);
+
+	status = 0;
+	infoLogLength = 0;
+	log = NULL;
+
+	glGetShaderiv(geometryShaderObject, GL_COMPILE_STATUS, &status);
+
+	if (status == GL_FALSE)
+	{
+		glGetShaderiv(geometryShaderObject, GL_INFO_LOG_LENGTH, &infoLogLength);
+		if (infoLogLength > 0)
+		{
+			log = (char *)malloc(infoLogLength);
+			if (log != NULL)
+			{
+				GLsizei written;
+				glGetShaderInfoLog(geometryShaderObject, infoLogLength, &written, log);
+				fprintf(gpFile, "GL_GEOMETRY_SHADER COMPILATION LOG : %s\n", log);
+				free(log);
+				log = NULL;
+				uninitialize();
+			}
+		}
+	}
+
 	// Shader Program Object
 	// pr
 	shaderProgramObject = glCreateProgram();
 	glAttachShader(shaderProgramObject, vertexShaderObject);
+	glAttachShader(shaderProgramObject, geometryShaderObject);
 
 	glAttachShader(shaderProgramObject, fragmentShaderObject);
 
 	// prelinked binding
-	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_POSITION, "a_position");
+	glBindAttribLocation(shaderProgramObject, AMC_ATRIBUTE_POSITION, "a_position");
 
 	// link
 	glLinkProgram(shaderProgramObject);
@@ -462,50 +500,26 @@ int initialize(void)
 	}
 
 	// post link - getting
-	modelMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_modelMatrix");
-	viewMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_viewMatrix");
-	projectionMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_projectionMatrix");
+	mvpMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_mvpMatrix");
 
-	// gVao_sphere and vba related code
+	// vao and vba related code
 	// declartions of vertex Data array
-	getSphereVertexData(sphere_vertices, sphere_normals, sphere_textures, sphere_elements);
-	gNumVertices = getNumberOfSphereVertices();
-	gNumElements = getNumberOfSphereElements();
+	const GLfloat triangleVertices[] = {
+		0.0f, 1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f};
 
-	// vao vbo reelated code
-	// vao
-	glGenVertexArrays(1, &gVao_sphere);
-	glBindVertexArray(gVao_sphere);
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
 
-	// position vbo
-	glGenBuffers(1, &gVbo_sphere_position);
-	glBindBuffer(GL_ARRAY_BUFFER, gVbo_sphere_position);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_vertices), sphere_vertices, GL_STATIC_DRAW);
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-	glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-	glEnableVertexAttribArray(PRJ_ATRIBUTE_POSITION);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVertices), triangleVertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(AMC_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(AMC_ATRIBUTE_POSITION);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	// normal vbo
-	glGenBuffers(1, &gVbo_sphere_normal);
-	glBindBuffer(GL_ARRAY_BUFFER, gVbo_sphere_normal);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_normals), sphere_normals, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(PRJ_ATRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-	glEnableVertexAttribArray(PRJ_ATRIBUTE_NORMAL);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	// element vbo
-	glGenBuffers(1, &gVbo_sphere_element);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(sphere_elements), sphere_elements, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	// unbind vao
 	glBindVertexArray(0);
 
 	// Depth Related Changes
@@ -571,26 +585,23 @@ void display(void)
 
 	// Tranformations
 	mat4 translationMatrix = mat4::identity();
-	mat4 modelMatrix = mat4::identity();
-	mat4 viewMatrix = mat4::identity();
+	mat4 modelViewMatrix = mat4::identity();
+	mat4 modelViewProjectionMatrix = mat4::identity();
 
-	translationMatrix = vmath::translate(0.0f, 0.0f, -2.0f); // glTranslatef() is replaced by this line
+	translationMatrix = vmath::translate(0.0f, 0.0f, -4.0f); // glTranslatef() is replaced by this line
 
-	modelMatrix = translationMatrix;
+	modelViewMatrix = translationMatrix;
 
-	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
-	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
-	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+	modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
+
+	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
+
+	glBindVertexArray(vao);
 
 	// draw the desired graphics
 	// drawing code -- magic
 
-	glBindVertexArray(gVao_sphere);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
-
-	// glDrawArrays(GL_TRIANGLES, 0, gNumElements);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 
 	glBindVertexArray(0);
 
@@ -615,32 +626,18 @@ void uninitialize(void)
 		ToggleFullScreen();
 
 	/*  */
-	// deletion of gVbo_sphere_element
-	if (gVbo_sphere_element)
+	// deletion of vbo
+	if (vbo)
 	{
-		glDeleteBuffers(1, &gVbo_sphere_element);
-		gVbo_sphere_element = 0;
+		glDeleteBuffers(1, &vbo);
+		vbo = 0;
 	}
 
-	// deletion of gVbo_sphere_normal
-	if (gVbo_sphere_normal)
+	// deletion of vao
+	if (vao)
 	{
-		glDeleteBuffers(1, &gVbo_sphere_normal);
-		gVbo_sphere_normal = 0;
-	}
-
-	// deletion of gVbo_sphere_Position
-	if (gVbo_sphere_position)
-	{
-		glDeleteBuffers(1, &gVbo_sphere_position);
-		gVbo_sphere_position = 0;
-	}
-
-	// deletion of gVao_sphere
-	if (gVao_sphere)
-	{
-		glDeleteVertexArrays(1, &gVao_sphere);
-		gVao_sphere = 0;
+		glDeleteVertexArrays(1, &vao);
+		vao = 0;
 	}
 
 	if (shaderProgramObject)

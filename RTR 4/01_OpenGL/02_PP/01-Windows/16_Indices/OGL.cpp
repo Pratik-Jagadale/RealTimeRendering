@@ -8,14 +8,12 @@
 #include <GL/glew.h> // This must be before gl.h
 #include <GL/gl.h>
 #include "vmath.h"
-#include "Sphere.h"
 
 using namespace vmath;
 
 /* OpenGL libraries */
 #pragma comment(lib, "glew32.lib")
 #pragma comment(lib, "OpenGL32.lib")
-#pragma comment(lib, "Sphere.lib")
 
 #define WINWIDTH 800
 #define WINHEIGHT 600
@@ -37,63 +35,18 @@ GLuint shaderProgramObject;
 
 enum
 {
-	PRJ_ATRIBUTE_POSITION = 0,
-	PRJ_ATRIBUTE_COLOR,
-	PRJ_ATRIBUTE_NORMAL,
-	PRJ_ATRIBUTE_TEXTURE0
+	AMC_ATRIBUTE_POSITION = 0,
+	AMC_ATRIBUTE_COLOR,
+	AMC_ATRIBUTE_NORMAL,
+	AMC_ATRIBUTE_TEXTURE0
 };
 
-GLuint gVao_sphere;			 // Vertex Array Object
-GLuint gVbo_sphere_position; // Vertex Buffer Object
-GLuint gVbo_sphere_normal;
-GLuint gVbo_sphere_element;
-
-GLuint modelMatrixUniform;
-GLuint viewMatrixUniform;
-GLuint projectionMatrixUniform;
+GLuint vao_Square;			// Vertex Array Object - Square
+GLuint vbo_Square_Position; // Vertex Buffer Object - Square- Position
+GLuint vbo_Indices;
+GLuint mvpMatrixUniform; // model View Projection
 
 mat4 perspectiveProjectionMatrix;
-
-float sphere_vertices[1146];
-float sphere_normals[1146];
-float sphere_textures[764];
-unsigned short sphere_elements[2280];
-int gNumVertices;
-int gNumElements;
-
-// For Three Light on Sphere
-GLuint laUniform[3];		   // light Ambiant
-GLuint ldUniform[3];		   // light Diffuse
-GLuint lsUniform[3];		   // light Spec
-GLuint lighPositionUniform[3]; // light Position
-
-GLuint kaUniform; // material amb
-GLuint kdUniform; // mat diff
-GLuint ksUniform; // mat specular
-GLuint materialShininessUniform;
-
-GLuint lightingEnabledUniform;
-
-BOOL bLight;
-
-struct Light
-{
-	vmath::vec4 lightAmbiant;
-	vmath::vec4 lightDiffuse;
-	vmath::vec4 lightSpecular;
-	vmath::vec4 lightPositions;
-};
-
-struct Light lights[3];
-
-GLfloat materialAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
-GLfloat meterialDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat materialSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
-GLfloat materialShineeness = 128.0f;
-
-GLfloat lightAngleOne = 0.0f;
-GLfloat lightAngleTwo = 0.0f;
-GLfloat lightAngleZero = 0.0f;
 
 /* Entry Point Function */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
@@ -102,7 +55,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	int initialize(void);
 	void uninitialize(void);
 	void display(void);
-	void update(void);
 
 	/* variable declarations */
 	WNDCLASSEX wndclass;
@@ -179,7 +131,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 	}
 	else if (iRetVal == -4)
 	{
-		fprintf(gpFile, "Makeing OpnGL as current Context Failed...\n");
+		fprintf(gpFile, "Makeing OpenGL as current Context Failed...\n");
 		uninitialize();
 	}
 	else if (iRetVal == -5)
@@ -220,7 +172,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 				/* Render the seen */
 				display();
 				// updatetheseen
-				update();
 			}
 		}
 	}
@@ -257,22 +208,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		case 'F':
 			ToggleFullScreen();
 			break;
-
-		case 'L':
-		case 'l':
-			if (bLight == FALSE)
-			{
-				bLight = TRUE;
-			}
-			else
-			{
-				bLight = FALSE;
-			}
-			break;
-
 		case 27:
-			DestroyWindow(hwnd);
-			break;
+			if (gpFile)
+			{
+				fprintf(gpFile, "Log File Successfully Closes");
+				fclose(gpFile);
+				gpFile = NULL;
+			}
+			PostQuitMessage(0);
 		}
 		break;
 
@@ -394,49 +337,10 @@ int initialize(void)
 		"#version 460 core"
 		"\n"
 		"in vec4 a_position;"
-		"in vec3 a_normal;"
-		"uniform mat4 u_modelMatrix;"
-		"uniform mat4 u_viewMatrix;"
-		"uniform mat4 u_projectionMatrix;"
-		"uniform vec3 u_la[3];"
-		"uniform vec3 u_ld[3];"
-		"uniform vec3 u_ls[3];"
-		"uniform vec4 u_lightPosition[3];"
-		"uniform vec3 u_ka;"
-		"uniform vec3 u_ks;"
-		"uniform vec3 u_kd;"
-		"uniform float u_materialShininnes;"
-		"uniform int u_lightingEnabled;"
-		"out vec3 phong_ads_light;"
+		"uniform mat4 u_mvpMatrix;"
 		"void main(void)"
 		"{"
-		"phong_ads_light = vec3(0.0,0.0,0.0);"
-		"if(u_lightingEnabled == 1)"
-		"{"
-		"vec4 eyeCoordinates = u_viewMatrix * u_modelMatrix * a_position;"
-		"mat3 normalMatrix = mat3(u_viewMatrix * u_modelMatrix);"
-		"vec3 transformedNormals = normalize(normalMatrix * a_normal);"
-		"vec3 viewerVector = normalize(-eyeCoordinates.xyz);"
-		"vec3 ambiant[3];"
-		"vec3 lightDirection[3];"
-		"vec3 diffuse[3];"
-		"vec3 reflectionVector[3];"
-		"vec3 specular[3];"
-		"for(int i = 0 ; i < 3 ; i++)"
-		"{"
-		"ambiant[i] = u_la[i] * u_ka;"
-		"lightDirection[i] = normalize(vec3(u_lightPosition[i]) - eyeCoordinates.xyz);" // Swizaling
-		"diffuse[i] = u_ld[i] * u_kd * max(dot(lightDirection[i] ,transformedNormals),0.0);"
-		"reflectionVector[i] = reflect(-lightDirection[i],transformedNormals);"
-		"specular[i] = u_ls[i] * u_ks * pow(max(dot(reflectionVector[i], viewerVector), 0.0), u_materialShininnes);"
-		"phong_ads_light = phong_ads_light + ambiant[i] + diffuse[i] +  specular[i];"
-		"}"
-		"}"
-		"else"
-		"{"
-		"phong_ads_light = vec3(1.0,1.0,1.0);"
-		"}"
-		"gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;"
+		"gl_Position = u_mvpMatrix * a_position;"
 		"}";
 
 	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
@@ -476,11 +380,11 @@ int initialize(void)
 	const GLchar *fragmentShaderSourceCode =
 		"#version 460 core"
 		"\n"
-		"in vec3 phong_ads_light;"
+		"in vec4 a_color_out;"
 		"out vec4 FragColor;"
 		"void main(void)"
 		"{"
-		"FragColor = vec4(phong_ads_light, 1.0);"
+		"FragColor = vec4(1.0f,1.0f,1.0f,1.0f);"
 		"}";
 
 	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
@@ -517,8 +421,8 @@ int initialize(void)
 	glAttachShader(shaderProgramObject, fragmentShaderObject);
 
 	// prelinked binding
-	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_POSITION, "a_position");
-	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_NORMAL, "a_normal");
+	// Binding Position Array
+	glBindAttribLocation(shaderProgramObject, AMC_ATRIBUTE_POSITION, "a_position");
 
 	// link
 	glLinkProgram(shaderProgramObject);
@@ -547,73 +451,41 @@ int initialize(void)
 	}
 
 	// post link - getting
-	modelMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_modelMatrix");
-	viewMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_viewMatrix");
-	projectionMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_projectionMatrix");
+	mvpMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_mvpMatrix");
 
-	laUniform[0] = glGetUniformLocation(shaderProgramObject, "u_la[0]");
-	ldUniform[0] = glGetUniformLocation(shaderProgramObject, "u_ld[0]");
-	lsUniform[0] = glGetUniformLocation(shaderProgramObject, "u_ls[0]");
-	lighPositionUniform[0] = glGetUniformLocation(shaderProgramObject, "u_lightPosition[0]");
-
-	laUniform[1] = glGetUniformLocation(shaderProgramObject, "u_la[1]");
-	ldUniform[1] = glGetUniformLocation(shaderProgramObject, "u_ld[1]");
-	lsUniform[1] = glGetUniformLocation(shaderProgramObject, "u_ls[1]");
-	lighPositionUniform[1] = glGetUniformLocation(shaderProgramObject, "u_lightPosition[1]");
-
-	laUniform[2] = glGetUniformLocation(shaderProgramObject, "u_la[2]");
-	ldUniform[2] = glGetUniformLocation(shaderProgramObject, "u_ld[2]");
-	lsUniform[2] = glGetUniformLocation(shaderProgramObject, "u_ls[2]");
-	lighPositionUniform[2] = glGetUniformLocation(shaderProgramObject, "u_lightPosition[2]");
-
-	kaUniform = glGetUniformLocation(shaderProgramObject, "u_ka");
-	kdUniform = glGetUniformLocation(shaderProgramObject, "u_kd");
-	ksUniform = glGetUniformLocation(shaderProgramObject, "u_ks");
-	materialShininessUniform = glGetUniformLocation(shaderProgramObject, "u_materialShininnes");
-
-	lightingEnabledUniform = glGetUniformLocation(shaderProgramObject, "u_lightingEnabled");
-
-	// gVao_sphere and vba related code
+	// vao_Triangle and vba related code
 	// declartions of vertex Data array
-	getSphereVertexData(sphere_vertices, sphere_normals, sphere_textures, sphere_elements);
-	gNumVertices = getNumberOfSphereVertices();
-	gNumElements = getNumberOfSphereElements();
+	const GLfloat SquarePosition[] = {
+		1.0f, 1.0f, 0.0f,
+		-1.0f, 1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f};
 
-	// vao vbo reelated code
-	// vao
-	glGenVertexArrays(1, &gVao_sphere);
-	glBindVertexArray(gVao_sphere);
+	GLuint squareIndices[] = {
+		0, 1, 3,
+		3, 1, 2};
 
-	// position vbo
-	glGenBuffers(1, &gVbo_sphere_position);
-	glBindBuffer(GL_ARRAY_BUFFER, gVbo_sphere_position);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_vertices), sphere_vertices, GL_STATIC_DRAW);
+	// vao and vbo related code
+	// vao for Square
+	glGenVertexArrays(1, &vao_Square);
+	glBindVertexArray(vao_Square);
 
-	glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	// vbo for position
+	glGenBuffers(1, &vbo_Square_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Square_Position);
 
-	glEnableVertexAttribArray(PRJ_ATRIBUTE_POSITION);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	// normal vbo
-	glGenBuffers(1, &gVbo_sphere_normal);
-	glBindBuffer(GL_ARRAY_BUFFER, gVbo_sphere_normal);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_normals), sphere_normals, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(PRJ_ATRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-	glEnableVertexAttribArray(PRJ_ATRIBUTE_NORMAL);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(SquarePosition), SquarePosition, GL_STATIC_DRAW);
+	glVertexAttribPointer(AMC_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(AMC_ATRIBUTE_POSITION);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// element vbo
-	glGenBuffers(1, &gVbo_sphere_element);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(sphere_elements), sphere_elements, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glGenBuffers(1, &vbo_Indices);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_Indices);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(squareIndices), squareIndices, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// unbind vao
-	glBindVertexArray(0);
+	glBindVertexArray(0); // ubind vao for Square
 
 	// Depth Related Changes
 	glEnable(GL_DEPTH_TEST);
@@ -622,22 +494,7 @@ int initialize(void)
 	glShadeModel(GL_SMOOTH);
 
 	/* Clear the  screen using blue color */
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-	lights[0].lightAmbiant = vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	lights[0].lightDiffuse = vmath::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	lights[0].lightSpecular = vmath::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	lights[0].lightPositions = vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-
-	lights[1].lightAmbiant = vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	lights[1].lightDiffuse = vmath::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-	lights[1].lightSpecular = vmath::vec4(0.0f, 0.0f, 1.0f, 1.0f);
-	lights[1].lightPositions = vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-
-	lights[2].lightAmbiant = vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	lights[2].lightDiffuse = vmath::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-	lights[2].lightSpecular = vmath::vec4(0.0f, 1.0f, 0.0f, 1.0f);
-	lights[2].lightPositions = vmath::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
 
 	perspectiveProjectionMatrix = mat4::identity();
 
@@ -691,73 +548,27 @@ void display(void)
 	// use shader program obejct
 	glUseProgram(shaderProgramObject);
 
+	// Triangle
 	// Tranformations
 	mat4 translationMatrix = mat4::identity();
-	mat4 modelMatrix = mat4::identity();
-	mat4 viewMatrix = mat4::identity();
+	mat4 modelViewMatrix = mat4::identity();
+	mat4 modelViewProjectionMatrix = mat4::identity();
 
-	translationMatrix = vmath::translate(0.0f, 0.0f, -2.0f); // glTranslatef() is replaced by this line
+	translationMatrix = vmath::translate(0.0f, 0.0f, -4.0f); // glTranslatef() is replaced by this line
 
-	modelMatrix = translationMatrix;
+	modelViewMatrix = translationMatrix;
 
-	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
-	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
-	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+	modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
 
-	// draw the desired graphics
-	// drawing code -- magic
+	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
 
-	// Light Related Code
-	// Set Light Zero Position - rotating zero light - x Around
-	float angle = lightAngleZero * (M_PI / 180.0f);
-	float x = 5.0f * cos(angle);
-	float y = 5.0f * sin(angle);
-	lights[0].lightPositions[1] = x;
-	lights[0].lightPositions[2] = y;
+	glBindVertexArray(vao_Square);
 
-	// Set Light One Position  rotating One Light - Y Rotation
-	angle = (lightAngleOne * M_PI) / 180.0f;
-	x = 5.0f * cos(angle);
-	y = 5.0f * sin(angle);
-	lights[1].lightPositions[0] = x;
-	lights[1].lightPositions[2] = y;
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_Indices);
 
-	// Set Light Two Position rotating Two Light Z Rotation
-	angle = (lightAngleTwo * M_PI) / 180.0f;
-	x = 5.0f * cos(angle);
-	y = 5.0f * sin(angle);
-	lights[2].lightPositions[0] = x;
-	lights[2].lightPositions[1] = y;
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-	if (bLight == TRUE)
-	{
-		glUniform1i(lightingEnabledUniform, 1);
-
-		for (int i = 0; i < 3; i++)
-		{
-			glUniform3fv(laUniform[i], 1, lights[i].lightAmbiant); // we can use glUniform3f() ,so we can directly pass the values to uniform
-			glUniform3fv(ldUniform[i], 1, lights[i].lightDiffuse);
-			glUniform3fv(lsUniform[i], 1, lights[i].lightSpecular);
-			glUniform4fv(lighPositionUniform[i], 1, lights[i].lightPositions);
-		}
-
-		glUniform3fv(kaUniform, 1, materialAmbiant);
-		glUniform3fv(kdUniform, 1, meterialDiffuse);
-		glUniform3fv(ksUniform, 1, materialSpecular);
-		glUniform1f(materialShininessUniform, materialShineeness);
-	}
-	else
-	{
-		glUniform1i(lightingEnabledUniform, 0);
-	}
-
-	glBindVertexArray(gVao_sphere);
-
-	// *** draw, either by glDrawTriangles() or glDrawArrays() or glDrawElements()
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-	// glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
-
-	glDrawArrays(GL_TRIANGLES, 0, gNumElements);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	glBindVertexArray(0);
 
@@ -770,17 +581,6 @@ void display(void)
 void update(void)
 {
 	/* code */
-	lightAngleZero = lightAngleZero + 1.1f;
-	if (lightAngleZero > 360.0f)
-		lightAngleZero = lightAngleZero - 360.0f;
-
-	lightAngleOne = lightAngleOne + 1.0f;
-	if (lightAngleOne > 360.0f)
-		lightAngleOne = lightAngleOne - 360.0f;
-
-	lightAngleTwo = lightAngleTwo + 1.0f;
-	if (lightAngleTwo > 360.0f)
-		lightAngleTwo = lightAngleTwo - 360.0f;
 }
 
 void uninitialize(void)
@@ -793,32 +593,24 @@ void uninitialize(void)
 		ToggleFullScreen();
 
 	/*  */
-	// deletion of gVbo_sphere_element
-	if (gVbo_sphere_element)
+	if (vbo_Indices)
 	{
-		glDeleteBuffers(1, &gVbo_sphere_element);
-		gVbo_sphere_element = 0;
+		glDeleteBuffers(1, &vbo_Indices);
+		vbo_Indices = 0;
 	}
 
-	// deletion of gVbo_sphere_normal
-	if (gVbo_sphere_normal)
+	// delete vbo_Square_Position
+	if (vbo_Square_Position)
 	{
-		glDeleteBuffers(1, &gVbo_sphere_normal);
-		gVbo_sphere_normal = 0;
+		glDeleteBuffers(1, &vbo_Square_Position);
+		vbo_Square_Position = 0;
 	}
 
-	// deletion of gVbo_sphere_Position
-	if (gVbo_sphere_position)
+	// deletion of vao_Square
+	if (vao_Square)
 	{
-		glDeleteBuffers(1, &gVbo_sphere_position);
-		gVbo_sphere_position = 0;
-	}
-
-	// deletion of gVao_sphere
-	if (gVao_sphere)
-	{
-		glDeleteVertexArrays(1, &gVao_sphere);
-		gVao_sphere = 0;
+		glDeleteVertexArrays(1, &vao_Square);
+		vao_Square = 0;
 	}
 
 	if (shaderProgramObject)
