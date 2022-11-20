@@ -1,0 +1,633 @@
+/* Header Files */
+#include <windows.h>
+#include "OGLMain.h"
+#include <stdio.h>
+#include <stdlib.h>
+
+/* OpenGL Header files */
+#include "vmath.h"
+#include "GLShaders.h"
+#include "GLLog.h"
+
+using namespace vmath;
+
+#define WINWIDTH 800
+#define WINHEIGHT 600
+
+/* Global Function Declartion */
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+void ToggleFullScreen();
+BOOL gbActiveWindow = FALSE;
+
+// global variable declarations
+HWND ghwnd = NULL;
+HDC ghdc = NULL;
+HGLRC ghrc = NULL;
+BOOL gbFullScreen = FALSE;
+
+// PP Related Global Variables
+GLuint shaderProgramObject;
+
+enum
+{
+	AMC_ATRIBUTE_POSITION = 0,
+	AMC_ATRIBUTE_COLOR,
+	AMC_ATRIBUTE_NORMAL,
+	AMC_ATRIBUTE_TEXTURE0
+};
+
+GLuint vao;				 // Vertex Array Object
+GLuint vbo_Position;	 // Vertex Buffer Object - Position
+GLuint vbo_Color;		 // Vertex Buffer Object - Color
+GLuint mvpMatrixUniform; // model View Projection
+
+mat4 perspectiveProjectionMatrix;
+
+/* Entry Point Function */
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
+{
+	/* function declartions */
+	int initialize(void);
+	void uninitialize(void);
+	void display(void);
+
+	/* variable declarations */
+	WNDCLASSEX wndclass;
+	HWND hwnd;
+	MSG msg;
+	TCHAR szAppName[] = TEXT("MyWindow");
+	BOOL bDone = FALSE;
+	int iRetVal = 0;
+	int iHeightOfWindow, iWidthOfWindow;
+
+	// Code
+	CreateLogFile();
+
+	// Initializaion of wndclassex structure
+	wndclass.cbSize = sizeof(WNDCLASSEX);
+	wndclass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+	wndclass.cbClsExtra = 0;
+	wndclass.cbWndExtra = 0;
+	wndclass.lpfnWndProc = WndProc;
+	wndclass.hInstance = hInstance;
+	wndclass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+	wndclass.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(MYICON));
+	wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wndclass.lpszClassName = szAppName;
+	wndclass.lpszMenuName = NULL;
+	wndclass.hIconSm = LoadIcon(hInstance, MAKEINTRESOURCE(MYICON));
+
+	/* Register Above wndclass */
+	RegisterClassEx(&wndclass);
+
+	iHeightOfWindow = GetSystemMetrics(SM_CYSCREEN); // Height of Window Screen
+	iWidthOfWindow = GetSystemMetrics(SM_CXSCREEN);	 // Width Of Window Screen
+
+	/* Create Window */
+	hwnd = CreateWindowEx(WS_EX_APPWINDOW, szAppName,
+						  TEXT("OpenGL -  Pratik Rajendra Jagadale"),
+						  WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE,
+						  (iWidthOfWindow - WINWIDTH) / 2,
+						  (iHeightOfWindow - WINHEIGHT) / 2,
+						  WINWIDTH,
+						  WINHEIGHT,
+						  NULL,
+						  NULL,
+						  hInstance,
+						  NULL);
+
+	ghwnd = hwnd;
+
+	// initizalize
+	iRetVal = initialize();
+
+	if (iRetVal == -1)
+	{
+		PrintLog("Choose Pixel format Failed...\n");
+		uninitialize();
+	}
+	else if (iRetVal == -2)
+	{
+		PrintLog("Set Pixel format Failed...\n");
+		uninitialize();
+	}
+	else if (iRetVal == -3)
+	{
+		PrintLog("Crete OpenGl Context Failed...\n");
+		uninitialize();
+	}
+	else if (iRetVal == -4)
+	{
+		PrintLog("Makeing OpenGL as current Context Failed...\n");
+		uninitialize();
+	}
+	else if (iRetVal == -5)
+	{
+		PrintLog("GLEW Initialization Failed...\n");
+		uninitialize();
+	}
+	else
+	{
+		PrintLog("Initialize Successfull...\n");
+	}
+
+	ShowWindow(hwnd, iCmdShow);
+
+	/* fore grounding and focusing window */
+	SetForegroundWindow(hwnd);
+	SetFocus(hwnd);
+
+	/* Game Loop */
+	while (bDone == FALSE)
+	{
+		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+			if (msg.message == WM_QUIT)
+			{
+				bDone = TRUE;
+			}
+			else
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+		}
+		else
+		{
+			if (gbActiveWindow == TRUE)
+			{
+				/* Render the seen */
+				display();
+				// updatetheseen
+			}
+		}
+	}
+
+	uninitialize();
+	return ((int)msg.wParam);
+}
+
+/* CALLBACK Function */
+LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
+{
+	/* fucntion declarations */
+	// void ToggleFullScreen();
+	void resize(int, int);
+
+	// code
+	switch (iMsg)
+	{
+	case WM_SETFOCUS:
+		gbActiveWindow = TRUE;
+		break;
+
+	case WM_KILLFOCUS:
+		gbActiveWindow = FALSE;
+		break;
+
+	case WM_ERASEBKGND:
+		return (0);
+
+	case WM_CHAR:
+		switch (wParam)
+		{
+		case 'f':
+		case 'F':
+			ToggleFullScreen();
+			break;
+		case 27:
+			PostQuitMessage(0);
+		}
+		break;
+
+	case WM_SIZE:
+		resize(WORD(lParam), HIWORD(lParam));
+		break;
+
+	case WM_CLOSE:
+		DestroyWindow(hwnd);
+		break;
+
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+	default:
+		break;
+	}
+	return (DefWindowProc(hwnd, iMsg, wParam, lParam));
+}
+
+void ToggleFullScreen()
+{
+	// variable declartions
+	static DWORD dwStyle;
+	static WINDOWPLACEMENT wp;
+	MONITORINFO mi;
+
+	//	code
+	wp.length = sizeof(WINDOWPLACEMENT);
+	if (gbFullScreen == FALSE)
+	{
+		dwStyle = GetWindowLong(ghwnd, GWL_STYLE);
+
+		if (dwStyle & WS_OVERLAPPEDWINDOW)
+		{
+			mi.cbSize = sizeof(MONITORINFO);
+
+			if (GetWindowPlacement(ghwnd, &wp) && GetMonitorInfo(MonitorFromWindow(ghwnd, MONITORINFOF_PRIMARY), &mi))
+			{
+				SetWindowLong(ghwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
+
+				SetWindowPos(ghwnd, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top, SWP_NOZORDER | SWP_FRAMECHANGED); // nccalksize
+			}
+
+			ShowCursor(FALSE);
+			gbFullScreen = TRUE;
+		}
+	}
+	else
+	{
+		SetWindowLong(ghwnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
+
+		SetWindowPlacement(ghwnd, &wp);
+		SetWindowPos(ghwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_FRAMECHANGED);
+
+		ShowCursor(TRUE);
+		gbFullScreen = FALSE;
+	}
+}
+
+int initialize(void)
+{
+	/* fucntion delcations */
+	void resize(int, int);
+	void uninitialize(void);
+
+	/* variable declartions */
+	PIXELFORMATDESCRIPTOR pfd;
+	int iPixelFormatIndex = 0;
+
+	/* code */
+	/* initialization of pixelformatdesciptor structure */
+	ZeroMemory(&pfd, sizeof(PIXELFORMATDESCRIPTOR)); // memset((void*)&pfd , NULL, sizeof(OIXELFORAMTEDESCRIPTOR));
+	pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+	pfd.nVersion = 1;
+	pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+	pfd.iPixelType = PFD_TYPE_RGBA;
+	pfd.cColorBits = 32;
+	pfd.cRedBits = 8;
+	pfd.cGreenBits = 8;
+	pfd.cBlueBits = 8;
+	pfd.cAlphaBits = 8;
+	pfd.cDepthBits = 32;
+
+	/* GetDC */
+	ghdc = GetDC(ghwnd);
+
+	/* Choose Pixel Format */
+	iPixelFormatIndex = ChoosePixelFormat(ghdc, &pfd);
+
+	if (iPixelFormatIndex == 0)
+		return -1;
+
+	/* Set The choosen Puxel Format */
+	if (SetPixelFormat(ghdc, iPixelFormatIndex, &pfd) == FALSE)
+		return -2;
+
+	/* binding API */
+	/* Create OpenGL Rendering Context */
+	ghrc = wglCreateContext(ghdc);
+	if (ghrc == NULL)
+		return -3;
+
+	/* make the rendering as current cintext */
+	if (wglMakeCurrent(ghdc, ghrc) == FALSE)
+		return -4;
+
+	/* Here start OpeGL Code */
+	// GLEW INITIALIZATION
+	if (glewInit() != GLEW_OK)
+		return -5;
+
+	// Print OpenGL Info
+	PrintGLInfo();
+
+	// vartex Shader
+	const GLchar *vertexShaderSourceCode =
+		"#version 460 core"
+		"\n"
+		"in vec4 a_position;"
+		"in vec4 a_color;"
+		"uniform mat4 u_mvpMatrix;"
+		"out vec4 a_color_out;"
+		"void main(void)"
+		"{"
+		"gl_Position = u_mvpMatrix * a_position;"
+		"a_color_out = a_color;"
+		"}";
+
+	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
+
+	glShaderSource(vertexShaderObject, 1, (const GLchar **)&vertexShaderSourceCode, NULL);
+
+	glCompileShader(vertexShaderObject);
+
+	GLint status;
+	GLint infoLogLength;
+	char *log = NULL;
+	glGetShaderiv(vertexShaderObject, GL_COMPILE_STATUS, &status);
+
+	if (status == GL_FALSE)
+	{
+		glGetShaderiv(vertexShaderObject, GL_INFO_LOG_LENGTH, &infoLogLength);
+		if (infoLogLength > 0)
+		{
+			log = (char *)malloc(infoLogLength);
+			if (log != NULL)
+			{
+				GLsizei written;
+				glGetShaderInfoLog(vertexShaderObject, infoLogLength, &written, log);
+				PrintLog("VERTEX SHADER COMPILATION LOG : %s\n", log);
+				free(log);
+				log = NULL;
+				uninitialize();
+			}
+		}
+	}
+
+	// fragment Shader
+
+	status = 0;
+	infoLogLength = 0;
+
+	const GLchar *fragmentShaderSourceCode =
+		"#version 460 core"
+		"\n"
+		"in vec4 a_color_out;"
+		"out vec4 FragColor;"
+		"void main(void)"
+		"{"
+		"FragColor = a_color_out;"
+		"}";
+
+	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
+
+	glShaderSource(fragmentShaderObject, 1, (const GLchar **)&fragmentShaderSourceCode, NULL);
+
+	glCompileShader(fragmentShaderObject);
+
+	glGetShaderiv(fragmentShaderObject, GL_COMPILE_STATUS, &status);
+
+	if (status == GL_FALSE)
+	{
+		glGetShaderiv(fragmentShaderObject, GL_INFO_LOG_LENGTH, &infoLogLength);
+		if (infoLogLength > 0)
+		{
+			log = (char *)malloc(infoLogLength);
+			if (log != NULL)
+			{
+				GLsizei written;
+				glGetShaderInfoLog(fragmentShaderObject, infoLogLength, &written, log);
+				PrintLog("FRAGMENT SHADER COMPILATION LOG : %s\n", log);
+				free(log);
+				log = NULL;
+				uninitialize();
+			}
+		}
+	}
+
+	// Shader Program Object
+	// pr
+	shaderProgramObject = glCreateProgram();
+	glAttachShader(shaderProgramObject, vertexShaderObject);
+
+	glAttachShader(shaderProgramObject, fragmentShaderObject);
+
+	// prelinked binding
+	// Binding Position Array
+	glBindAttribLocation(shaderProgramObject, AMC_ATRIBUTE_POSITION, "a_position");
+	// Binding Color Array
+	glBindAttribLocation(shaderProgramObject, AMC_ATRIBUTE_COLOR, "a_color");
+
+	// link
+	glLinkProgram(shaderProgramObject);
+
+	status = 0;
+	infoLogLength = 0;
+
+	glGetProgramiv(shaderProgramObject, GL_LINK_STATUS, &status);
+
+	if (status == GL_FALSE)
+	{
+		glGetProgramiv(shaderProgramObject, GL_INFO_LOG_LENGTH, &infoLogLength);
+		if (infoLogLength > 0)
+		{
+			log = (char *)malloc(infoLogLength);
+			if (log != NULL)
+			{
+				GLsizei written;
+				glGetProgramInfoLog(shaderProgramObject, infoLogLength, &written, log);
+				PrintLog("SHADER PROGRAM LINK LOG: %s \n", log);
+				free(log);
+				log = NULL;
+				uninitialize();
+			}
+		}
+	}
+
+	// post link - getting
+	mvpMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_mvpMatrix");
+
+	// vao and vba related code
+	// declartions of vertex Data array
+	const GLfloat trianglePosition[] = {
+		0.0f, 1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f};
+
+	const GLfloat triangleColor[] = {
+		1.0f, 0.0f, 0.0f, // RED
+		0.0f, 1.0f, 0.0f, // BLUE
+		0.0f, 0.0f, 1.0f  // GREEN
+	};
+
+	// vao and vbo related code
+	// vao
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	// vbo for position
+	glGenBuffers(1, &vbo_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Position);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(trianglePosition), trianglePosition, GL_STATIC_DRAW);
+	glVertexAttribPointer(AMC_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(AMC_ATRIBUTE_POSITION);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// vbo for color
+	glGenBuffers(1, &vbo_Color);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Color);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(triangleColor), triangleColor, GL_STATIC_DRAW);
+	glVertexAttribPointer(AMC_ATRIBUTE_COLOR, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(AMC_ATRIBUTE_COLOR);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	// Depth Related Changes
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+
+	glShadeModel(GL_SMOOTH);
+
+	/* Clear the  screen using blue color */
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+	perspectiveProjectionMatrix = mat4::identity();
+
+	// warmup resize call
+	resize(WINWIDTH, WINHEIGHT);
+
+	return (0);
+}
+
+void resize(int width, int height)
+{
+	/* code */
+	if (height == 0) // to avoid devided by zero
+		height = 1;
+
+	glViewport(0, 0, width, height);
+
+	perspectiveProjectionMatrix = vmath::perspective(
+		45.0f,
+		(GLfloat)width / (GLfloat)height,
+		0.1f,
+		100.0f);
+}
+
+void display(void)
+{
+	/* Code */
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// use shader program obejct
+	glUseProgram(shaderProgramObject);
+
+	// Tranformations
+	mat4 translationMatrix = mat4::identity();
+	mat4 modelViewMatrix = mat4::identity();
+	mat4 modelViewProjectionMatrix = mat4::identity();
+
+	translationMatrix = vmath::translate(0.0f, 0.0f, -4.0f); // glTranslatef() is replaced by this line
+
+	modelViewMatrix = translationMatrix;
+
+	modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
+
+	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
+
+	glBindVertexArray(vao);
+
+	// draw the desired graphics
+	// drawing code -- magic
+
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	glBindVertexArray(0);
+
+	// unuse the shader program object
+	glUseProgram(0);
+
+	SwapBuffers(ghdc);
+}
+
+void update(void)
+{
+	/* code */
+}
+
+void uninitialize(void)
+{
+	/* function declarations */
+	void ToggleFullScreen(void);
+
+	/* code */
+	if (gbFullScreen)
+		ToggleFullScreen();
+
+	/*  */
+	// deletion of vbo_Color
+	if (vbo_Color)
+	{
+		glDeleteBuffers(1, &vbo_Color);
+		vbo_Color = 0;
+	}
+
+	// deletion of vbo_Position
+	if (vbo_Position)
+	{
+		glDeleteBuffers(1, &vbo_Position);
+		vbo_Position = 0;
+	}
+
+	// deletion of vao
+	if (vao)
+	{
+		glDeleteVertexArrays(1, &vao);
+		vao = 0;
+	}
+
+	if (shaderProgramObject)
+	{
+		glUseProgram(shaderProgramObject);
+
+		GLsizei numAttachedShaders;
+
+		glGetProgramiv(shaderProgramObject, GL_ATTACHED_SHADERS, &numAttachedShaders);
+
+		GLuint *shaderObject = NULL;
+		shaderObject = (GLuint *)malloc(numAttachedShaders * sizeof(GLuint));
+		glGetAttachedShaders(shaderProgramObject, numAttachedShaders, &numAttachedShaders, shaderObject);
+
+		for (GLsizei i = 0; i < numAttachedShaders; i++)
+		{
+			glDetachShader(shaderProgramObject, shaderObject[i]);
+			glDeleteShader(shaderObject[i]);
+			shaderObject[i] = 0;
+		}
+		free(shaderObject);
+		shaderObject = NULL;
+		glUseProgram(0);
+		glDeleteProgram(shaderProgramObject);
+		shaderProgramObject = 0;
+	}
+
+	if (wglGetCurrentContext() == ghrc)
+	{
+		wglMakeCurrent(NULL, NULL);
+	}
+
+	if (ghrc)
+	{
+		wglDeleteContext(ghrc);
+		ghrc = NULL;
+	}
+
+	if (ghdc)
+	{
+		ReleaseDC(ghwnd, ghdc);
+		ghwnd = NULL;
+		ghdc = NULL;
+	}
+
+	if (ghwnd)
+	{
+		DestroyWindow(ghwnd);
+	}
+
+	CloseLogFile();
+}
