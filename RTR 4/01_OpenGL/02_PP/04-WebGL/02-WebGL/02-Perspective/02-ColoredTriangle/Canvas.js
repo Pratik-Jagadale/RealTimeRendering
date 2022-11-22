@@ -264,7 +264,7 @@ function resize() {
     mat4.perspective(
         perspectiveProjectionMatrix,
         45.0,
-        canvas.width / canvas.height,
+        parseFloat(canvas.width) / parseFloat(canvas.height),
         0.1,
         100.0);
 

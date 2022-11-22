@@ -390,7 +390,7 @@ function resize() {
     mat4.perspective(
         perspectiveProjectionMatrix,
         45.0,
-        canvas.width / canvas.height,
+        parseFloat(canvas.width) / parseFloat(canvas.height),
         0.1,
         100.0);
 
@@ -412,7 +412,7 @@ function display() {
 
     // DRAW Pyramid
     mat4.translate(modelViewMatrix, modelViewMatrix, [-1.5, 0.0, -6.0]);
-    mat4.rotateY(rotationMatrix, rotationMatrix, anglePyramid)
+    mat4.rotateY(rotationMatrix, rotationMatrix, degToRad(anglePyramid))
 
     mat4.multiply(modelViewMatrix, modelViewMatrix, rotationMatrix);
     mat4.multiply(modelViewProjectionMatrix, perspectiveProjectionMatrix, modelViewMatrix);
@@ -429,11 +429,11 @@ function display() {
     mat4.identity(rotationMatrix);
 
     mat4.translate(modelViewMatrix, modelViewMatrix, [1.5, 0.0, -6.0]);
-    mat4.rotateX(rotationMatrix, rotationMatrix, angleCube)
-    mat4.rotateY(rotationMatrix, rotationMatrix, angleCube)
-    mat4.rotateZ(rotationMatrix, rotationMatrix, angleCube)
+    mat4.rotateX(rotationMatrix, rotationMatrix, degToRad(angleCube));
+    mat4.rotateY(rotationMatrix, rotationMatrix, degToRad(angleCube));
+    mat4.rotateZ(rotationMatrix, rotationMatrix, degToRad(angleCube));
 
-    mat4.scale(scaleMatrix, scaleMatrix, [0.8, 0.8, 0.8])
+    mat4.scale(scaleMatrix, scaleMatrix, [0.8, 0.8, 0.8]);
 
 
     // mat4.rotateX(rotationMatrix, rotationMatrix, angle)
@@ -462,13 +462,19 @@ function display() {
     update();
 }
 
+function degToRad(degree) {
+
+    /* CODE */
+    return (degree * Math.PI / 180.0);
+}
+
 function update() {
     /* CODE */
-    anglePyramid = anglePyramid + 0.05;
+    anglePyramid = anglePyramid + 3.05;
     if (anglePyramid >= 360.0)
         anglePyramid = anglePyramid - 360.0;
 
-    angleCube = angleCube + 0.05;
+    angleCube = angleCube + 3.05;
     if (angleCube >= 360.0)
         angleCube = angleCube - 360.0;
 }

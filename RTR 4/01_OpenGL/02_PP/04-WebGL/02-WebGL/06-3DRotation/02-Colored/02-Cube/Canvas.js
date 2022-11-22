@@ -24,7 +24,7 @@ var vbo_Cube_Color;
 var mvpMatrixUniform;
 var perspectiveProjectionMatrix;
 
-var anglePyramid = 0.0;
+var angleCube = 0.0;
 
 /* FULLSCREEN RELATED GLOBAL VARIABLES */
 var requestAnimationFrame =
@@ -205,58 +205,88 @@ function initialize() {
     mvpMatrixUniform = gl.getUniformLocation(shaderProgramObject, "u_mvpMatrix");
 
     // 
-    var PyramidVertices = new Float32Array([
-        // front
-        0.0, 1.0, 0.0,
+    var CubeVertices = new Float32Array([
+        // top
+        1.0, 1.0, -1.0,
+        -1.0, 1.0, -1.0,
+        -1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0,
+
+        // bottom
+        1.0, -1.0, -1.0,
+        -1.0, -1.0, -1.0,
         -1.0, -1.0, 1.0,
         1.0, -1.0, 1.0,
 
+        // front
+        1.0, 1.0, 1.0,
+        -1.0, 1.0, 1.0,
+        -1.0, -1.0, 1.0,
+        1.0, -1.0, 1.0,
+
+        // back
+        1.0, 1.0, -1.0,
+        -1.0, 1.0, -1.0,
+        -1.0, -1.0, -1.0,
+        1.0, -1.0, -1.0,
+
         // right
-        0.0, 1.0, 0.0,
+        1.0, 1.0, -1.0,
+        1.0, 1.0, 1.0,
         1.0, -1.0, 1.0,
         1.0, -1.0, -1.0,
 
-        // back
-        0.0, 1.0, 0.0,
-        1.0, -1.0, -1.0,
-        -1.0, -1.0, -1.0,
-
         // left
-        0.0, 1.0, 0.0,
+        -1.0, 1.0, 1.0,
+        -1.0, 1.0, -1.0,
         -1.0, -1.0, -1.0,
         -1.0, -1.0, 1.0
     ]);
 
-    var PyramidColor = new Float32Array([
-        1.0, 0.0, 0.0,
+    var CubeColor = new Float32Array([
         0.0, 1.0, 0.0,
-        0.0, 0.0, 1.0,
-
-        1.0, 0.0, 0.0,
-        0.0, 0.0, 1.0,
+        0.0, 1.0, 0.0,
+        0.0, 1.0, 0.0,
         0.0, 1.0, 0.0,
 
-        1.0, 0.0, 0.0,
-        0.0, 1.0, 0.0,
-        0.0, 0.0, 1.0,
+        1.0, 0.5, 0.0,
+        1.0, 0.5, 0.0,
+        1.0, 0.5, 0.0,
+        1.0, 0.5, 0.0,
 
         1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+        1.0, 0.0, 0.0,
+
+        1.0, 1.0, 0.0,
+        1.0, 1.0, 0.0,
+        1.0, 1.0, 0.0,
+        1.0, 1.0, 0.0,
+
         0.0, 0.0, 1.0,
-        0.0, 1.0, 0.0
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+        0.0, 0.0, 1.0,
+
+        1.0, 0.0, 1.0,
+        1.0, 0.0, 1.0,
+        1.0, 0.0, 1.0,
+        1.0, 0.0, 1.0
     ]);
     // VERTEX ARRAY OBJECT
-    vao_Pyramid = gl.createVertexArray();
-    gl.bindVertexArray(vao_Pyramid);
-    vbo_Pyramid_Position = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vbo_Pyramid_Position);
-    gl.bufferData(gl.ARRAY_BUFFER, PyramidVertices, gl.STATIC_DRAW);
+    vao_Cube = gl.createVertexArray();
+    gl.bindVertexArray(vao_Cube);
+    vbo_Cube_Position = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo_Cube_Position);
+    gl.bufferData(gl.ARRAY_BUFFER, CubeVertices, gl.STATIC_DRAW);
     gl.vertexAttribPointer(webGLMacros.PRJ_ATTRIBUTE_POSITION, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(webGLMacros.PRJ_ATTRIBUTE_POSITION);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
     vbo_Cube_Color = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo_Cube_Color);
-    gl.bufferData(gl.ARRAY_BUFFER, PyramidColor, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, CubeColor, gl.STATIC_DRAW);
     gl.vertexAttribPointer(webGLMacros.PRJ_ATTRIBUTE_COLOR, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(webGLMacros.PRJ_ATTRIBUTE_COLOR);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -296,7 +326,7 @@ function resize() {
     mat4.perspective(
         perspectiveProjectionMatrix,
         45.0,
-        canvas.width / canvas.height,
+        parseFloat(canvas.width) / parseFloat(canvas.height),
         0.1,
         100.0);
 
@@ -314,19 +344,31 @@ function display() {
     var modelViewMatrix = mat4.create();
     var modelViewProjectionMatrix = mat4.create();
     var rotationMatrix = mat4.create();
+    var scaleMatrix = mat4.create();
 
-    // DRAW Pyramid
+    // DRAW Cube
     mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, -4.0]);
-    mat4.rotateY(rotationMatrix, rotationMatrix, anglePyramid)
+    mat4.rotateX(rotationMatrix, rotationMatrix, degToRad(angleCube));
+    mat4.rotateY(rotationMatrix, rotationMatrix, degToRad(angleCube));
+    mat4.rotateZ(rotationMatrix, rotationMatrix, degToRad(angleCube));
 
+    mat4.scale(scaleMatrix, scaleMatrix, [0.8, 0.8, 0.8]);
+
+    mat4.multiply(rotationMatrix, rotationMatrix, scaleMatrix);
     mat4.multiply(modelViewMatrix, modelViewMatrix, rotationMatrix);
-    mat4.multiply(modelViewProjectionMatrix, perspectiveProjectionMatrix, modelViewMatrix);
 
+    mat4.multiply(modelViewProjectionMatrix, perspectiveProjectionMatrix, modelViewMatrix);
     gl.uniformMatrix4fv(mvpMatrixUniform, false, modelViewProjectionMatrix);
 
-    gl.bindVertexArray(vao_Pyramid);
-    gl.drawArrays(gl.TRIANGLES, 0, 12);
+    gl.bindVertexArray(vao_Cube);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+    gl.drawArrays(gl.TRIANGLE_FAN, 4, 4);
+    gl.drawArrays(gl.TRIANGLE_FAN, 8, 4);
+    gl.drawArrays(gl.TRIANGLE_FAN, 12, 4);
+    gl.drawArrays(gl.TRIANGLE_FAN, 16, 4);
+    gl.drawArrays(gl.TRIANGLE_FAN, 20, 4);
     gl.bindVertexArray(null);
+
     gl.useProgram(null);
 
     // Double Buffering Emulation
@@ -338,10 +380,16 @@ function display() {
 
 function update() {
     /* CODE */
-    anglePyramid = anglePyramid + 0.05;
-    if (anglePyramid >= 360.0)
-        anglePyramid = anglePyramid - 360.0;
+    angleCube = angleCube + 3.05;
+    if (angleCube >= 360.0)
+        angleCube = angleCube - 360.0;
 
+}
+
+function degToRad(degree) {
+
+    /* CODE */
+    return (degree * Math.PI / 180.0);
 }
 
 function keyDown(event) {
@@ -367,19 +415,19 @@ function mouseDown() {
 function uninitialize() {
     /* CODE */
 
-    if (vbo_Pyramid_Color) {
-        gl.deleteBuffer(vbo_Pyramid_Color);
-        vbo_Pyramid_Color = null;
+    if (vbo_Cube_Color) {
+        gl.deleteBuffer(vbo_Cube_Color);
+        vbo_Cube_Color = null;
     }
 
-    if (vbo_Pyramid_Position) {
-        gl.deleteBuffer(vbo_Pyramid_Position);
-        vbo_Pyramid_Position = null;
+    if (vbo_Cube_Position) {
+        gl.deleteBuffer(vbo_Cube_Position);
+        vbo_Cube_Position = null;
     }
 
-    if (vao_Pyramid) {
-        gl.deleteVertexArray(vao_Pyramid);
-        vao_Pyramid = null;
+    if (vao_Cube) {
+        gl.deleteVertexArray(vao_Cube);
+        vao_Cube = null;
     }
 
     if (shaderProgramObject) {

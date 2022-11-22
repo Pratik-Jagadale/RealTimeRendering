@@ -295,7 +295,7 @@ function resize() {
     mat4.perspective(
         perspectiveProjectionMatrix,
         45.0,
-        canvas.width / canvas.height,
+        parseFloat(canvas.width) / parseFloat(canvas.height),
         0.1,
         100.0);
 
@@ -316,7 +316,7 @@ function display() {
 
     // DRAW Pyramid
     mat4.translate(modelViewMatrix, modelViewMatrix, [0.0, 0.0, -4.0]);
-    mat4.rotateY(rotationMatrix, rotationMatrix, anglePyramid)
+    mat4.rotateY(rotationMatrix, rotationMatrix, degToRad(anglePyramid));
 
     mat4.multiply(modelViewMatrix, modelViewMatrix, rotationMatrix);
     mat4.multiply(modelViewProjectionMatrix, perspectiveProjectionMatrix, modelViewMatrix);
@@ -338,10 +338,16 @@ function display() {
 
 function update() {
     /* CODE */
-    anglePyramid = anglePyramid + 0.05;
+    anglePyramid = anglePyramid + 3.05;
     if (anglePyramid >= 360.0)
         anglePyramid = anglePyramid - 360.0;
 
+}
+
+function degToRad(degree) {
+
+    /* CODE */
+    return (degree * Math.PI / 180.0);
 }
 
 function keyDown(event) {

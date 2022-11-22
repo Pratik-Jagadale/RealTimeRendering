@@ -303,7 +303,7 @@ function resize() {
     mat4.perspective(
         perspectiveProjectionMatrix,
         45.0,
-        canvas.width / canvas.height,
+        parseFloat(canvas.width) / parseFloat(canvas.height),
         0.1,
         100.0);
 
@@ -324,7 +324,7 @@ function display() {
 
     // DRAW TRIANGLE
     mat4.translate(modelViewMatrix, modelViewMatrix, [-1.5, 0.0, -4.0]);
-    mat4.rotateY(rotationMatrix, rotationMatrix, angle)
+    mat4.rotateY(rotationMatrix, rotationMatrix, degToRad(angle))
 
     mat4.multiply(modelViewMatrix, modelViewMatrix, rotationMatrix);
     mat4.multiply(modelViewProjectionMatrix, perspectiveProjectionMatrix, modelViewMatrix);
@@ -341,7 +341,7 @@ function display() {
     mat4.identity(rotationMatrix);
 
     mat4.translate(modelViewMatrix, modelViewMatrix, [1.5, 0.0, -4.0]);
-    mat4.rotateX(rotationMatrix, rotationMatrix, angle)
+    mat4.rotateX(rotationMatrix, rotationMatrix, degToRad(angle))
 
     mat4.multiply(modelViewMatrix, modelViewMatrix, rotationMatrix);
 
@@ -363,7 +363,7 @@ function display() {
 
 function update() {
     /* CODE */
-    angle = angle + 0.1;
+    angle = angle + 3.0;
     if (angle > 360.0)
         angle = 0.0;
 }
@@ -386,6 +386,12 @@ function keyDown(event) {
 
 function mouseDown() {
     /* CODE */
+}
+
+function degToRad(degree) {
+
+    /* CODE */
+    return (degree * Math.PI / 180.0);
 }
 
 function uninitialize() {

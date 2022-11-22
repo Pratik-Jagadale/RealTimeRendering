@@ -1,5 +1,6 @@
 /* WINDOW RELATED GLOBAL VARIABLES */
 var canvas = null;
+/* @type {WebGLRenderingContext}/*/
 var gl = null;
 var bFullscreen = false;
 var canvas_original_width;
@@ -262,7 +263,7 @@ function resize() {
     mat4.perspective(
         perspectiveProjectionMatrix,
         45.0,
-        canvas.width / canvas.height,
+        parseFloat(canvas.width) / parseFloat(canvas.height),
         0.1,
         100.0);
 
