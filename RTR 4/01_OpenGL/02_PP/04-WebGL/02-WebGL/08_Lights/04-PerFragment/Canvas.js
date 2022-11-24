@@ -20,8 +20,36 @@ var shaderProgramObject;
 var modelMatrixUniform;
 var viewMatrixUniform;
 var projectionMatrixUniform;
-
 var perspectiveProjectionMatrix;
+
+
+var laUniform;			// light Ambiant
+var ldUniform;			// light Diffuse
+var lsUniform;			// light Spec
+var lighPositionUniform; // light Position
+
+var kaUniform; // material amb
+var kdUniform; // mat diff
+var ksUniform; // mat specular
+var materialShininessUniform;
+
+
+var lightingEnabledUniform;
+
+var lightAmbiant = [0.1, 0.1, 0.1];
+var lightDiffuse = [1.0, 1.0, 1.0];
+var lightSpecular = [1.0, 1.0, 1.0];
+var lightPosition = [100.0, 100.0, 100.0, 1.0];
+
+var materialAmbiant = [0.0, 0.0, 0.0];
+var meterialDeffuse = [0.5, 0.2, 0.7];
+var materialSpecular = [0.7, 0.7, 0.7];
+var materialShineeness = 120.0;
+
+
+var materialDiffuse = [1.0, 1.0, 1.0];
+
+var bLight = false;
 
 var sphere = null;
 
@@ -32,7 +60,6 @@ var requestAnimationFrame =
     window.webkitAnimationFrame ||
     window.oRequestAnimationFrame ||
     window.msRequestAnimationFrame;
-
 
 function main() {
 
@@ -56,6 +83,8 @@ function main() {
 
     // Display
     display();
+
+
 
     window.addEventListener("keydown", keyDown, false);
     window.addEventListener("click", mouseDown, false);
@@ -125,11 +154,25 @@ function initialize() {
         "#version 300 es" +
         "\n" +
         "in vec4 a_position;" +
+        "in vec3 a_normal;" +
         "uniform mat4 u_modelMatrix;" +
         "uniform mat4 u_viewMatrix;" +
         "uniform mat4 u_projectionMatrix;" +
+        "uniform vec4 u_lightPosition;" +
+        "uniform highp int u_lightingEnabled;" +
+        "out vec3 transformedNormals;" +
+        "out vec3 lightDirection;" +
+        "out vec3 viewerVector;" +
         "void main(void)" +
         "{" +
+        "if(u_lightingEnabled == 1)" +
+        "{" +
+        "vec4 eyeCoordinates = u_viewMatrix * u_modelMatrix * a_position;" +
+        "mat3 normalMatrix = mat3(u_viewMatrix * u_modelMatrix);" +
+        "transformedNormals = normalMatrix * a_normal;" +
+        "lightDirection = vec3(u_lightPosition) - eyeCoordinates.xyz;" + // Swizaling
+        "viewerVector = -eyeCoordinates.xyz;" +
+        "}" +
         "gl_Position = u_projectionMatrix * u_viewMatrix * u_modelMatrix * a_position;" +
         "}";
 
@@ -153,10 +196,39 @@ function initialize() {
         "#version 300 es" +
         "\n" +
         "precision highp float;" +
+        "in vec3 transformedNormals;" +
+        "in vec3 lightDirection;" +
+        "in vec3 viewerVector;" +
+        "uniform vec3 u_la;" +
+        "uniform vec3 u_ld;" +
+        "uniform vec3 u_ls;" +
+        "uniform vec3 u_ka;" +
+        "uniform vec3 u_ks;" +
+        "uniform vec3 u_kd;" +
+        "uniform float u_materialShininnes;" +
+        "uniform highp int u_lightingEnabled;" +
         "out vec4 FragColor;" +
         "void main(void)" +
         "{" +
-        "FragColor = vec4(1.0,1.0,1.0, 1.0);" +
+        "vec3 phong_ads_color;" +
+        "if(u_lightingEnabled == 1)" +
+        "{" +
+        "vec3 ambiant = u_la * u_ka;" +
+        "vec3 normalized_transformed_normals = normalize(transformedNormals);" +
+        "vec3 normalized_light_direction = normalize(lightDirection);" +
+        "vec3 diffuse = u_ld * u_kd * max(dot(normalized_light_direction ,normalized_transformed_normals),0.0);"
+        +
+        "vec3 reflectionVector = reflect(-normalized_light_direction,normalized_transformed_normals);" +
+        "vec3 normalized_view_vector = normalize(viewerVector);" +
+        "vec3 specular = u_ls * u_ks * pow(max(dot(reflectionVector , normalized_view_vector), 0.0), u_materialShininnes);"
+        +
+        "phong_ads_color = ambiant + diffuse +  specular;" +
+        "}" +
+        "else" +
+        "{" +
+        "phong_ads_color = vec3(1.0,1.0,1.0);" +
+        "}" +
+        "FragColor = vec4(phong_ads_color, 1.0);" +
         "}";
 
     var fragmentShaderObject = gl.createShader(gl.FRAGMENT_SHADER);
@@ -182,7 +254,7 @@ function initialize() {
 
     // PRELINKING SHADER PROGRAM OBJECT ATTRIBUTE BINDING
     gl.bindAttribLocation(shaderProgramObject, webGLMacros.PRJ_ATTRIBUTE_POSITION, "a_position");
-
+    gl.bindAttribLocation(shaderProgramObject, webGLMacros.PRJ_ATTRIBUTE_NORMAL, "a_normal");
 
     // SHADER PROGRAM LINKING
     gl.linkProgram(shaderProgramObject);
@@ -201,6 +273,19 @@ function initialize() {
     viewMatrixUniform = gl.getUniformLocation(shaderProgramObject, "u_viewMatrix");
     projectionMatrixUniform = gl.getUniformLocation(shaderProgramObject, "u_projectionMatrix");
 
+    laUniform = gl.getUniformLocation(shaderProgramObject, "u_la");
+    ldUniform = gl.getUniformLocation(shaderProgramObject, "u_ld");
+    lsUniform = gl.getUniformLocation(shaderProgramObject, "u_ls");
+    lighPositionUniform = gl.getUniformLocation(shaderProgramObject, "u_lightPosition");
+
+    kaUniform = gl.getUniformLocation(shaderProgramObject, "u_ka");
+    kdUniform = gl.getUniformLocation(shaderProgramObject, "u_kd");
+    ksUniform = gl.getUniformLocation(shaderProgramObject, "u_ks");
+    materialShininessUniform = gl.getUniformLocation(shaderProgramObject, "u_materialShininnes");
+
+
+    lightingEnabledUniform = gl.getUniformLocation(shaderProgramObject, "u_lightingEnabled");
+
     sphere = new Mesh();
     makeSphere(sphere, 2.0, 30, 30);
 
@@ -209,8 +294,7 @@ function initialize() {
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
 
-    gl.enable(gl.TEXTURE_2D);
-
+    // Clear Screen Using Blue Color
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
     perspectiveProjectionMatrix = mat4.create();
@@ -250,28 +334,53 @@ function display() {
     // USE SHADER PROGRAM OBJECT
     gl.useProgram(shaderProgramObject);
 
-    var modelMatrix = mat4.create();
     var viewMatrix = mat4.create();
+    var translateMatrix = mat4.create();
 
-    mat4.translate(modelMatrix, modelMatrix, [0.0, 0.0, -6.0]);
+    // DRAW Sphere
+    mat4.translate(translateMatrix, translateMatrix, [0.0, 0.0, -6.0]);
 
-    gl.uniformMatrix4fv(modelMatrixUniform, false, modelMatrix);
+    gl.uniformMatrix4fv(modelMatrixUniform, false, translateMatrix);
     gl.uniformMatrix4fv(viewMatrixUniform, false, viewMatrix);
     gl.uniformMatrix4fv(projectionMatrixUniform, false, perspectiveProjectionMatrix);
+
+    if (bLight == true) {
+        gl.uniform1i(lightingEnabledUniform, 1);
+
+        gl.uniform3fv(laUniform, lightAmbiant); // we can use gl.uniform3f() ,so we can directly pass the values to uniform
+        gl.uniform3fv(ldUniform, lightDiffuse);
+        gl.uniform3fv(lsUniform, lightSpecular);
+        gl.uniform4fv(lighPositionUniform, lightPosition);
+
+        gl.uniform3fv(kaUniform, materialAmbiant);
+        gl.uniform3fv(kdUniform, meterialDeffuse);
+        gl.uniform3fv(ksUniform, materialSpecular);
+        gl.uniform1f(materialShininessUniform, materialShineeness);
+    }
+    else {
+        gl.uniform1i(lightingEnabledUniform, 0);
+    }
 
     // DRAW sphere
     sphere.draw();
 
     gl.useProgram(null);
 
-    gl.bindTexture(gl.TEXTURE_2D, null);
-
     // Double Buffering Emulation
     requestAnimationFrame(display, canvas);
+
+    // Update
+    update();
 }
 
 function update() {
     /* CODE */
+}
+
+function degToRad(degree) {
+
+    /* CODE */
+    return (degree * Math.PI / 180.0);
 }
 
 function keyDown(event) {
@@ -286,6 +395,15 @@ function keyDown(event) {
 
         case 70:
             toggleFullscreen();
+            break;
+
+        case 76:
+            if (bLight == false) {
+                bLight = true;
+            }
+            else {
+                bLight = false;
+            }
             break;
     }
 }
