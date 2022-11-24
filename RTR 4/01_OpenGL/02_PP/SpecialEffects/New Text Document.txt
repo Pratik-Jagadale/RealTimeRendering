@@ -1,5 +1,0 @@
-
-Tesselation,
-geometry,
-interleaved,
-fbo

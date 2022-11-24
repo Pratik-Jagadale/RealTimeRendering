@@ -11,8 +11,15 @@
 #include "GLShaders.h"
 #include "GLLog.h"
 #include "Noise.h"
+#include "./3DModels/3DModels.h"
+
+#include "UseSkyShader.h"
+#include "UseWoodShader.h"
+#include "UseMarbleShader.h"
+#include "UseSunSurfaceShader.h"
 
 #pragma comment(lib, "Sphere.lib")
+#pragma comment(lib, "./3DModels/3DModels.lib")
 
 using namespace vmath;
 
@@ -31,38 +38,45 @@ HGLRC ghrc = NULL;
 BOOL gbFullScreen = FALSE;
 
 // PP Related Global Variables
-GLuint shaderProgramObject;
+// class variables which coantins respective uniforms declartions and variables
 
-GLuint vao;			 // Vertex Array Object -
-GLuint vbo_Position; // Vertex Buffer Object - Pyramid - Position
-GLuint vbo_Texcoord; // Vertex Buffer Object - Pyramid
-GLuint vbo_Normal;
-GLuint gVbo_sphere_element;
+CloudShader cloudShader_obj;
+WoodShader woodShader_obj;
+MarbleShader marbleShader_obj;
+SunSurfaceShader sunSurfaceShader;
 
-GLuint projectMatrixUniform; // model View Projection
-GLuint viewMatrixUniform;	 // model View Projection
-GLuint modelMatrixUniform;	 // model View Projection
 mat4 perspectiveProjectionMatrix;
 
-GLuint lightPosUniform;
-GLuint scaleUniform;
-GLuint skyColorUniform;
-GLuint cloudColorUniform;
+// Cyilnder
+GLuint vao_Cylinder;
+GLuint vbo_Cylinder_Position;
+GLuint vbo_Cylinder_Texcoord;
+GLuint vbo_Cylinder_Normal;
 
-GLuint textureSamplerUniform;
-GLuint texture_noise;
-GLubyte *myNoise3DTexPtr;
+// Cube
+GLuint vao_Cube;
+GLuint vbo_Cube_Position;
+GLuint vbo_Cube_Texcoord;
+GLuint vbo_Cube_Normal;
 
-float lightPos[4] = {100.0f, 100.0f, 100.0f, 1.0f};
+// Torus
+GLuint vao_Torus;
+GLuint vbo_Torus_Position;
+GLuint vbo_Torus_Texcoord;
+GLuint vbo_Torus_Normal;
 
-float skyColor[3] = {0.0f, 0.0f, 0.8f};
-float cloudColor[3] = {0.8f, 0.8, 0.8f};
+// Pyramid
+GLuint vao_Pyramid;
+GLuint vbo_Pyramid_Position;
+GLuint vbo_Pyramid_Texcoord;
+GLuint vbo_Pyramid_Normal;
 
-// float skyColor[3] = {0.7f, 0.7f, 0.7f}; // marble
-// float cloudColor[3] = {0.0f, 0.15f, 0.0f};// marble
-
-GLfloat scaleFactor = 1.0f;
-BOOL isScaled = FALSE;
+// SPHERE
+GLuint vao_Sphere;
+GLuint vbo_Sphere_Position;
+GLuint vbo_Sphere_Texcoord;
+GLuint vbo_Sphere_Normal;
+GLuint gVbo_Sphere_element;
 
 float sphere_vertices[1146];
 float sphere_normals[1146];
@@ -71,9 +85,20 @@ unsigned short sphere_elements[2280];
 int gNumVertices;
 int gNumElements;
 
-float alphaSky = 1.0f;
-float alphaCloud = 1.0f;
-BOOL glAlphaEnable = FALSE;
+vec3 eye = vec3(0.0f, 0.0f, 6.0f);
+vec3 center = vec3(0.0f, 0.0f, 0.0f);
+vec3 up = vec3(0.0f, 1.0f, 0.0f);
+
+Cylinder *cylinder = nullptr;
+Torus *torus = nullptr;
+Pyramid *pyramid = nullptr;
+// Cube cube;
+
+/* MARBLE RELATED VARIABLES */
+GLuint texture_noise;
+GLuint texture_noise_cloud;
+
+GLfloat scaleFactor = 2.0f;
 
 /* Entry Point Function */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
@@ -231,38 +256,62 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			break;
 
 		case 'w':
-			if (alphaSky <= 1.0f)
-				alphaSky = alphaSky + 0.1f;
-			break;
-
-		case 'W':
-			if (alphaSky >= 0.0f)
-				alphaSky = alphaSky - 0.1f;
+			eye[2] = eye[2] - 0.1f;
+			// center[2] = center[2] - 0.1f;
 			break;
 
 		case 's':
-			if (alphaCloud <= 1.0f)
-				alphaCloud = alphaCloud + 0.1f;
+			eye[2] = eye[2] + 0.1f;
+			// center[2] = center[2] + 0.01f;
 			break;
 
-		case 'S':
-			if (alphaCloud >= 0.0f)
-				alphaCloud = alphaCloud + 0.1f;
-			break;
+		case 'a':
+			eye[0] = eye[0] - 0.1f;
+			// center[0] = center[0] - 0.1f;
 
 			break;
 
+		case 'd':
+			eye[0] = eye[0] + 0.1f;
+			// center[0] = center[0] + 0.1f;
+			break;
+
+		case 'q':
+
+			eye[1] = eye[1] + 0.1f;
+			// center[1] = center[1] + 0.1f;
+			break;
+
+		case 'e':
+			eye[1] = eye[1] - 0.1f;
+			//  center[1] = center[1] - 0.1f;
+			break;
+
+			/*
+					case 'w':
+						if (alphaSky <= 1.0f)
+							alphaSky = alphaSky + 0.1f;
+						break;
+
+					case 'W':
+						if (alphaSky >= 0.0f)
+							alphaSky = alphaSky - 0.1f;
+						break;
+
+					case 's':
+						if (alphaCloud <= 1.0f)
+							alphaCloud = alphaCloud + 0.1f;
+						break;
+
+					case 'S':
+						if (alphaCloud >= 0.0f)
+							alphaCloud = alphaCloud + 0.1f;
+						break;
+
+						break;
+			*/
 		case 'l':
 		case 'L':
-			if (glAlphaEnable == TRUE)
-			{
-				glAlphaEnable = FALSE;
-			}
-			else
-			{
-				glAlphaEnable = TRUE;
-			}
-
 			break;
 
 		case 27:
@@ -382,99 +431,97 @@ int initialize(void)
 	// Print OpenGL Info
 	PrintGLInfo();
 
-	// vertex Shader
-	GLuint vertexShaderObject = CreateAndCompileShaderObjects("Shaders\\cloud.vs", VERTEX);
+	BOOL status = woodShader_obj.initialize_WoodShaderObject();
 
-	// fragment Shader
-	GLuint fragmentShaderObject = CreateAndCompileShaderObjects("Shaders\\cloud.fs", FRAGMENT);
-	// GLuint fragmentShaderObject = CreateAndCompileShaderObjects("Shaders\\marble.fs", FRAGMENT);
+	status = cloudShader_obj.initialize_cloudShaderObject();
 
-	// Shader Program Object
-	// pr
-	shaderProgramObject = glCreateProgram();
-	glAttachShader(shaderProgramObject, vertexShaderObject);
-	glAttachShader(shaderProgramObject, fragmentShaderObject);
+	status = marbleShader_obj.initialize_marbleShaderObject();
 
-	// prelinked binding
-	// Binding Position Array
-	glBindAttribLocation(shaderProgramObject, PVG_ATTRIBUTE_POSITION, "a_position");
-	// Binding Color Array
-	glBindAttribLocation(shaderProgramObject, PVG_ATTRIBUTE_NORMAL, "a_normal");
+	status = sunSurfaceShader.initialize_SunSurafaceShaderObject();
 
-	// link
-	BOOL bShaderLinkStatus = LinkShaderProgramObject(shaderProgramObject);
-
-	if (bShaderLinkStatus == FALSE)
-		return FALSE;
-	// post link - getting
-	projectMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_projectionMatrix");
-	viewMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_viewMatrix");
-	modelMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_modelMatrix");
-
-	lightPosUniform = glGetUniformLocation(shaderProgramObject, "LightPos");
-	scaleUniform = glGetUniformLocation(shaderProgramObject, "Scale");
-
-	textureSamplerUniform = glGetUniformLocation(shaderProgramObject, "u_textureSampler");
-
-	skyColorUniform = glGetUniformLocation(shaderProgramObject, "SkyColor");
-	cloudColorUniform = glGetUniformLocation(shaderProgramObject, "CloudColor");
-
-	// vao and vba related code
-	// declartions of vertex Data array
-	const GLfloat trianglePosition[] = {
-		1.0f, 1.0f, 0.0f,
-		-1.0f, 1.0f, 0.0f,
-		-1.0f, -1.0f, 0.0f,
-		1.0f, -1.0f, 0.0f};
-
-	const GLfloat normal[] = {
-		0.0f, 0.0f, 1.0f, // top-right of front
-		0.0f, 0.0f, 1.0f, // top-left of front
-		0.0f, 0.0f, 1.0f, // bottom-left of front
-		0.0f, 0.0f, 1.0f, // bottom-right of front
-	};
+	// Geometry Object Creation
+	cylinder = new Cylinder(1.0f, 1.0f, 5.0f, 100.0f, 100.0f);
 
 	getSphereVertexData(sphere_vertices, sphere_normals, sphere_textures, sphere_elements);
 	gNumVertices = getNumberOfSphereVertices();
 	gNumElements = getNumberOfSphereElements();
 
-	// vao and vbo related code
-	// vao
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	// Cylinder vao & vbo
+	//  vao_Cylinder
+	glGenVertexArrays(1, &vao_Cylinder);
+	glBindVertexArray(vao_Cylinder);
 
 	// vbo for position
-	glGenBuffers(1, &vbo_Position);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Position);
+	glGenBuffers(1, &vbo_Cylinder_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Cylinder_Position);
+	glBufferData(GL_ARRAY_BUFFER, cylinder->vertices->size * sizeof(float), cylinder->vertices->p_arr, GL_STATIC_DRAW);
+	glVertexAttribPointer(PVG_ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(PVG_ATTRIBUTE_POSITION);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// glBufferData(GL_ARRAY_BUFFER, sizeof(trianglePosition), trianglePosition, GL_STATIC_DRAW);
+	// vbo for Normal
+	glGenBuffers(1, &vbo_Cylinder_Normal);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Cylinder_Normal);
+	glBufferData(GL_ARRAY_BUFFER, cylinder->normals->size * sizeof(float), cylinder->normals->p_arr, GL_STATIC_DRAW);
+	glVertexAttribPointer(PVG_ATTRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(PVG_ATTRIBUTE_NORMAL);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindVertexArray(0);
+
+	// Sphere vao and vbo related code
+	// vao_Sphere
+	glGenVertexArrays(1, &vao_Sphere);
+	glBindVertexArray(vao_Sphere);
+
+	// vbo for position
+	glGenBuffers(1, &vbo_Sphere_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Sphere_Position);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_vertices), sphere_vertices, GL_STATIC_DRAW);
-
 	glVertexAttribPointer(PVG_ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(PVG_ATTRIBUTE_POSITION);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// vbo for Normal
-	glGenBuffers(1, &vbo_Normal);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Normal);
-
-	// glBufferData(GL_ARRAY_BUFFER, sizeof(normal), normal, GL_STATIC_DRAW);
+	glGenBuffers(1, &vbo_Sphere_Normal);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Sphere_Normal);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_normals), sphere_normals, GL_STATIC_DRAW);
-
 	glVertexAttribPointer(PVG_ATTRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(PVG_ATTRIBUTE_NORMAL);
-
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// element vbo
-	glGenBuffers(1, &gVbo_sphere_element);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glGenBuffers(1, &gVbo_Sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_Sphere_element);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(sphere_elements), sphere_elements, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	glBindVertexArray(0);
 
+	// Cube vao & vbo
+	//  vao_Cube
+	/*glGenVertexArrays(1, &vao_Cube);
+	glBindVertexArray(vao_Cube);
+
+	// vbo for position
+	glGenBuffers(1, &vbo_Cube_Position);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Cube_Position);
+	glBufferData(GL_ARRAY_BUFFER, cube.getVerticesCount() * sizeof(float), cube.getVerticesData(), GL_STATIC_DRAW);
+	glVertexAttribPointer(PVG_ATTRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(PVG_ATTRIBUTE_POSITION);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// vbo for Normal
+	glGenBuffers(1, &vbo_Cube_Normal);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Cube_Normal);
+	glBufferData(GL_ARRAY_BUFFER, cube.getNormalsCount() * sizeof(float), cube.getNormalsData(), GL_STATIC_DRAW);
+	glVertexAttribPointer(PVG_ATTRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(PVG_ATTRIBUTE_NORMAL);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindVertexArray(0);
+*/
 	// Depth Related Changes
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
@@ -485,11 +532,12 @@ int initialize(void)
 	glEnable(GL_TEXTURE_3D);
 
 	/* Clear the  screen using blue color */
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 	perspectiveProjectionMatrix = mat4::identity();
 
 	CreateNoise3D(&texture_noise);
+	CreateNoise3D(&texture_noise_cloud);
 
 	// warmup resize call
 	resize(WINWIDTH, WINHEIGHT);
@@ -517,44 +565,105 @@ void display(void)
 	/* Code */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	if (glAlphaEnable)
-		glEnable(GL_ALPHA_TEST);
-	else
-		glDisable(GL_ALPHA_TEST);
-
 	// use shader program obejct
-	glUseProgram(shaderProgramObject);
+	glUseProgram(sunSurfaceShader.shaderProgramObject);
 
 	// Tranformations
 	mat4 translationMatrix = mat4::identity();
 	mat4 rotateMatrix = mat4::identity();
+	mat4 scaleMatrix = mat4::identity();
 	mat4 modelMatrix = mat4::identity();
 	mat4 viewMatrix = mat4::identity();
 
-	translationMatrix = vmath::translate(0.0f, 0.0f, -2.0f); // glTranslatef() is replaced by this line
-	rotateMatrix = vmath::rotate(25.0f, -1.0f, 0.0f, 0.0f);
+	viewMatrix = vmath::lookat(eye, center, up);
+	translationMatrix = vmath::translate(1.2f, 0.0f, 0.0f);
+	rotateMatrix = vmath::rotate(90.0f, 1.0f, 0.0f, 0.0f);
+	scaleMatrix = vmath::scale(2.0f, 2.0f, 2.0f);
 
-	modelMatrix = translationMatrix * rotateMatrix;
+	modelMatrix = translationMatrix * scaleMatrix;
 
-	glUniformMatrix4fv(projectMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
-	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
-	glUniformMatrix4fv(modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+	// modelMatrix = translationMatrix * rotateMatrix;
 
-	glUniform3fv(lightPosUniform, 1, lightPos);
-	glUniform1f(scaleUniform, scaleFactor);
+	glUniformMatrix4fv(sunSurfaceShader.projectMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+	glUniformMatrix4fv(sunSurfaceShader.viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(sunSurfaceShader.modelMatrixUniform, 1, GL_FALSE, modelMatrix);
 
-	glUniform3fv(skyColorUniform, 1, skyColor);
-	glUniform3fv(cloudColorUniform, 1, cloudColor);
+	sunSurfaceShader.update_SunSurfaceObjectUniforms();
 
-	glActiveTexture(GL_TEXTURE0); //
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_3D, texture_noise);
-	glUniform1i(textureSamplerUniform, 0); //
+	glUniform1i(sunSurfaceShader.textureSamplerUniform, 0);
+	/*
+		glBindVertexArray(vao_Cylinder);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, cylinder->vertices->size);
+		glBindVertexArray(0);
+	*/
 
-	glBindVertexArray(vao);
+	glBindVertexArray(vao_Sphere);
 
-	/// glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_Sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+	// unuse the shader program object
+	glUseProgram(0);
+
+	//============================================================================
+
+	// use shader program obejct
+	glUseProgram(cloudShader_obj.shaderProgramObject);
+
+	translationMatrix = mat4::identity();
+	modelMatrix = mat4::identity();
+
+	translationMatrix = vmath::translate(-1.2f, 0.0f, 0.0f);
+	scaleMatrix = vmath::scale(2.0f, 2.0f, 2.0f);
+
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(cloudShader_obj.projectMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+	glUniformMatrix4fv(cloudShader_obj.viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(cloudShader_obj.modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+
+	cloudShader_obj.update_CloudShaderObjectUniforms();
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_3D, texture_noise_cloud);
+	glUniform1i(cloudShader_obj.textureSamplerUniform, 0);
+
+	glBindVertexArray(vao_Sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_Sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
+	//============================================================================
+
+	// use shader program obejct
+	glUseProgram(marbleShader_obj.shaderProgramObject);
+
+	translationMatrix = mat4::identity();
+	modelMatrix = mat4::identity();
+
+	translationMatrix = vmath::translate(-3.5f, 0.0f, 0.0f);
+	scaleMatrix = vmath::scale(2.0f, 2.0f, 2.0f);
+
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(marbleShader_obj.projectMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+	glUniformMatrix4fv(marbleShader_obj.viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(marbleShader_obj.modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+
+	marbleShader_obj.update_CloudShaderObjectUniforms();
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_3D, texture_noise_cloud);
+	glUniform1i(marbleShader_obj.textureSamplerUniform, 0);
+
+	glBindVertexArray(vao_Sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_Sphere_element);
 	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
 
 	glBindVertexArray(0);
@@ -562,26 +671,44 @@ void display(void)
 	// unuse the shader program object
 	glUseProgram(0);
 
+	// ================= WOOD ==========================
+	//============================================================================
+
+	// use shader program obejct
+	glUseProgram(woodShader_obj.shaderProgramObject);
+
+	translationMatrix = mat4::identity();
+	modelMatrix = mat4::identity();
+
+	translationMatrix = vmath::translate(3.5f, 0.0f, 0.0f);
+	scaleMatrix = vmath::scale(2.0f, 2.0f, 2.0f);
+
+	modelMatrix = translationMatrix * scaleMatrix;
+
+	glUniformMatrix4fv(woodShader_obj.projectMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
+	glUniformMatrix4fv(woodShader_obj.viewMatrixUniform, 1, GL_FALSE, viewMatrix);
+	glUniformMatrix4fv(woodShader_obj.modelMatrixUniform, 1, GL_FALSE, modelMatrix);
+
+	woodShader_obj.update_WoodShaderObjectUniforms();
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_3D, texture_noise_cloud);
+	glUniform1i(woodShader_obj.textureSamplerUniform, 0);
+
+	glBindVertexArray(vao_Sphere);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_Sphere_element);
+	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
+
+	glBindVertexArray(0);
+
 	SwapBuffers(ghdc);
 }
 
 void update(void)
 {
 	/* code */
-	if (isScaled == TRUE)
-	{
-		scaleFactor = scaleFactor - 0.004f;
 
-		if (scaleFactor < 1.0f)
-			isScaled = FALSE;
-	}
-	else
-	{
-		// scaleFactor = scaleFactor + 0.1f;
-		scaleFactor = scaleFactor + 0.004f;
-		if (scaleFactor > 1.5f)
-			isScaled = TRUE;
-	}
 	// skyColor[3] = alphaSky;
 	// cloudColor[3] = alphaCloud;
 }
@@ -592,38 +719,70 @@ void uninitialize(void)
 	void ToggleFullScreen(void);
 
 	/* code */
+	free(cylinder);
+
 	if (gbFullScreen)
 		ToggleFullScreen();
 
 	/*  */
-	if (vbo_Normal)
+	if (vbo_Sphere_Normal)
 	{
-		glDeleteBuffers(1, &vbo_Normal);
-		vbo_Normal = 0;
+		glDeleteBuffers(1, &vbo_Sphere_Normal);
+		vbo_Sphere_Normal = 0;
+	}
+
+	// deletion of vbo_Sphere_Texcoord
+	if (vbo_Sphere_Texcoord)
+	{
+		glDeleteBuffers(1, &vbo_Sphere_Texcoord);
+		vbo_Sphere_Texcoord = 0;
+	}
+
+	// deletion of vbo_Sphere_Position
+	if (vbo_Sphere_Position)
+	{
+		glDeleteBuffers(1, &vbo_Sphere_Position);
+		vbo_Sphere_Position = 0;
+	}
+
+	// deletion of vao_Sphere
+	if (vao_Sphere)
+	{
+		glDeleteVertexArrays(1, &vao_Sphere);
+		vao_Sphere = 0;
+	}
+
+	if (vbo_Cylinder_Normal)
+	{
+		glDeleteBuffers(1, &vbo_Cylinder_Normal);
+		vbo_Cylinder_Normal = 0;
 	}
 
 	// deletion of vbo_Color
-	if (vbo_Texcoord)
+	if (vbo_Cylinder_Texcoord)
 	{
-		glDeleteBuffers(1, &vbo_Texcoord);
-		vbo_Texcoord = 0;
+		glDeleteBuffers(1, &vbo_Cylinder_Texcoord);
+		vbo_Cylinder_Texcoord = 0;
 	}
 
-	// deletion of vbo_Position
-	if (vbo_Position)
+	// deletion of vbo_Cylinder_Position
+	if (vbo_Cylinder_Position)
 	{
-		glDeleteBuffers(1, &vbo_Position);
-		vbo_Position = 0;
+		glDeleteBuffers(1, &vbo_Cylinder_Position);
+		vbo_Cylinder_Position = 0;
 	}
 
-	// deletion of vao
-	if (vao)
+	// deletion of vao_Cylinder
+	if (vao_Cylinder)
 	{
-		glDeleteVertexArrays(1, &vao);
-		vao = 0;
+		glDeleteVertexArrays(1, &vao_Cylinder);
+		vao_Cylinder = 0;
 	}
 
-	UninitializeShaders(shaderProgramObject);
+	UninitializeShaders(woodShader_obj.shaderProgramObject);
+	UninitializeShaders(cloudShader_obj.shaderProgramObject);
+	UninitializeShaders(marbleShader_obj.shaderProgramObject);
+	UninitializeShaders(sunSurfaceShader.shaderProgramObject);
 
 	if (wglGetCurrentContext() == ghrc)
 	{

@@ -1,0 +1,10 @@
+#include "OGL.h"
+
+MYICON ICON p_logo.ico
+
+IDBITMAP_RIGHT BITMAP skybox/right.bmp
+IDBITMAP_LEFT BITMAP skybox/left.bmp
+IDBITMAP_TOP BITMAP skybox/top.bmp
+IDBITMAP_BOTTOM BITMAP skybox/bottom.bmp
+IDBITMAP_BACK BITMAP skybox/back.bmp
+IDBITMAP_FRONT BITMAP skybox/front.bmp

@@ -1,0 +1,10 @@
+#pragma once
+
+#define MYICON 101
+
+#define IDBITMAP_RIGHT 102
+#define IDBITMAP_LEFT 103
+#define IDBITMAP_TOP 104
+#define IDBITMAP_BOTTOM 105
+#define IDBITMAP_BACK 106
+#define IDBITMAP_FRONT 107

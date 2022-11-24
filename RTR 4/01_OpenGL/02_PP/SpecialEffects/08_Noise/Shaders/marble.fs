@@ -4,8 +4,8 @@ in vec3  MCposition;
 in float LightIntensity;
 
 uniform sampler3D u_textureSampler;
-uniform vec3 SkyColor;
-uniform vec3 CloudColor;   
+uniform vec3 MarbleColor;
+uniform vec3 VeinColor;   
 uniform float Scale;
 
 out vec4 FragColor;
@@ -22,7 +22,6 @@ float intensity = abs(noisevec[0] - 0.25) +
 float sineval = sin(MCposition.y * 6.0 + intensity * 12.0) * 0.5
  + 0.5;
 
-vec3 color   = mix(SkyColor, CloudColor, sineval) * LightIntensity;
-//vec3 color   = mix(SkyColor, CloudColor, intensity) ;
+vec3 color   = mix(VeinColor, MarbleColor, sineval) * LightIntensity;
 FragColor = vec4(color, 1.0);
 }
