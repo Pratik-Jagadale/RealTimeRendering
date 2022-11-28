@@ -1,0 +1,15 @@
+Found Number of FB Configs = 10
+VisaulInfo = 0x36 Found Samples buffer = 0 and Samples = 0 
+VisaulInfo = 0x122 Found Samples buffer = 0 and Samples = 0 
+VisaulInfo = 0x56 Found Samples buffer = 1 and Samples = 2 
+VisaulInfo = 0x142 Found Samples buffer = 1 and Samples = 2 
+VisaulInfo = 0x58 Found Samples buffer = 1 and Samples = 4 
+VisaulInfo = 0x144 Found Samples buffer = 1 and Samples = 4 
+VisaulInfo = 0x68 Found Samples buffer = 1 and Samples = 8 
+VisaulInfo = 0x154 Found Samples buffer = 1 and Samples = 8 
+VisaulInfo = 0x76 Found Samples buffer = 1 and Samples = 16 
+VisaulInfo = 0x162 Found Samples buffer = 1 and Samples = 16 
+Visaul ID of best visual Info is : 0x76 
+ SUCCESS - FOUND THE SUPPORT TO 4.6
+HW/DIRECT RENDERING NOT SUPPORTS.
+load_mesh() FAILED... ERROR IN OPENING FILE...
