@@ -151,6 +151,7 @@ int main(int argc, char* argv[]){
 	GLuint vbo_Triangle_Color;	  // Vertex Buffer Object - Triangle
 	GLuint vao_Square;			  // Vertex Array Object - Square
 	GLuint vbo_Square_Position;	  // Vertex Buffer Object - Square- Position
+	GLuint vbo_Square_Color;	  // Vertex Buffer Object - Square- Color
 	GLuint mvpMatrixUniform;	  // model View Projection
 
 	mat4 perspectiveProjectionMatrix;
@@ -306,7 +307,7 @@ int main(int argc, char* argv[]){
     
 	// vartex Shader
 	const GLchar *vertexShaderSourceCode =
-		"#version 460 core"
+		"#version 410 core"
 		"\n"
 		"in vec4 a_position;"
 		"in vec4 a_color;"
@@ -355,7 +356,7 @@ int main(int argc, char* argv[]){
 	infoLogLength = 0;
 
 	const GLchar *fragmentShaderSourceCode =
-		"#version 460 core"
+		"#version 410 core"
 		"\n"
 		"in vec4 a_color_out;"
 		"out vec4 FragColor;"
@@ -455,6 +456,13 @@ int main(int argc, char* argv[]){
 		-1.0f, -1.0f, 0.0f,
 		1.0f, -1.0f, 0.0f};
 
+	const GLfloat SquareColor[] = {
+		0.0f, 0.0f, 1.0f,  // BLUE
+		0.0f, 0.0f, 1.0f,  // BLUE
+		0.0f, 0.0f, 1.0f,  // BLUE
+		0.0f, 0.0f, 1.0f  // BLUE
+		};
+
 	// vao and vbo related code
 	// vao for Triangle
 	glGenVertexArrays(1, &vao_Triangle);
@@ -495,15 +503,23 @@ int main(int argc, char* argv[]){
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+	glGenBuffers(1, &vbo_Square_Color);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_Square_Color);
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(SquareColor), SquareColor, GL_STATIC_DRAW);
+	glVertexAttribPointer(PRJ_ATRIBUTE_COLOR, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(PRJ_ATRIBUTE_COLOR);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
 	glBindVertexArray(0); // ubind vao for Square
 
 	// Depth Related Changes
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 
-	glShadeModel(GL_SMOOTH);
 
-    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
     perspectiveProjectionMatrix = mat4::identity();
 
@@ -519,26 +535,11 @@ int main(int argc, char* argv[]){
     
     glViewport(0, 0, (GLsizei)width, (GLsizei)height);
 
-    if (width <= height)
-	{
-		orthographicProjectionMatrix = vmath::ortho(
-			-100.0f,
-			100.0f,
-			-100.0f * ((GLfloat)height / (GLfloat)width),
-			100.0f * ((GLfloat)height / (GLfloat)width),
-			-100.0f,
-			100.0f);
-	}
-	else
-	{
-		orthographicProjectionMatrix = vmath::ortho(
-			-100.0f * ((GLfloat)width / (GLfloat)height),
-			100.0f * ((GLfloat)width / (GLfloat)height),
-			-100.0f,
-			100.0f,
-			-100.0f,
-			100.0f);
-	}
+    perspectiveProjectionMatrix = vmath::perspective(
+		45.0f,
+		(GLfloat)width / (GLfloat)height,
+		0.1f,
+		100.0f);
 }
 
 - (void) display
@@ -613,6 +614,12 @@ int main(int argc, char* argv[]){
 	{
 		glDeleteBuffers(1, &vbo_Square_Position);
 		vbo_Square_Position = 0;
+	}
+
+	if (vbo_Square_Color)
+	{
+		glDeleteBuffers(1, &vbo_Square_Color);
+		vbo_Square_Color = 0;
 	}
 
 	// deletion of vao_Square

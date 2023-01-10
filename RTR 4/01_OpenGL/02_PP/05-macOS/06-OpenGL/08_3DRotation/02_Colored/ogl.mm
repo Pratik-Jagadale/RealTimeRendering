@@ -155,8 +155,8 @@ int main(int argc, char* argv[]){
 	GLuint mvpMatrixUniform;	 // model View Projection
 	mat4 perspectiveProjectionMatrix;
 
-	GLfloat anglePyramid = 0.0f;
-	GLfloat angleCube = 0.0f;
+	GLfloat anglePyramid ;
+	GLfloat angleCube ;
 }
 
 - (id)initWithFrame:(NSRect)frame
@@ -311,7 +311,7 @@ int main(int argc, char* argv[]){
     
 	// vartex Shader
 	const GLchar *vertexShaderSourceCode =
-		"#version 460 core"
+		"#version 410 core"
 		"\n"
 		"in vec4 a_position;"
 		"in vec4 a_color;"
@@ -360,7 +360,7 @@ int main(int argc, char* argv[]){
 	infoLogLength = 0;
 
 	const GLchar *fragmentShaderSourceCode =
-		"#version 460 core"
+		"#version 410 core"
 		"\n"
 		"in vec4 a_color_out;"
 		"out vec4 FragColor;"
@@ -610,7 +610,6 @@ int main(int argc, char* argv[]){
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 
-	glShadeModel(GL_SMOOTH);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
@@ -628,26 +627,11 @@ int main(int argc, char* argv[]){
     
     glViewport(0, 0, (GLsizei)width, (GLsizei)height);
 
-    if (width <= height)
-	{
-		orthographicProjectionMatrix = vmath::ortho(
-			-100.0f,
-			100.0f,
-			-100.0f * ((GLfloat)height / (GLfloat)width),
-			100.0f * ((GLfloat)height / (GLfloat)width),
-			-100.0f,
-			100.0f);
-	}
-	else
-	{
-		orthographicProjectionMatrix = vmath::ortho(
-			-100.0f * ((GLfloat)width / (GLfloat)height),
-			100.0f * ((GLfloat)width / (GLfloat)height),
-			-100.0f,
-			100.0f,
-			-100.0f,
-			100.0f);
-	}
+    perspectiveProjectionMatrix = vmath::perspective(
+		45.0f,
+		(GLfloat)width / (GLfloat)height,
+		0.1f,
+		100.0f);
 }
 
 - (void) display
@@ -729,11 +713,11 @@ int main(int argc, char* argv[]){
 - (void) myupdate
 {
     // CODE
-    anglePyramid = anglePyramid + 0.1f;
+    anglePyramid = anglePyramid + 1.0f;
 	if (anglePyramid >= 360.0f)
 		anglePyramid = anglePyramid - 360.0f;
 
-	angleCube = angleCube + 0.1f;
+	angleCube = angleCube + 1.0f;
 	if (angleCube >= 360.0f)
 		angleCube = angleCube - 360.0f;
 }

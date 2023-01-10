@@ -155,8 +155,8 @@ int main(int argc, char* argv[]){
 	GLuint mvpMatrixUniform;	 // model View Projection
 	mat4 perspectiveProjectionMatrix;
 
-	GLfloat anglePyramid = 0.0f;
-	GLfloat angleCube = 0.0f;
+	GLfloat anglePyramid ;
+	GLfloat angleCube ;
 
 	GLuint texture_kundali;
 	GLuint texture_stone;
@@ -287,7 +287,6 @@ int main(int argc, char* argv[]){
 - (void) drawRect:(NSRect)dirtyRect
 {
     // CODE
-    
     [self drawView];
 }
 
@@ -315,7 +314,7 @@ int main(int argc, char* argv[]){
     
 	// vartex Shader
 	const GLchar *vertexShaderSourceCode =
-		"#version 460 core"
+		"#version 410 core"
 		"\n"
 		"in vec4 a_position;"
 		"in vec2 a_texcoord;"
@@ -364,7 +363,7 @@ int main(int argc, char* argv[]){
 	infoLogLength = 0;
 
 	const GLchar *fragmentShaderSourceCode =
-		"#version 460 core"
+		"#version 410 core"
 		"\n"
 		"in vec2 a_texcoord_out;"
 		"uniform sampler2D u_textureSampler;"
@@ -614,7 +613,6 @@ int main(int argc, char* argv[]){
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 
-	glShadeModel(GL_SMOOTH);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
@@ -650,20 +648,27 @@ int main(int argc, char* argv[]){
     NSString *appDirPath = [appBundle bundlePath];
     NSString *parentDirPath = [appDirPath stringByDeletingLastPathComponent];
     NSString *textureFileNameWithPath = [NSString stringWithFormat:@"%@/%s",parentDirPath,textureFileName];
-    if(logFileNameWithPath == nil)
+
+    if(textureFileNameWithPath == nil)
     {
-            fprintf(gpfile, "Failed textureFileNameWithPath for stringWithFormat.\n");
-            return 0;
+        fprintf(gpFile, "Failed to create textureFile Path.\n");
+        return 0;
     }
 
     // Get NSImage Representation of texture file
-    NSImage *nsImage = [[NSImage alloc] initWithContaintsWithFile: textureFileNameWithPath];
+    NSImage *nsImage = [[NSImage alloc] initWithContentsOfFile:textureFileNameWithPath];
     
+	if(nsImage == nil)
+    {
+        fprintf(gpFile, "NSImage Failed.\n");
+        return 0;
+    }
+
     // From NSImageRepresentation obtain get CGImage Represenation
-    CGImageRef cgImageRef = [nsImage CGImageForPropsedRect:nil context:nil hints:nil];
+    CGImageRef cgImageRef = [nsImage CGImageForProposedRect:nil context:nil hints:nil];
 
     // From this CGImageRepresenation get width and height of Image
-    int width = (int)CGImagegetWidth(cgImageRef);
+    int width = (int)CGImageGetWidth(cgImageRef);
     int height = (int)CGImageGetHeight(cgImageRef);
 
     // From this CGImage Representation get CGDataProvider 
@@ -673,15 +678,15 @@ int main(int argc, char* argv[]){
     CFDataRef imageData = CGDataProviderCopyData(cgdataProviderRef);
 
     // Convert This CFData Formated Image data into void*
-    void* pixel = (void*)CFDataGetBytePtr(width, height, imageData);
+    void* pixel = (void*)CFDataGetBytePtr(imageData);
 
     // Procceed with usual texture creation code
     GLuint texture = 0;
 
-    glGenTexture(1 , &texture);
+    glGenTextures(1 , &texture);
 
     glBindTexture(GL_TEXTURE_2D, texture);
-    glPixelStorei(GL_UNPACK_ALLIGNMENT,1);
+    // glPixelStorei(GL_UNPACK_ALLIGNMENT,1);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -694,7 +699,7 @@ int main(int argc, char* argv[]){
 					 width,	   // Image Width
 					 height,	   // Image Height
 					 0,				   // Border Width
-					 GL_RGB,		   // Image Format
+					 GL_RGBA,		   // Image Format
 					 GL_UNSIGNED_BYTE, // Data type of bmp.bmBits
 					 pixel);	   //
 
@@ -703,6 +708,8 @@ int main(int argc, char* argv[]){
     glBindTexture(GL_TEXTURE_2D, 0); // unbind texture
 
     CFRelease(imageData);
+
+	return (texture);
 }
 
 - (void) resize:(int)width :(int)height
@@ -714,58 +721,84 @@ int main(int argc, char* argv[]){
     
     glViewport(0, 0, (GLsizei)width, (GLsizei)height);
 
-    if (width <= height)
-	{
-		orthographicProjectionMatrix = vmath::ortho(
-			-100.0f,
-			100.0f,
-			-100.0f * ((GLfloat)height / (GLfloat)width),
-			100.0f * ((GLfloat)height / (GLfloat)width),
-			-100.0f,
-			100.0f);
-	}
-	else
-	{
-		orthographicProjectionMatrix = vmath::ortho(
-			-100.0f * ((GLfloat)width / (GLfloat)height),
-			100.0f * ((GLfloat)width / (GLfloat)height),
-			-100.0f,
-			100.0f,
-			-100.0f,
-			100.0f);
-	}
+    perspectiveProjectionMatrix = vmath::perspective(
+		45.0f,
+		(GLfloat)width / (GLfloat)height,
+		0.1f,
+		100.0f);
 }
 
 - (void) display
 {
     // CODE
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// use shader program obejct
+// use shader program obejct
 	glUseProgram(shaderProgramObject);
 
 	// Pyramid
 	// Tranformations
 	mat4 translationMatrix = mat4::identity();
+	mat4 rotationMatrix_X = mat4::identity();
+	mat4 rotationMatrix_Y = mat4::identity();
+	mat4 rotationMatrix_Z = mat4::identity();
+	mat4 rotationMatrix = mat4::identity();
+	mat4 scaleMatrix = mat4::identity();
 	mat4 modelViewMatrix = mat4::identity();
 	mat4 modelViewProjectionMatrix = mat4::identity();
 
-	translationMatrix = vmath::translate(0.0f, 0.0f, -6.0f); // glTranslatef() is replaced by this line
+	translationMatrix = vmath::translate(-1.5f, 0.0f, -6.0f); // glTranslatef() is replaced by this line
+	rotationMatrix = vmath::rotate(anglePyramid, 0.0f, 1.0f, 0.0f);
 
-	modelViewMatrix = translationMatrix; // order is very important
+	modelViewMatrix = translationMatrix * rotationMatrix; // order is very important
 
 	modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
 
 	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
 
 	glActiveTexture(GL_TEXTURE0); //
-	glBindTexture(GL_TEXTURE_2D, texture_smiley);
+	glBindTexture(GL_TEXTURE_2D, texture_stone);
 	glUniform1i(textureSamplerUniform, 0); //
 
-	glBindVertexArray(vao);
+	glBindVertexArray(vao_Pyramid);
 
+	glDrawArrays(GL_TRIANGLES, 0, 12);
+
+	glBindVertexArray(0);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// Cube
+	// Tranformations
+	translationMatrix = mat4::identity();
+	modelViewMatrix = mat4::identity();
+	modelViewProjectionMatrix = mat4::identity();
+
+	translationMatrix = vmath::translate(1.5f, 0.0f, -6.0f); // glTranslatef() is replaced by this line
+
+	rotationMatrix_X = vmath::rotate(angleCube, 1.0f, 0.0f, 0.0f);
+	rotationMatrix_Y = vmath::rotate(angleCube, 0.0f, 1.0f, 0.0f);
+	rotationMatrix_Z = vmath::rotate(angleCube, 0.0f, 0.0f, 1.0f);
+	rotationMatrix = rotationMatrix_X * rotationMatrix_Y * rotationMatrix_Z;
+
+	scaleMatrix = vmath::scale(0.75f, 0.75f, 0.75f);
+
+	modelViewMatrix = translationMatrix * scaleMatrix * rotationMatrix;
+
+	modelViewProjectionMatrix = perspectiveProjectionMatrix * modelViewMatrix;
+
+	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
+
+	glActiveTexture(GL_TEXTURE0); //
+	glBindTexture(GL_TEXTURE_2D, texture_kundali);
+	glUniform1i(textureSamplerUniform, 0); //
+
+	glBindVertexArray(vao_Cube);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
+	glDrawArrays(GL_TRIANGLE_FAN, 4, 4);
+	glDrawArrays(GL_TRIANGLE_FAN, 8, 4);
+	glDrawArrays(GL_TRIANGLE_FAN, 12, 4);
+	glDrawArrays(GL_TRIANGLE_FAN, 16, 4);
+	glDrawArrays(GL_TRIANGLE_FAN, 20, 4);
 	glBindVertexArray(0);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -778,36 +811,70 @@ int main(int argc, char* argv[]){
 - (void) myupdate
 {
     // CODE
+	anglePyramid = anglePyramid + 1.0f;
+	if (anglePyramid >= 360.0f)
+		anglePyramid = anglePyramid - 360.0f;
+
+	angleCube = angleCube + 1.0f;
+	if (angleCube >= 360.0f)
+		angleCube = angleCube - 360.0f;
    
 }
 
 - (void) uninitialise
 {
     // CODE
-    if (texture_smiley)
+   if (texture_kundali)
 	{
-		glDeleteTextures(1, &texture_smiley);
-		texture_smiley = 0;
+		glDeleteTextures(1, &texture_kundali);
+		texture_kundali = 0;
 	}
 
-	if (vbo_Texcoord)
+	if (texture_stone)
 	{
-		glDeleteBuffers(1, &vbo_Texcoord);
-		vbo_Texcoord = 0;
+		glDeleteTextures(1, &texture_stone);
+		texture_stone = 0;
+	}
+
+	if (vbo_Cube_TexCoord)
+	{
+		glDeleteBuffers(1, &vbo_Cube_TexCoord);
+		vbo_Cube_TexCoord = 0;
 	}
 
 	// delete vbo_Cube_Position
-	if (vbo_Position)
+	if (vbo_Cube_Position)
 	{
-		glDeleteBuffers(1, &vbo_Position);
-		vbo_Position = 0;
+		glDeleteBuffers(1, &vbo_Cube_Position);
+		vbo_Cube_Position = 0;
 	}
 
 	// deletion of vao_Cube
-	if (vao)
+	if (vao_Cube)
 	{
-		glDeleteVertexArrays(1, &vao);
-		vao = 0;
+		glDeleteVertexArrays(1, &vao_Cube);
+		vao_Cube = 0;
+	}
+
+	// deletion of vbo_Pyramid_Texcoord
+	if (vbo_Pyramid_Texcoord)
+	{
+		glDeleteBuffers(1, &vbo_Pyramid_Texcoord);
+		vbo_Pyramid_Texcoord = 0;
+	}
+
+	// deletion of vbo_Pyramid_Position
+	if (vbo_Pyramid_Position)
+	{
+		glDeleteBuffers(1, &vbo_Pyramid_Position);
+		vbo_Pyramid_Position = 0;
+	}
+
+	// deletion of vao_Pyramid
+	if (vao_Pyramid)
+	{
+		glDeleteVertexArrays(1, &vao_Pyramid);
+		vao_Pyramid = 0;
 	}
 
 	if (shaderProgramObject)

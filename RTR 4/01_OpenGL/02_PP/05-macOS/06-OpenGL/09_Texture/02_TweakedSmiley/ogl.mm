@@ -154,7 +154,7 @@ int main(int argc, char* argv[]){
 	GLuint keyPressUniform;
 	mat4 perspectiveProjectionMatrix;
 	GLuint texture_smiley;
-	int keyPressed = -1;
+	int keyPressed;
 }
 
 - (id)initWithFrame:(NSRect)frame
@@ -309,7 +309,7 @@ int main(int argc, char* argv[]){
     
 	// vartex Shader
 	const GLchar *vertexShaderSourceCode =
-		"#version 460 core"
+		"#version 410 core"
 		"\n"
 		"in vec4 a_position;"
 		"in vec2 a_texcoord;"
@@ -358,7 +358,7 @@ int main(int argc, char* argv[]){
 	infoLogLength = 0;
 
 	const GLchar *fragmentShaderSourceCode =
-		"#version 460 core"
+		"#version 410 core"
 		"\n"
 		"in vec2 a_texcoord_out;"
 		"uniform sampler2D u_textureSampler;"
@@ -487,7 +487,6 @@ int main(int argc, char* argv[]){
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 
-	glShadeModel(GL_SMOOTH);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
@@ -516,20 +515,27 @@ int main(int argc, char* argv[]){
     NSString *appDirPath = [appBundle bundlePath];
     NSString *parentDirPath = [appDirPath stringByDeletingLastPathComponent];
     NSString *textureFileNameWithPath = [NSString stringWithFormat:@"%@/%s",parentDirPath,textureFileName];
-    if(logFileNameWithPath == nil)
+
+    if(textureFileNameWithPath == nil)
     {
-            fprintf(gpfile, "Failed textureFileNameWithPath for stringWithFormat.\n");
-            return 0;
+        fprintf(gpFile, "Failed to create textureFile Path.\n");
+        return 0;
     }
 
     // Get NSImage Representation of texture file
-    NSImage *nsImage = [[NSImage alloc] initWithContaintsWithFile: textureFileNameWithPath];
+    NSImage *nsImage = [[NSImage alloc] initWithContentsOfFile:textureFileNameWithPath];
     
+	if(nsImage == nil)
+    {
+        fprintf(gpFile, "NSImage Failed.\n");
+        return 0;
+    }
+
     // From NSImageRepresentation obtain get CGImage Represenation
-    CGImageRef cgImageRef = [nsImage CGImageForPropsedRect:nil context:nil hints:nil];
+    CGImageRef cgImageRef = [nsImage CGImageForProposedRect:nil context:nil hints:nil];
 
     // From this CGImageRepresenation get width and height of Image
-    int width = (int)CGImagegetWidth(cgImageRef);
+    int width = (int)CGImageGetWidth(cgImageRef);
     int height = (int)CGImageGetHeight(cgImageRef);
 
     // From this CGImage Representation get CGDataProvider 
@@ -539,15 +545,15 @@ int main(int argc, char* argv[]){
     CFDataRef imageData = CGDataProviderCopyData(cgdataProviderRef);
 
     // Convert This CFData Formated Image data into void*
-    void* pixel = (void*)CFDataGetBytePtr(width, height, imageData);
+    void* pixel = (void*)CFDataGetBytePtr(imageData);
 
     // Procceed with usual texture creation code
     GLuint texture = 0;
 
-    glGenTexture(1 , &texture);
+    glGenTextures(1 , &texture);
 
     glBindTexture(GL_TEXTURE_2D, texture);
-    glPixelStorei(GL_UNPACK_ALLIGNMENT,1);
+    // glPixelStorei(GL_UNPACK_ALLIGNMENT,1);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -555,20 +561,22 @@ int main(int argc, char* argv[]){
 
     // create the texture
 		glTexImage2D(GL_TEXTURE_2D,	   // Targter
-					 0,				   // MipMap Level (done by opengl)
-					 GL_RGBA,		   // Opengl Image format
-					 width,	   // Image Width
-					 height,	   // Image Height
-					 0,				   // Border Width
-					 GL_RGB,		   // Image Format
-					 GL_UNSIGNED_BYTE, // Data type of bmp.bmBits
-					 pixel);	   //
+					0,				   // MipMap Level (done by opengl)
+					GL_RGBA,		   // Opengl Image format
+					width,	   // Image Width
+					height,	   // Image Height
+					0,				   // Border Width
+					GL_RGBA,		   // Image Format
+					GL_UNSIGNED_BYTE, // Data type of bmp.bmBits
+					pixel);	   //
 
     glGenerateMipmap(GL_TEXTURE_2D); // Generate MipMap
 
     glBindTexture(GL_TEXTURE_2D, 0); // unbind texture
 
     CFRelease(imageData);
+
+	return (texture);
 }
 
 - (void) resize:(int)width :(int)height
@@ -580,26 +588,11 @@ int main(int argc, char* argv[]){
     
     glViewport(0, 0, (GLsizei)width, (GLsizei)height);
 
-    if (width <= height)
-	{
-		orthographicProjectionMatrix = vmath::ortho(
-			-100.0f,
-			100.0f,
-			-100.0f * ((GLfloat)height / (GLfloat)width),
-			100.0f * ((GLfloat)height / (GLfloat)width),
-			-100.0f,
-			100.0f);
-	}
-	else
-	{
-		orthographicProjectionMatrix = vmath::ortho(
-			-100.0f * ((GLfloat)width / (GLfloat)height),
-			100.0f * ((GLfloat)width / (GLfloat)height),
-			-100.0f,
-			100.0f,
-			-100.0f,
-			100.0f);
-	}
+    perspectiveProjectionMatrix = vmath::perspective(
+		45.0f,
+		(GLfloat)width / (GLfloat)height,
+		0.1f,
+		100.0f);
 }
 
 - (void) display
@@ -787,7 +780,24 @@ int main(int argc, char* argv[]){
             [[self window]toggleFullScreen:self];
             break;
             
+		case '1':
+			keyPressed = 1;
+			break;
+
+		case '2':
+			keyPressed = 2;
+			break;
+
+		case '3':
+			keyPressed = 3;
+			break;
+
+		case '4':
+			keyPressed = 4;
+			break;
+
         default:
+			keyPressed = -1;
             break;
     }
 }

@@ -303,16 +303,13 @@ int main(int argc, char* argv[]){
     
 	// vartex Shader
 	const GLchar *vertexShaderSourceCode =
-		"#version 460 core"
+		"#version 410 core"
 		"\n"
 		"in vec4 a_position;"
-		"in vec4 a_color;"
 		"uniform mat4 u_mvpMatrix;"
-		"out vec4 a_color_out;"
 		"void main(void)"
 		"{"
 		"gl_Position = u_mvpMatrix * a_position;"
-		"a_color_out = a_color;"
 		"}";
 
 	GLuint vertexShaderObject = glCreateShader(GL_VERTEX_SHADER);
@@ -352,13 +349,12 @@ int main(int argc, char* argv[]){
 	infoLogLength = 0;
 
 	const GLchar *fragmentShaderSourceCode =
-		"#version 460 core"
+		"#version 410 core"
 		"\n"
-		"in vec4 a_color_out;"
 		"out vec4 FragColor;"
 		"void main(void)"
 		"{"
-		"FragColor = a_color_out;"
+		"FragColor = vec4(1.0, 1.0 , 1.0 , 1.0);;"
 		"}";
 
 	GLuint fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER);
@@ -399,9 +395,7 @@ int main(int argc, char* argv[]){
 	// prelinked binding
 	// Binding Position Array
 	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_POSITION, "a_position");
-	// Binding Color Array
-	glBindAttribLocation(shaderProgramObject, PRJ_ATRIBUTE_COLOR, "a_color");
-
+	
 	// link
 	glLinkProgram(shaderProgramObject);
 
@@ -461,22 +455,9 @@ int main(int argc, char* argv[]){
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	// vbo for color
-	glGenBuffers(1, &vbo_Color);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Color);
-
-	glBufferData(GL_ARRAY_BUFFER, sizeof(triangleColor), triangleColor, GL_STATIC_DRAW);
-	glVertexAttribPointer(PRJ_ATRIBUTE_COLOR, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(PRJ_ATRIBUTE_COLOR);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-
 	// Depth Related Changes
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
-
-	glShadeModel(GL_SMOOTH);
 
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
     
@@ -494,26 +475,11 @@ int main(int argc, char* argv[]){
     
     glViewport(0, 0, (GLsizei)width, (GLsizei)height);
 
-    if (width <= height)
-	{
-		orthographicProjectionMatrix = vmath::ortho(
-			-100.0f,
-			100.0f,
-			-100.0f * ((GLfloat)height / (GLfloat)width),
-			100.0f * ((GLfloat)height / (GLfloat)width),
-			-100.0f,
-			100.0f);
-	}
-	else
-	{
-		orthographicProjectionMatrix = vmath::ortho(
-			-100.0f * ((GLfloat)width / (GLfloat)height),
-			100.0f * ((GLfloat)width / (GLfloat)height),
-			-100.0f,
-			100.0f,
-			-100.0f,
-			100.0f);
-	}
+    perspectiveProjectionMatrix = vmath::perspective(
+		45.0f,
+		(GLfloat)width / (GLfloat)height,
+		0.1f,
+		100.0f);
 }
 
 - (void) display
@@ -560,14 +526,7 @@ int main(int argc, char* argv[]){
 - (void) uninitialise
 {
     // CODE
-    // deletion of vbo_Color
-	if (vbo_Color)
-	{
-		glDeleteBuffers(1, &vbo_Color);
-		vbo_Color = 0;
-	}
-
-	// deletion of vbo_Position
+    // deletion of vbo_Position
 	if (vbo_Position)
 	{
 		glDeleteBuffers(1, &vbo_Position);

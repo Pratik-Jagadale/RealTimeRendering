@@ -154,8 +154,10 @@ int main(int argc, char* argv[]){
 	mat4 perspectiveProjectionMatrix;
 	GLuint textureSamplerUniform;
 
+	 GLuint CHECKERBOARD_WIDTH ;
+	 GLuint CHECKERBOARD_HEIGHT ;
 	GLuint texture_checkerBoard;
-	GLubyte checkerboard[CHECKERBOARD_WIDTH][CHECKERBOARD_HEIGHT][4];
+	GLubyte checkerboard[64][64][4];
 
 }
 
@@ -311,7 +313,7 @@ int main(int argc, char* argv[]){
     
 	// vartex Shader
 	const GLchar *vertexShaderSourceCode =
-		"#version 460 core"
+		"#version 410 core"
 		"\n"
 		"in vec4 a_position;"
 		"in vec2 a_texcoord;"
@@ -347,7 +349,9 @@ int main(int argc, char* argv[]){
 				fprintf(gpFile, "VERTEX SHADER COMPILATION LOG : %s\n", log);
 				free(log);
 				log = NULL;
-				uninitialize();
+				[self uninitialise];
+            [self release];
+            [NSApp terminate:self];
 			}
 		}
 	}
@@ -358,7 +362,7 @@ int main(int argc, char* argv[]){
 	infoLogLength = 0;
 
 	const GLchar *fragmentShaderSourceCode =
-		"#version 460 core"
+		"#version 410 core"
 		"\n"
 		"in vec2 a_texcoord_out;"
 		"uniform sampler2D u_textureSampler;"
@@ -389,7 +393,9 @@ int main(int argc, char* argv[]){
 				fprintf(gpFile, "FRAGMENT SHADER COMPILATION LOG : %s\n", log);
 				free(log);
 				log = NULL;
-				uninitialize();
+				[self uninitialise];
+            [self release];
+            [NSApp terminate:self];
 			}
 		}
 	}
@@ -428,7 +434,9 @@ int main(int argc, char* argv[]){
 				fprintf(gpFile, "SHADER PROGRAM LINK LOG: %s \n", log);
 				free(log);
 				log = NULL;
-				uninitialize();
+				[self uninitialise];
+            [self release];
+            [NSApp terminate:self];
 			}
 		}
 	}
@@ -476,13 +484,14 @@ int main(int argc, char* argv[]){
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 
-	glShadeModel(GL_SMOOTH);
 
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
     
 	[self loadGLTexture];
 
     perspectiveProjectionMatrix = mat4::identity();
+	CHECKERBOARD_WIDTH = 64;
+	CHECKERBOARD_HEIGHT = 64;
 
     return 0;
 }
@@ -505,7 +514,6 @@ int main(int argc, char* argv[]){
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-    CFRelease(imageData);
 }
 
 
@@ -539,26 +547,11 @@ int main(int argc, char* argv[]){
     
     glViewport(0, 0, (GLsizei)width, (GLsizei)height);
 
-    if (width <= height)
-	{
-		orthographicProjectionMatrix = vmath::ortho(
-			-100.0f,
-			100.0f,
-			-100.0f * ((GLfloat)height / (GLfloat)width),
-			100.0f * ((GLfloat)height / (GLfloat)width),
-			-100.0f,
-			100.0f);
-	}
-	else
-	{
-		orthographicProjectionMatrix = vmath::ortho(
-			-100.0f * ((GLfloat)width / (GLfloat)height),
-			100.0f * ((GLfloat)width / (GLfloat)height),
-			-100.0f,
-			100.0f,
-			-100.0f,
-			100.0f);
-	}
+    perspectiveProjectionMatrix = vmath::perspective(
+		45.0f,
+		(GLfloat)width / (GLfloat)height,
+		0.1f,
+		100.0f);
 }
 
 - (void) display

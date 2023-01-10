@@ -152,7 +152,7 @@ int main(int argc, char* argv[]){
 	GLuint mvpMatrixUniform;  // model View Projection
 	mat4 perspectiveProjectionMatrix;
 
-	GLfloat angleCube = 0.0f;
+	GLfloat angleCube;
 }
 
 - (id)initWithFrame:(NSRect)frame
@@ -307,7 +307,7 @@ int main(int argc, char* argv[]){
     
 	// vartex Shader
 	const GLchar *vertexShaderSourceCode =
-		"#version 460 core"
+		"#version 410 core"
 		"\n"
 		"in vec4 a_position;"
 		"uniform mat4 u_mvpMatrix;"
@@ -353,7 +353,7 @@ int main(int argc, char* argv[]){
 	infoLogLength = 0;
 
 	const GLchar *fragmentShaderSourceCode =
-		"#version 460 core"
+		"#version 410 core"
 		"\n"
 		"out vec4 FragColor;"
 		"void main(void)"
@@ -490,7 +490,6 @@ int main(int argc, char* argv[]){
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 
-	glShadeModel(GL_SMOOTH);
 
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
     
@@ -508,26 +507,11 @@ int main(int argc, char* argv[]){
     
     glViewport(0, 0, (GLsizei)width, (GLsizei)height);
 
-    if (width <= height)
-	{
-		orthographicProjectionMatrix = vmath::ortho(
-			-100.0f,
-			100.0f,
-			-100.0f * ((GLfloat)height / (GLfloat)width),
-			100.0f * ((GLfloat)height / (GLfloat)width),
-			-100.0f,
-			100.0f);
-	}
-	else
-	{
-		orthographicProjectionMatrix = vmath::ortho(
-			-100.0f * ((GLfloat)width / (GLfloat)height),
-			100.0f * ((GLfloat)width / (GLfloat)height),
-			-100.0f,
-			100.0f,
-			-100.0f,
-			100.0f);
-	}
+    perspectiveProjectionMatrix = vmath::perspective(
+		45.0f,
+		(GLfloat)width / (GLfloat)height,
+		0.1f,
+		100.0f);
 }
 
 - (void) display
@@ -588,7 +572,7 @@ int main(int argc, char* argv[]){
 - (void) myupdate
 {
     // CODE
-    angleCube = angleCube + 0.1f;
+    angleCube = angleCube + 1.0f;
 	if (angleCube >= 360.0f)
 		angleCube = angleCube - 360.0f;
 }
@@ -598,17 +582,17 @@ int main(int argc, char* argv[]){
     // CODE
     
 	// deletion of vbo_Pyramid_Position
-	if (vbo_Pyramid_Position)
+	if (vbo_Cube_Position)
 	{
-		glDeleteBuffers(1, &vbo_Pyramid_Position);
-		vbo_Pyramid_Position = 0;
+		glDeleteBuffers(1, &vbo_Cube_Position);
+		vbo_Cube_Position = 0;
 	}
 
 	// deletion of vao_Pyramid
-	if (vao_Pyramid)
+	if (vao_Cube)
 	{
-		glDeleteVertexArrays(1, &vao_Pyramid);
-		vao_Pyramid = 0;
+		glDeleteVertexArrays(1, &vao_Cube);
+		vao_Cube = 0;
 	}
 
 	if (shaderProgramObject)
