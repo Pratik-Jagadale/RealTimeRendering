@@ -556,6 +556,11 @@ int main(int argc, char* argv[]){
 
 	glUniformMatrix4fv(mvpMatrixUniform, 1, GL_FALSE, modelViewProjectionMatrix);
 
+	glBindVertexArray(vao);
+	glDrawArrays(GL_TRIANGLES, 0 , 3);
+
+	glBindVertexArray(0);
+
 	// unuse the shader program object
 	glUseProgram(0);
 }

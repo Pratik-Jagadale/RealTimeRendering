@@ -11,6 +11,7 @@
 using namespace vmath;
 
 #include "Sphere.h"
+#include "Matrix.h"
 
 // Global function declarations
 CVReturn MyDisplayLinkCallback(CVDisplayLinkRef, const CVTimeStamp*, const CVTimeStamp*, CVOptionFlags, CVOptionFlags*, void*);
@@ -149,6 +150,8 @@ int main(int argc, char* argv[]){
     	PRJ_ATRIBUTE_TEXTURE0
     };
 
+	GLuint shaderProgramObject;
+
 	GLuint gVao_sphere;			 // Vertex Array Object
 	GLuint gVbo_sphere_position; // Vertex Buffer Object
 	GLuint gVbo_sphere_normal;
@@ -160,11 +163,11 @@ int main(int argc, char* argv[]){
 
 	mat4 perspectiveProjectionMatrix;
 
-	int shoulder = 0;
-	int elbow = 0;
-	int palm = 0;
+	int shoulder;
+	int elbow ;
+	int palm ;
 
-	BOOL bPolygonModelIsLine = FALSE;
+	BOOL bPolygonModelIsLine;
 
 	Sphere *sphere;
 }
@@ -455,15 +458,15 @@ int main(int argc, char* argv[]){
 
 
 	sphere = [[Sphere alloc]init];
-    [sphere initialize:1.0 :100 :100];
+    [sphere initialize:0.5 :100 :100];
 	// vao and vbo related code
 	// vao for Sphere
-	glGenVertexArrays(1, &vao_Sphere);
-	glBindVertexArray(vao_Sphere);
+	glGenVertexArrays(1, &gVao_sphere);
+	glBindVertexArray(gVao_sphere);
 
 	// vbo for position
-	glGenBuffers(1, &vbo_Sphere_Position);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Sphere_Position);
+	glGenBuffers(1, &gVbo_sphere_position);
+	glBindBuffer(GL_ARRAY_BUFFER, gVbo_sphere_position);
 	glBufferData(GL_ARRAY_BUFFER, ([sphere getNumberOfSphereVertices] ) * sizeof(GLfloat), [sphere getSphereVertex], GL_STATIC_DRAW);
 	glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(PRJ_ATRIBUTE_POSITION);
@@ -542,14 +545,9 @@ int main(int argc, char* argv[]){
 	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
 	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
 
-	// gluSphere()
 	glBindVertexArray(gVao_sphere);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-
 	glVertexAttrib3f(PRJ_ATRIBUTE_COLOR, 0.5f, 0.35f, 0.005f);
-	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, [sphere getNumberOfSphereVertices]);
 	glBindVertexArray(0);
 
 	// ** POP 2 (Arm Mid point) ***
@@ -573,15 +571,8 @@ int main(int argc, char* argv[]){
 	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
 
 	glBindVertexArray(gVao_sphere);
-
 	glVertexAttrib3f(PRJ_ATRIBUTE_COLOR, 0.5f, 0.35f, 0.005f);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-
-	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, [sphere getNumberOfSphereVertices]);
 	glBindVertexArray(0);
 
 	modelMatrix = popMatrix(); // ** POP 3 **
@@ -605,14 +596,9 @@ int main(int argc, char* argv[]){
 	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
 
 	glBindVertexArray(gVao_sphere);
-
 	glVertexAttrib3f(PRJ_ATRIBUTE_COLOR, 0.5f, 0.35f, 0.005f);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gVbo_sphere_element);
-
-	glDrawElements(GL_TRIANGLES, gNumElements, GL_UNSIGNED_SHORT, 0);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, [sphere getNumberOfSphereVertices]);
+	glBindVertexArray(0);
 
 	glBindVertexArray(0);
 
@@ -628,13 +614,6 @@ int main(int argc, char* argv[]){
 - (void) myupdate
 {
     // CODE
-    angleSphere = angleSphere + 1.1f;
-	if (angleSphere >= 360.0f)
-		angleSphere = angleSphere - 360.0f;
-
-	angleSquare = angleSquare + 1.1f;
-	if (angleSquare >= 360.0f)
-		angleSquare = angleSquare - 360.0f;
 }
 
 - (void) uninitialise
@@ -642,32 +621,18 @@ int main(int argc, char* argv[]){
     // CODE
     [sphere uninitialize];
 
-    // delete vbo_Square_Position
-	if (vbo_Square_Position)
-	{
-		glDeleteBuffers(1, &vbo_Square_Position);
-		vbo_Square_Position = 0;
-	}
-
-	// deletion of vao_Square
-	if (vao_Square)
-	{
-		glDeleteVertexArrays(1, &vao_Square);
-		vao_Square = 0;
-	}
-
 	// deletion of vbo_Sphere_Position
-	if (vbo_Sphere_Position)
+	if (gVbo_sphere_position)
 	{
-		glDeleteBuffers(1, &vbo_Sphere_Position);
-		vbo_Sphere_Position = 0;
+		glDeleteBuffers(1, &gVbo_sphere_position);
+		gVbo_sphere_position = 0;
 	}
 
 	// deletion of vao_Sphere
-	if (vao_Sphere)
+	if (gVao_sphere)
 	{
-		glDeleteVertexArrays(1, &vao_Sphere);
-		vao_Sphere = 0;
+		glDeleteVertexArrays(1, &gVao_sphere);
+		gVao_sphere = 0;
 	}
 
 	if (shaderProgramObject)
@@ -774,64 +739,4 @@ CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* 
     CVReturn result = [(GLView*)view getFrameForTime:outputTime];
     
     return result;
-}
-
-
-void initializeMatrixStack(void)
-{
-	// code
-	matrixStackTop = 0;
-	for (int i = matrixStackTop; i < MODEL_VIEW_MATRIX_STACK; i++)
-		matrixStack[i] = mat4::identity();
-}
-
-void pushMatrix(mat4 matrix)
-{
-	// Function Prototype
-	void uninitialize(void);
-
-	//	Code
-	fprintf(gpFile, "Before Push Stack Top = %d\n", matrixStackTop);
-
-	if (matrixStackTop > (MODEL_VIEW_MATRIX_STACK - 1))
-	{
-		fprintf(gpFile, "ERROR - EXCEEDED MATRIX STACK LIMIT:\n");
-		[self uninitialise];
-        [self release];
-        [NSApp terminate:self];
-	}
-
-	matrixStack[matrixStackTop] = matrix;
-	matrixStackTop++;
-
-	fprintf(gpFile, "After Push Stack Top = %d\n", matrixStackTop);
-}
-
-mat4 popMatrix(void)
-{
-	// function ptototype
-	void uninitialize(void);
-
-	// variable declartions
-	mat4 matrix;
-
-	// code
-	fprintf(gpFile, "Before Pop Staqck Top = %d\n", matrixStackTop);
-
-	if (matrixStackTop < 0)
-	{
-		fprintf(gpFile, "ERROR : MATRIX STACK EMPTY!\n");
-		[self uninitialise];
-        [self release];
-        [NSApp terminate:self];
-	}
-
-	matrixStack[matrixStackTop] = mat4::identity();
-	matrixStackTop--;
-
-	matrix = matrixStack[matrixStackTop];
-
-	fprintf(gpFile, "After Pop Staqck Top = %d\n", matrixStackTop);
-
-	return (matrix);
 }
