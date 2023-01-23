@@ -26,10 +26,6 @@ FILE *gpFile = NULL;
 @interface GLView : NSOpenGLView
 @end
 
-void initializeMatrixStack(void);
-void pushMatrix(mat4);
-mat4 popMatrix(void);
-
 // Entry point function
 int main(int argc, char* argv[])
 {
@@ -472,8 +468,9 @@ int main(int argc, char* argv[])
 	glBindVertexArray(0);
 
 	// Depth Related Changes
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
+    glClearDepthf(1.0f);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
 
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
     

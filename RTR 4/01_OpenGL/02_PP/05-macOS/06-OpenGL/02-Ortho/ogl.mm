@@ -439,8 +439,9 @@ int main(int argc, char* argv[]){
 	glBindVertexArray(0);
 
 	// Depth Related Changes
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
+    glClearDepthf(1.0f);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
 
 	//glShadeModel(GL_SMOOTH);
 

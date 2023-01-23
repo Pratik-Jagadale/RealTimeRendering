@@ -484,8 +484,9 @@ int main(int argc, char* argv[]){
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	// Depth Related Changes
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
+    glClearDepthf(1.0f);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
 
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
