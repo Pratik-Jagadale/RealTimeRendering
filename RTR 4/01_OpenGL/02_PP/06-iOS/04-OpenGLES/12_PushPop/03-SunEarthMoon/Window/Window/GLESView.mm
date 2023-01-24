@@ -39,12 +39,6 @@ using namespace vmath;
 
 	GLuint shaderProgramObject;
 
-	GLuint vao_Sphere;			 // Vertex Array Object
-	GLuint vbo_Sphere_Position; // Vertex Buffer Object
-	GLuint vbo_Sphere_Normal;
-	GLuint vbo_sphere_element;
-	GLuint vbo_sphere_element;
-
 	GLuint modelMatrixUniform;
 	GLuint viewMatrixUniform;
 	GLuint projectionMatrixUniform;
@@ -55,7 +49,7 @@ using namespace vmath;
 	int year ;
 	int moon ;
 
-	Sphere *sphere;
+	
 }
 -(id)initWithFrame:(CGRect)frame
 {
@@ -341,7 +335,7 @@ using namespace vmath;
 	infoLogLength = 0;
 
 	const GLchar *fragmentShaderSourceCode =
-		"#version 300 core"
+		"#version 300 es"
 		"\n"
 		"precision highp float;"
 		"in vec4 a_color_out;"
@@ -419,28 +413,35 @@ using namespace vmath;
 	viewMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_viewMatrix");
 	projectionMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_projectionMatrix");
 
-	sphere = [[Sphere alloc]init];
-    [sphere initialize:1.0 :100 :100];
+	newSphere(fRadius,iSlices,iStacks,(&sphereVertices_new),(&sphereNormals_new),&iNoOfVertices,false,(&sphereElements_new));
+
 	// vao and vbo related code
 	// vao for Sphere
-	glGenVertexArrays(1, &vao_Sphere);
-	glBindVertexArray(vao_Sphere);
+	glGenVertexArrays(1, &Vao_sphere);
+	glBindVertexArray(Vao_sphere);
 
 	// vbo for position
-	glGenBuffers(1, &vbo_Sphere_Position);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Sphere_Position);
-	glBufferData(GL_ARRAY_BUFFER, ([sphere getNumberOfSphereVertices] ) * sizeof(GLfloat), [sphere getSphereVertex], GL_STATIC_DRAW);
+	glGenBuffers(1, &Vbo_sphere_position);
+	glBindBuffer(GL_ARRAY_BUFFER, Vbo_sphere_position);
+	glBufferData(GL_ARRAY_BUFFER, 12 * iNoOfVertices, sphereVertices_new, GL_STATIC_DRAW);
+
 	glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(PRJ_ATRIBUTE_POSITION);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
 
+	// Elements vbo
+    glGenBuffers(1, &Vbo_sphere_element);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(GLushort) * iNoOfElements,sphereElements_new, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	glBindVertexArray(0);
 	// Depth Related Changes
     glClearDepthf(1.0f);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
-    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
     perspectiveProjectionMatrix = mat4::identity();
 
@@ -508,10 +509,11 @@ using namespace vmath;
 	// gluSphere()
 	glVertexAttrib3f(PRJ_ATRIBUTE_COLOR, 1.0f, 1.0f, 0.0f);
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	glBindVertexArray(0);
 
@@ -543,14 +545,14 @@ using namespace vmath;
 
 	glVertexAttrib3f(PRJ_ATRIBUTE_COLOR, 0.4f, 0.9f, 1.0f);
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	glBindVertexArray(0);
 
-	glBindVertexArray(0);
 
 	// Moon
 	modelMatrix = popMatrix();
@@ -572,12 +574,11 @@ using namespace vmath;
 	// gluSphere()
 	glVertexAttrib3f(PRJ_ATRIBUTE_COLOR, 1.0f, 1.0f, 1.0f);
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
-
-	glBindVertexArray(0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	glBindVertexArray(0);
 
@@ -596,34 +597,6 @@ using namespace vmath;
 {
     // Code0
     unInitializeNewSphere();
-
-    // delete vbo_Square_Position
-	if (vbo_Sphere_Position)
-	{
-		glDeleteBuffers(1, &vbo_Sphere_Position);
-		vbo_Sphere_Position = 0;
-	}
-
-	// deletion of vao_Square
-	if (vao_Sphere)
-	{
-		glDeleteVertexArrays(1, &vao_Sphere);
-		vao_Sphere = 0;
-	}
-
-	// deletion of vbo_Sphere_Position
-	if (vbo_Sphere_Position)
-	{
-		glDeleteBuffers(1, &vbo_Sphere_Position);
-		vbo_Sphere_Position = 0;
-	}
-
-	// deletion of vao_Sphere
-	if (vao_Sphere)
-	{
-		glDeleteVertexArrays(1, &vao_Sphere);
-		vao_Sphere = 0;
-	}
 
 	if (shaderProgramObject)
 	{

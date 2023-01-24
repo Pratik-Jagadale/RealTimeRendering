@@ -38,10 +38,10 @@ using namespace vmath;
 
     GLuint shaderProgramObject;
 
-	GLuint vao_Sphere;			 // Vertex Array Object
-	GLuint vbo_Sphere_Position; // Vertex Buffer Object
-	GLuint vbo_Sphere_Normal;
-	GLuint vbo_sphere_element;
+	GLuint Vao_sphere;			 // Vertex Array Object
+	GLuint Vbo_sphere_position; // Vertex Buffer Object
+	GLuint Vbo_sphere_normal;
+	GLuint Vbo_sphere_element;
 
 	GLuint modelMatrixUniform;
 	GLuint viewMatrixUniform;
@@ -81,7 +81,7 @@ using namespace vmath;
 	int currentWindowWidth;
 	int currentWindowHeight;
 
-	Sphere *sphere;
+	
 }
 -(id)initWithFrame:(CGRect)frame
 {
@@ -327,7 +327,7 @@ using namespace vmath;
 		"uniform mat4 u_modelMatrix;"
 		"uniform mat4 u_viewMatrix;"
 		"uniform mat4 u_projectionMatrix;"
-		"uniform mediump int u_lightingEnabled;"
+		"uniform highp int u_lightingEnabled;"
 		"out vec3 transformedNormals;"
 		"out vec3 lightDirection;"
 		"out vec3 viewerVector;"
@@ -393,7 +393,7 @@ using namespace vmath;
 		"uniform vec3 u_ks;"
 		"uniform vec3 u_kd;"
 		"uniform float u_materialShininnes;"
-		"uniform mediump int u_lightingEnabled;"
+		"uniform highp int u_lightingEnabled;"
 		"out vec4 FragColor;"
 		"vec3 phong_ads_light;"
 		"void main(void)"
@@ -500,31 +500,30 @@ using namespace vmath;
 
 	newSphere(fRadius,iSlices,iStacks,(&sphereVertices_new),(&sphereNormals_new),&iNoOfVertices,false,(&sphereElements_new));
 
-
 	// vao and vbo related code
 	// vao for Sphere
-	glGenVertexArrays(1, &vao_Sphere);
-	glBindVertexArray(vao_Sphere);
+	glGenVertexArrays(1, &Vao_sphere);
+	glBindVertexArray(Vao_sphere);
 
 	// vbo for position
-	glGenBuffers(1, &vbo_Sphere_Position);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Sphere_Position);
+	glGenBuffers(1, &Vbo_sphere_position);
+	glBindBuffer(GL_ARRAY_BUFFER, Vbo_sphere_position);
 	glBufferData(GL_ARRAY_BUFFER, 12 * iNoOfVertices, sphereVertices_new, GL_STATIC_DRAW);
     glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(PRJ_ATRIBUTE_POSITION);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // vbo for Normal
-	glGenBuffers(1, &vbo_Sphere_Normal);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Sphere_Normal);
+	glGenBuffers(1, &Vbo_sphere_normal);
+	glBindBuffer(GL_ARRAY_BUFFER, Vbo_sphere_normal);
 	glBufferData(GL_ARRAY_BUFFER, 12 * iNoOfVertices, sphereNormals_new, GL_STATIC_DRAW);
     glVertexAttribPointer(PRJ_ATRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(PRJ_ATRIBUTE_NORMAL);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // Elements vbo
-    glGenBuffers(1, &vbo_sphere_element);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+    glGenBuffers(1, &Vbo_sphere_element);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(GLushort) * iNoOfElements,sphereElements_new, GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
@@ -689,9 +688,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -741,9 +740,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -793,9 +792,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -845,9 +844,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -895,9 +894,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -946,9 +945,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1001,9 +1000,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1053,9 +1052,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1104,9 +1103,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1155,9 +1154,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1206,9 +1205,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1257,9 +1256,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1313,9 +1312,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1364,9 +1363,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1414,9 +1413,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1465,9 +1464,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1516,9 +1515,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1566,9 +1565,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1620,9 +1619,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1670,9 +1669,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1720,9 +1719,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1770,9 +1769,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1820,9 +1819,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1870,9 +1869,9 @@ using namespace vmath;
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -1883,28 +1882,6 @@ using namespace vmath;
 {
     // Code
     unInitializeNewSphere();
-
-    // delete vbo_Square_Position
-	
-	// deletion of vbo_Sphere_Position
-	if (vbo_Sphere_Position)
-	{
-		glDeleteBuffers(1, &vbo_Sphere_Position);
-		vbo_Sphere_Position = 0;
-	}
-
-	if (vbo_Sphere_Normal)
-	{
-		glDeleteBuffers(1, &vbo_Sphere_Position);
-		vbo_Sphere_Position = 0;
-	}
-
-	// deletion of vao_Sphere
-	if (vao_Sphere)
-	{
-		glDeleteVertexArrays(1, &vao_Sphere);
-		vao_Sphere = 0;
-	}
 
 	if (shaderProgramObject)
 	{

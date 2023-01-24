@@ -39,12 +39,6 @@ using namespace vmath;
 
 	GLuint shaderProgramObject;
 
-	GLuint vao_Sphere;			 // Vertex Array Object
-	GLuint vbo_Sphere_Position; // Vertex Buffer Object
-	GLuint vbo_Sphere_Normal;
-	GLuint vbo_sphere_element;
-	GLuint vbo_sphere_element;
-
 	GLuint modelMatrixUniform;
 	GLuint viewMatrixUniform;
 	GLuint projectionMatrixUniform;
@@ -57,7 +51,7 @@ using namespace vmath;
 
 	BOOL bPolygonModelIsLine;
 
-	Sphere *sphere;
+	
 }
 -(id)initWithFrame:(CGRect)frame
 {
@@ -420,21 +414,26 @@ using namespace vmath;
 	viewMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_viewMatrix");
 	projectionMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_projectionMatrix");
 
+	newSphere(fRadius,iSlices,iStacks,(&sphereVertices_new),(&sphereNormals_new),&iNoOfVertices,false,(&sphereElements_new));
 
-	sphere = [[Sphere alloc]init];
-    [sphere initialize:0.5 :100 :100];
 	// vao and vbo related code
 	// vao for Sphere
-	glGenVertexArrays(1, &vao_Sphere);
-	glBindVertexArray(vao_Sphere);
+	glGenVertexArrays(1, &Vao_sphere);
+	glBindVertexArray(Vao_sphere);
 
-	// vbo for position
-	glGenBuffers(1, &vbo_Sphere_Position);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Sphere_Position);
-	glBufferData(GL_ARRAY_BUFFER, ([sphere getNumberOfSphereVertices] ) * sizeof(GLfloat), [sphere getSphereVertex], GL_STATIC_DRAW);
+	glGenBuffers(1, &Vbo_sphere_position);
+	glBindBuffer(GL_ARRAY_BUFFER, Vbo_sphere_position);
+	glBufferData(GL_ARRAY_BUFFER, 12 * iNoOfVertices, sphereVertices_new, GL_STATIC_DRAW);
 	glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(PRJ_ATRIBUTE_POSITION);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// Elements vbo
+    glGenBuffers(1, &Vbo_sphere_element);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(GLushort) * iNoOfElements,sphereElements_new, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 	glBindVertexArray(0);
 
 	// Depth Related Changes
@@ -442,7 +441,7 @@ using namespace vmath;
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
-    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
     perspectiveProjectionMatrix = mat4::identity();
 
@@ -481,10 +480,6 @@ using namespace vmath;
 	/* Code */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (bPolygonModelIsLine == TRUE)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	else
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	// use shader program obejct
 	glUseProgram(shaderProgramObject);
@@ -509,9 +504,13 @@ using namespace vmath;
 	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
 	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 	glVertexAttrib3f(PRJ_ATRIBUTE_COLOR, 0.5f, 0.35f, 0.005f);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, [sphere getNumberOfSphereVertices]);
+	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
+    glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 	glBindVertexArray(0);
 
 	// ** POP 2 (Arm Mid point) ***
@@ -534,9 +533,13 @@ using namespace vmath;
 	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
 	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 	glVertexAttrib3f(PRJ_ATRIBUTE_COLOR, 0.5f, 0.35f, 0.005f);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, [sphere getNumberOfSphereVertices]);
+	    
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
+    glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 	glBindVertexArray(0);
 
 	modelMatrix = popMatrix(); // ** POP 3 **
@@ -559,9 +562,13 @@ using namespace vmath;
 	glUniformMatrix4fv(viewMatrixUniform, 1, GL_FALSE, viewMatrix);
 	glUniformMatrix4fv(projectionMatrixUniform, 1, GL_FALSE, perspectiveProjectionMatrix);
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 	glVertexAttrib3f(PRJ_ATRIBUTE_COLOR, 0.5f, 0.35f, 0.005f);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, [sphere getNumberOfSphereVertices]);
+		
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
+    glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 	glBindVertexArray(0);
 
 	glBindVertexArray(0);
@@ -584,20 +591,6 @@ using namespace vmath;
     // Code
 
     unInitializeNewSphere();
-
-	// deletion of vbo_Sphere_Position
-	if (vbo_Sphere_Position)
-	{
-		glDeleteBuffers(1, &vbo_Sphere_Position);
-		vbo_Sphere_Position = 0;
-	}
-
-	// deletion of vao_Sphere
-	if (vao_Sphere)
-	{
-		glDeleteVertexArrays(1, &vao_Sphere);
-		vao_Sphere = 0;
-	}
 
 	if (shaderProgramObject)
 	{

@@ -39,12 +39,6 @@ using namespace vmath;
 	GLuint shaderProgramObject_PV;
 	GLuint shaderProgramObject_PF;
 
-	GLuint vao_Sphere;			 // Vertex Array Object
-	GLuint vbo_Sphere_Position; // Vertex Buffer Object
-	GLuint vbo_Sphere_Normal;
-	GLuint vbo_sphere_element;
-	GLuint vbo_sphere_element;
-
 	GLuint modelMatrixUniform_PV;
 	GLuint viewMatrixUniform_PV;
 	GLuint projectionMatrixUniform_PV;
@@ -92,7 +86,7 @@ using namespace vmath;
 	vmath::vec4 materialSpecular;
 	GLfloat materialShineeness;
 
-	Sphere *sphere;
+	
 }
 -(id)initWithFrame:(CGRect)frame
 {
@@ -408,6 +402,7 @@ using namespace vmath;
 		const GLchar *fragmentShaderSourceCode_PV =
 			"#version 300 es"
 			"\n"
+			"precision highp float;"
 			"in vec3 phong_ads_out;"
 			"out vec4 FragColor;"
 			"void main(void)"
@@ -568,6 +563,7 @@ using namespace vmath;
 		const GLchar *fragmentShaderSourceCode_PF =
 			"#version 300 es"
 			"\n"
+			"precision highp float;"
 			"in vec3 transformedNormals;"
 			"in vec3 lightDirection;"
 			"in vec3 viewerVector;"
@@ -687,16 +683,16 @@ using namespace vmath;
 		lightingEnabledUniform_PF = glGetUniformLocation(shaderProgramObject_PF, "u_lightingEnabled");
 	}
 
-	mvpMatrixUniform = glGetUniformLocation(shaderProgramObject, "u_mvpMatrix");
+	newSphere(fRadius,iSlices,iStacks,(&sphereVertices_new),(&sphereNormals_new),&iNoOfVertices,false,(&sphereElements_new));
 
 	// vao and vbo related code
 	// vao for Sphere
-	glGenVertexArrays(1, &vao_Sphere);
-	glBindVertexArray(vao_Sphere);
+	glGenVertexArrays(1, &Vao_sphere);
+	glBindVertexArray(Vao_sphere);
 
 	// vbo for position
-	glGenBuffers(1, &vbo_Sphere_Position);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Sphere_Position);
+	glGenBuffers(1, &Vbo_sphere_position);
+	glBindBuffer(GL_ARRAY_BUFFER, Vbo_sphere_position);
 	glBufferData(GL_ARRAY_BUFFER, 12 * iNoOfVertices, sphereVertices_new, GL_STATIC_DRAW);
 
 	glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -704,13 +700,21 @@ using namespace vmath;
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// normal vbo
-	glGenBuffers(1, &vbo_Sphere_Normal);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_Sphere_Normal);
+	glGenBuffers(1, &Vbo_sphere_normal);
+	glBindBuffer(GL_ARRAY_BUFFER, Vbo_sphere_normal);
 	glBufferData(GL_ARRAY_BUFFER, 12 * iNoOfVertices, sphereNormals_new, GL_STATIC_DRAW);
 
 	glVertexAttribPointer(PRJ_ATRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glVertexAttribPointer(PRJ_ATRIBUTE_NORMAL, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(PRJ_ATRIBUTE_NORMAL);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// Elements vbo
+    glGenBuffers(1, &Vbo_sphere_element);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(GLushort) * iNoOfElements,sphereElements_new, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 	glBindVertexArray(0);
 
 	// Depth Related Changes
@@ -825,9 +829,9 @@ using namespace vmath;
 		}
 	}
 
-	glBindVertexArray(vao_Sphere);
+	glBindVertexArray(Vao_sphere);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_sphere_element);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Vbo_sphere_element);
     glDrawElements(GL_TRIANGLE_STRIP,iNoOfElements,GL_UNSIGNED_SHORT,0);
 
 	glBindVertexArray(0);
@@ -845,29 +849,6 @@ using namespace vmath;
 {
     // Code
     unInitializeNewSphere();
-
-    // delete vbo_Square_Position
-	
-	// deletion of vbo_Sphere_Position
-	if (vbo_Sphere_Position)
-	{
-		glDeleteBuffers(1, &vbo_Sphere_Position);
-		vbo_Sphere_Position = 0;
-	}
-
-	if (vbo_Sphere_Normal)
-	{
-		glDeleteBuffers(1, &vbo_Sphere_Position);
-		vbo_Sphere_Position = 0;
-	}
-
-	// deletion of vao_Sphere
-	if (vao_Sphere)
-	{
-		glDeleteVertexArrays(1, &vao_Sphere);
-		vao_Sphere = 0;
-	}
-
 	
 	if (shaderProgramObject_PF)
 	{

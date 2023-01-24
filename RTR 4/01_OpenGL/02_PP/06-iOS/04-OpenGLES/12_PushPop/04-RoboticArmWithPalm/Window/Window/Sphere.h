@@ -1,199 +1,302 @@
-/////////////////////////////////////////
-// Created By : Pratik J
-// HOW TO USE:
-//
-// Declare Variable
-// Sphere* sphere;
-//
-// Add Below Lines in initialize (Creating Object)
-// sphere = [[Sphere alloc]init];
-// [sphere initialize:0.5 :100 :100];
-//
-// // create vbo for position & Similaraly for texcoord & Normals
-//	glGenBuffers(1, &vbo_Sphere_Position);
-//	glBindBuffer(GL_ARRAY_BUFFER, vbo_Sphere_Position);
-//	glBufferData(GL_ARRAY_BUFFER, 12 * iNoOfVertices, sphereVertices_new, GL_STATIC_DRAW);
+#pragma once
 
-//	glVertexAttribPointer(PRJ_ATRIBUTE_POSITION, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-//	glEnableVertexAttribArray(PRJ_ATRIBUTE_POSITION);
-//	glBindBuffer(GL_ARRAY_BUFFER, 0);
-//
-// // Display - DrawArrays Call Should be
-//
-//	glDrawArrays(GL_TRIANGLE_STRIP, 0, [sphere getNumberOfSphereVertices]);
-//
-///////////////////////////////////////
-@interface Sphere : NSObject
-@end
+#include<math.h>
 
-@implementation Sphere
-{
-    @private
-        int VertexPointer ;
-        int TexcoordPointer ;
-        int NormalPointer ;
-	    int MAX_VERTICES ;
-	    int MAX_TEXCOORDS ;
-	    int MAX_NORMALS ;
-	    int CACHE_SIZE ;
-	    int MAX_ARRAY_SIZE ;
+FILE* gpFileSphere = NULL;
 
-        float *model_Vertices;
-        float *model_Texcoord;
-        float *model_Normal;
-}
+// Variables for Sphere
+int iNoOfVertices;
+int iNoOfElements;
+GLfloat fRadius = 0.5f;
+int iStacks = 50;
+int iSlices = 50;
 
-- (void)initialize:(double)radius :(int)slices :(int) stacks
-{
-	VertexPointer = 0;
-    TexcoordPointer = 0;
-    NormalPointer = 0;
+int iRotate=0;
+float fAngleX=0.0f;
+float fAngleZ=0.0f;
+float fAngleY=0.0f;
 
-	MAX_VERTICES = 100000;
-	MAX_TEXCOORDS = 100000;
-	MAX_NORMALS = 100000;
-	CACHE_SIZE = 240;
+bool bHalfCircle=false;
 
-    model_Vertices = (float*)malloc(MAX_VERTICES * sizeof(float));
-    model_Texcoord = (float*)malloc(MAX_TEXCOORDS * sizeof(float));
-    model_Normal = (float*)malloc(MAX_NORMALS * sizeof(float));
+GLfloat *sphereVertices_new;
+GLfloat *sphereNormals_new;
+GLushort *sphereElements_new;
 
-    [self generateSphereData1:radius :slices :stacks];
+// Sphere 
+GLuint Vao_sphere;
+GLuint Vbo_sphere_position;
+GLuint Vbo_sphere_normal;
+GLuint Vbo_sphere_element;
 
-}
 
-- (void) uninitialize
-{
-    free(model_Vertices);
-    model_Vertices = NULL;
 
-    free(model_Texcoord);
-    model_Texcoord = NULL;
+//#----Prototypes of new Sphere Functions------#
 
-    free(model_Normal);
-    model_Normal = NULL;
+void newSphere( GLfloat radius, GLint slices, GLint stacks,GLfloat **vertices, GLfloat **normals, int* nVert,const GLboolean halfCircle,GLshort **sphereElement_New);
 
-}
+void newGenerateSphere(GLfloat radius, GLint slices, GLint stacks, GLfloat **vertices, GLfloat **normals, int* nVert,const GLboolean halfCircle);
+void newCircleTable(GLfloat **sint, GLfloat **cost, const int n, const GLboolean halfCircle);
 
-- (void)addTexcoord:(float)a :(float)b
-{
-    model_Texcoord[TexcoordPointer++] = a;
-    model_Texcoord[TexcoordPointer++] = b;
-}
-        
-- (void)addVertices:(float)x :(float)y :(float)z
-{
-    model_Vertices[VertexPointer++] = x;
-    model_Vertices[VertexPointer++] = y;
-    model_Vertices[VertexPointer++] = z;
-}
+//#-----Definitions of new Sphere Functions-------#
 
-- (void)addNormals:(float)p :(float)q :(float)r
-{
-    model_Normal[NormalPointer++] = p;
-    model_Normal[NormalPointer++] = q;
-    model_Normal[NormalPointer++] = r;
-}
+    //#-- Inner 2---#
 
-- (void)generateSphereData1:(double)radius :(int)slices :(int) stacks
-{
-    int k = 0;
-    int kk = 0;
-    int i, j;
-    float sinCache1a[CACHE_SIZE];
-    float cosCache1a[CACHE_SIZE];
-    float sinCache2a[CACHE_SIZE];
-    float cosCache2a[CACHE_SIZE];
-    float sinCache3a[CACHE_SIZE];
-    float cosCache3a[CACHE_SIZE];
-    float sinCache1b[CACHE_SIZE];
-    float cosCache1b[CACHE_SIZE];
-    float sinCache2b[CACHE_SIZE];
-    float cosCache2b[CACHE_SIZE];
-    float sinCache3b[CACHE_SIZE];
-    float cosCache3b[CACHE_SIZE];
-    float angle;
-    float zLow, zHigh;
-    float sintemp1 = 0.0, sintemp2 = 0.0, sintemp3 = 0.0, sintemp4 = 0.0;
-    float costemp1 = 0.0, costemp2 = 0.0, costemp3 = 0.0, costemp4 = 0.0;
-    int start, finish;
-    if (slices >= CACHE_SIZE) slices = CACHE_SIZE - 1;
-    if (stacks >= CACHE_SIZE) stacks = CACHE_SIZE - 1;
-    if (slices < 2 || stacks < 1 || radius < 0.0) {
-        return;
-    }
-    for (i = 0; i < slices; i++) {
-        angle = 2 * (float)M_PI * i / slices;
-        sinCache1a[i] = (float)sin(angle);
-        cosCache1a[i] = (float)cos(angle);
-        sinCache2a[i] = sinCache1a[i];
-        cosCache2a[i] = cosCache1a[i];
-    }
-    for (j = 0; j <= stacks; j++) {
-        angle = (float)M_PI * j / stacks;
-        sinCache2b[j] = (float)sin(angle);
-        cosCache2b[j] = (float)cos(angle);
-        sinCache1b[j] = radius * (float)sin(angle);
-        cosCache1b[j] = radius * (float)cos(angle);
-    }
-    /* Make sure it comes to a point */
-    sinCache1b[0] = 0;
-    sinCache1b[stacks] = 0;
-    sinCache1a[slices] = sinCache1a[0];
-    cosCache1a[slices] = cosCache1a[0];
-    sinCache2a[slices] = sinCache2a[0];
-    cosCache2a[slices] = cosCache2a[0];
-    start = 0;
-    finish = stacks;
-    for (j = start; j < finish; j++) {
-        zLow = cosCache1b[j];
-        zHigh = cosCache1b[j + 1];
-        sintemp1 = sinCache1b[j];
-        sintemp2 = sinCache1b[j + 1];
-        sintemp3 = sinCache2b[j + 1];
-        costemp3 = cosCache2b[j + 1];
-        sintemp4 = sinCache2b[j];
-        costemp4 = cosCache2b[j];
-        //printf("Slices are %d\n", slices);
-        for (i = 0; i <= slices; i++)
+     void newCircleTable(GLfloat **sint, GLfloat **cost, const int n, const GLboolean halfCircle)
+     {
+        // prototype:
+        // local:
+
+        // code:
+        int i;
+
+        /* Table size, the sign of n flips the circle direction */
+        const int size = abs(n);
+
+        /* Determine the angle between samples */
+        const GLfloat angle = (halfCircle ? 1 : 2) * (GLfloat)M_PI / (GLfloat)((n == 0) ? 1 : n);
+
+        /* Allocate memory for n samples, plus duplicate of first entry at the end */
+        *sint = (GLfloat *)calloc(1, sizeof(GLfloat) * (size + 1));
+        *cost = (GLfloat *)calloc(1, sizeof(GLfloat) * (size + 1));
+
+        /* Bail out if memory allocation fails, fgError never returns */
+        if (!(*sint) || !(*cost))
         {
-            [self addVertices:sintemp2*sinCache1a[i] :sintemp2*cosCache1a[i] :zHigh];
-            [self addVertices:sintemp1*sinCache1a[i] :sintemp1*cosCache1a[i] :zLow];
-            [self addNormals:sinCache2a[i]*sintemp3 :cosCache2a[i]*sintemp3 :costemp3];
-            [self addNormals:sinCache2a[i]*sintemp4 :cosCache2a[i]*sintemp4 :costemp4];
-            [self addTexcoord:1-(float)i/slices :1-(float)(j+1)/stacks];
-            [self addTexcoord:1-(float)i/slices :1-(float)(j)/stacks];
+            free(*sint);
+            free(*cost);
+            *sint = NULL;
+            *cost = NULL;
+            fprintf(gpFileSphere,"\n # Failed to allocate memory in fghCircleTable");
+            return;
+        }
+
+        /* Compute cos and sin around the circle */
+        (*sint)[0] = 0.0;
+        (*cost)[0] = 1.0;
+
+        for (i = 1; i < size; i++)
+        {
+            (*sint)[i] = (GLfloat)sin(angle * i);
+            (*cost)[i] = (GLfloat)cos(angle * i);
+        }
+
+        if (halfCircle)
+        {
+            (*sint)[size] = 0.0f;  /* sin PI */
+            (*cost)[size] = -1.0f; /* cos PI */
+        }
+        else
+        {
+            /* Last sample is duplicate of the first (sin or cos of 2 PI) */
+            (*sint)[size] = (*sint)[0];
+            (*cost)[size] = (*cost)[0];
         }
     }
+
+
+   //#-- Inner 1---#
+
+     void newGenerateSphere(GLfloat radius, GLint slices, GLint stacks, GLfloat **vertices, GLfloat **normals, int* nVert,const GLboolean halfCircle)
+     {
+        //prototype:
+	    void newCircleTable(GLfloat **sint, GLfloat **cost, const int n, const GLboolean halfCircle);
+        //local:
+        int i, j;
+        int idx = 0; /* idx into vertex/normal buffer */
+        GLfloat x, y, z;
+
+        /* Pre-computed circle */
+        GLfloat *sint1, *cost1;
+        GLfloat *sint2, *cost2;
+
+        //code:
+
+        /* number of unique vertices */
+        if (slices == 0 || stacks < 2)
+        {
+            /* nothing to generate */
+            *nVert = 0;
+            return;
+        }
+        *nVert = slices * (stacks - 1) + 2;
+        if ((*nVert) > 65535)
+            /*
+             * limit of glushort, thats 256*256 subdivisions, should be enough in practice. See note above
+             */
+           fprintf(gpFileSphere,"\n # fghGenerateSphere: too many slices or stacks requested, indices will wrap");
+
+        /* precompute values on unit circle */
+        newCircleTable(&sint1, &cost1, -slices, GL_FALSE);
+        newCircleTable(&sint2, &cost2, stacks, GL_TRUE);
+
+        /* Allocate vertex and normal buffers, bail out if memory allocation fails */
+        *vertices = (GLfloat *)malloc((*nVert) * 3 * sizeof(GLfloat));
+        *normals = (GLfloat *)malloc((*nVert) * 3 * sizeof(GLfloat));
+        if (!(*vertices) || !(*normals))
+        {
+            free(*vertices);
+            free(*normals);
+            *vertices = NULL;
+            *normals = NULL;
+            fprintf(gpFileSphere,"\n # Failed to allocate memory in fghGenerateSphere");
+            return;
+        }
+
+        /* top */
+        (*vertices)[0] = 0.f;
+        (*vertices)[1] = 0.f;
+        (*vertices)[2] = radius;
+        (*normals)[0] = 0.f;
+        (*normals)[1] = 0.f;
+        (*normals)[2] = 1.f;
+        idx = 3;
+
+        /* each stack */
+        for (i = 1; i < stacks; i++)
+        {
+            for (j = 0; j < slices; j++, idx += 3)
+            {
+                x = cost1[j] * sint2[i];
+                y = sint1[j] * sint2[i];
+                z = cost2[i];
+
+                (*vertices)[idx] = x * radius;
+                (*vertices)[idx + 1] = y * radius;
+                (*vertices)[idx + 2] = z * radius;
+                (*normals)[idx] = x;
+                (*normals)[idx + 1] = y;
+                (*normals)[idx + 2] = z;
+            }
+        }
+
+        /* bottom */
+        (*vertices)[idx] = 0.f;
+        (*vertices)[idx + 1] = 0.f;
+        (*vertices)[idx + 2] = -radius;
+        (*normals)[idx] = 0.f;
+        (*normals)[idx + 1] = 0.f;
+        (*normals)[idx + 2] = -1.f;
+
+        /* Done creating vertices, release sin and cos tables */
+        free(sint1);
+        free(cost1);
+        free(sint2);
+        free(cost2);
+     }
+
+
+    //#-- Outer--#
+
+    void newSphere( GLfloat radius, GLint slices, GLint stacks,GLfloat **vertices, GLfloat **normals, int* nVert,const GLboolean halfCircle,GLushort **sphereElement_New)
+    {
+        //prototypes:
+       
+	   
+        //local:
+        int i,j,idx ;   //, nVert;
+
+         /* Calling Inner 1 To  Generate vertices and normals */
+        newGenerateSphere(radius,slices,stacks,vertices,normals,nVert,halfCircle);
+
+        if (nVert == 0 || !normals || !vertices)
+        {
+            if (normals)
+                free(normals);
+            if (vertices)
+                free(vertices);
+            /* nothing to draw */
+            return;
+        }
+   
+   
+        GLushort offset;
+        /* Allocate buffers for indices, bail out if memory allocation fails */
+        (*sphereElement_New) = (GLushort *)malloc((slices + 1) * 2 * (stacks) * sizeof(GLushort));
+        if (!(*sphereElement_New))
+        {
+            free(*sphereElement_New);
+            fprintf(gpFileSphere, "Failed to allocate memory in fghSphere");
+        }
+
+        /* top stack */
+        for (j = 0, idx = 0; j < slices; j++, idx += 2)
+        {
+            (*sphereElement_New)[idx] = (GLushort)(j + 1); /* 0 is top vertex, 1 is first for first stack */
+            (*sphereElement_New)[idx + 1] = 0;
+        }
+        (*sphereElement_New)[idx] = 1; /* repeat first slice's idx for closing off shape */
+        (*sphereElement_New)[idx + 1] = 0;
+        idx += 2;
+
+        /* middle stacks: */
+        /* Strip indices are relative to first index belonging to strip, NOT relative to first vertex/normal pair in array */
+        for (i = 0; i < stacks - 2; i++, idx += 2)
+        {
+            offset = (GLushort)(1 + i * slices); /* triangle_strip indices start at 1 (0 is top vertex), and we advance one stack down as we go along */
+            for (j = 0; j < slices; j++, idx += 2)
+            {
+                 
+                (*sphereElement_New)[idx] = (GLushort)(offset + j + slices);
+                (*sphereElement_New)[idx + 1] = (GLushort)(offset + j);
+            }
+            (*sphereElement_New)[idx] = (GLushort)(offset + slices); /* repeat first slice's idx for closing off shape */
+            (*sphereElement_New)[idx + 1] = offset;
+        }
+
+        /* bottom stack */
+        offset = (GLushort)(1 + (stacks - 2) * slices); /* triangle_strip indices start at 1 (0 is top vertex), and we advance one stack down as we go along */
+        for (j = 0; j < slices; j++, idx += 2)
+        {
+            // (*sphereElement_New)[idx] = (GLushort)(nVert - 1); /* zero based index, last element in array (bottom vertex)... */
+            (*sphereElement_New)[idx] = (GLushort)(*nVert - 1);
+            
+            (*sphereElement_New)[idx + 1] = (GLushort)(offset + j);
+        }
+       (*sphereElement_New)[idx] = (*nVert - 1); /* repeat first slice's idx for closing off shape */
+        (*sphereElement_New)[idx + 1] = offset;
+
+        // #-----USE stripIdx array to copy it into our ELEMENTS Array----#
+        /// # ----STEP  2 ----#
+
+        iNoOfElements = idx;
+        /* cleanup allocated memory */
+    }
+
+ 
+
+
+void unInitializeNewSphere(void)
+{
+    //code:
+	if (Vbo_sphere_element)
+	{
+		glDeleteBuffers(1, &Vbo_sphere_element);
+		Vbo_sphere_element = 0;
+	}
+
+	if (Vbo_sphere_normal)
+	{
+		glDeleteBuffers(1, &Vbo_sphere_normal);
+		Vbo_sphere_normal = 0;
+	}
+
+	if (Vbo_sphere_position)
+	{
+		glDeleteBuffers(1, &Vbo_sphere_position);
+		Vbo_sphere_position = 0;
+	}
+
+	// delete gVao_sphere :
+	if (Vao_sphere)
+	{
+		glDeleteVertexArrays(1, &Vao_sphere);
+		Vao_sphere = 0;
+	}
+
+
 }
 
-- (int)getNumberOfSphereVertices
-{
-    return(VertexPointer);
-}
-        
-- (int)getNumberOfSphereTexcoord
-{
-    return(TexcoordPointer);
-}
-        
-- (int)getNumberOfSphereNormal
-{
-    return(NormalPointer);
-}
 
-- (float*)getSphereVertex
-{
-    return(model_Vertices);
-}
 
-- (float*)getSphereTexcoord
-{
-    return(model_Texcoord);
-}
 
-- (float*)getSphereNormal
-{
-    return(model_Normal);
-}
-@end
+
