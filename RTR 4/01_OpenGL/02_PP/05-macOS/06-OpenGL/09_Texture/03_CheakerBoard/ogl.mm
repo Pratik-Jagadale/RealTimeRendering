@@ -485,14 +485,17 @@ int main(int argc, char* argv[]){
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
-
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
-    
+
+    CHECKERBOARD_WIDTH = 64;
+	CHECKERBOARD_HEIGHT = 64;
+
 	[self loadGLTexture];
 
+	glEnable(GL_TEXTURE_2D);
+
     perspectiveProjectionMatrix = mat4::identity();
-	CHECKERBOARD_WIDTH = 64;
-	CHECKERBOARD_HEIGHT = 64;
+
 
     return 0;
 }
@@ -512,7 +515,7 @@ int main(int argc, char* argv[]){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, CHECKERBOARD_WIDTH, CHECKERBOARD_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, checkerboard);
-	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 }

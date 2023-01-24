@@ -159,7 +159,7 @@ int main(int argc, char* argv[]){
 	GLuint projectionMatrixUniform;
 	GLuint textureSamplerUniform;
 
-	GLuint texture;
+	GLuint marble_texture;
 
 	GLuint laUniform;			// light Ambiant
 	GLuint ldUniform;			// light Diffuse
@@ -710,7 +710,6 @@ int main(int argc, char* argv[]){
 	glBufferData(GL_ARRAY_BUFFER, sizeof(CubeTexCoord), CubeTexCoord, GL_STATIC_DRAW);
 	glVertexAttribPointer(PRJ_ATRIBUTE_TEXTURE0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(PRJ_ATRIBUTE_TEXTURE0);
-
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// vbo for Normal
@@ -726,14 +725,13 @@ int main(int argc, char* argv[]){
 	glBindVertexArray(0); // ubind vao for Cube
 
 	// Depth Related Changes
-    glClearDepthf(1.0f);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
-	texture = [self loadGLTexture:"marble.bmp"];
-    if(texture == 0)
+	marble_texture = [self loadGLTexture:"marble.bmp"];
+    if(marble_texture == 0)
     {
 		fprintf(gpFile, "loadGLTexture Failed...\n");
         [self uninitialise];
@@ -896,7 +894,7 @@ int main(int argc, char* argv[]){
 		glUniform1i(lightingEnabledUniform, 0);
 	}
 	glActiveTexture(GL_TEXTURE0); //
-	glBindTexture(GL_TEXTURE_2D, texture);
+	glBindTexture(GL_TEXTURE_2D, marble_texture);
 	glUniform1i(textureSamplerUniform, 0); //
 
 	glBindVertexArray(vao_Cube);
@@ -930,10 +928,10 @@ int main(int argc, char* argv[]){
 
 - (void) uninitialise
 {
-    if (texture)
+    if (marble_texture)
 	{
-		glDeleteTextures(1, &texture);
-		texture = 0;
+		glDeleteTextures(1, &marble_texture);
+		marble_texture = 0;
 	}
 
 	if (vbo_Cube_Normal)

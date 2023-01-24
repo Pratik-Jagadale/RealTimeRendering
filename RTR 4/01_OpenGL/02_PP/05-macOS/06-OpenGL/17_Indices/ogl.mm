@@ -468,9 +468,8 @@ int main(int argc, char* argv[]){
 	glBindVertexArray(0); // ubind vao for Square
 
 	// Depth Related Changes
-    glClearDepthf(1.0f);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
 
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
     
