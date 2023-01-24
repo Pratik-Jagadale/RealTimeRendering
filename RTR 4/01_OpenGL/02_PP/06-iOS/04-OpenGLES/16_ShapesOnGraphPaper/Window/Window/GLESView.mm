@@ -299,7 +299,7 @@ using namespace vmath;
     
 	// vartex Shader
 	const GLchar *vertexShaderSourceCode =
-		"#version 300 core"
+		"#version 300 es"
 		"\n"
 		"in vec4 a_position;"
 		"uniform mat4 u_mvpMatrix;"
@@ -343,7 +343,7 @@ using namespace vmath;
 	infoLogLength = 0;
 
 	const GLchar *fragmentShaderSourceCode =
-		"#version 300 core"
+		"#version 300 es"
 		"\n"
 		"precision highp float;"
 		"uniform vec3 u_Color;"

@@ -331,7 +331,7 @@ using namespace vmath;
 	{
 		// vartex Shader
 		const GLchar *vertexShaderSourceCode_PV =
-			"#version 300 core"
+			"#version 300 es"
 			"\n"
 			"in vec4 a_position;"
 			"in vec3 a_normal;"
@@ -406,7 +406,7 @@ using namespace vmath;
 		infoLogLength = 0;
 
 		const GLchar *fragmentShaderSourceCode_PV =
-			"#version 300 core"
+			"#version 300 es"
 			"\n"
 			"in vec3 phong_ads_out;"
 			"out vec4 FragColor;"
@@ -505,7 +505,7 @@ using namespace vmath;
 	{
 		// vartex Shader
 		const GLchar *vertexShaderSourceCode_PF =
-			"#version 300 core"
+			"#version 300 es"
 			"\n"
 			"in vec4 a_position;"
 			"in vec3 a_normal;"
@@ -566,7 +566,7 @@ using namespace vmath;
 		infoLogLength = 0;
 
 		const GLchar *fragmentShaderSourceCode_PF =
-			"#version 300 core"
+			"#version 300 es"
 			"\n"
 			"in vec3 transformedNormals;"
 			"in vec3 lightDirection;"

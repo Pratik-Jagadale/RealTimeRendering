@@ -292,7 +292,7 @@ using namespace vmath;
     
 	// vartex Shader
 	const GLchar *vertexShaderSourceCode =
-		"#version 300 core"
+		"#version 300 es"
 		"\n"
 		"in vec4 a_position;"
 		"in vec4 a_color;"
