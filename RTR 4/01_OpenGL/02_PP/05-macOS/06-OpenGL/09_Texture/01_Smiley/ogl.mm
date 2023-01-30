@@ -665,6 +665,7 @@ int main(int argc, char* argv[]){
 		vao = 0;
 	}
 
+	
 	if (shaderProgramObject)
 	{
 		glUseProgram(shaderProgramObject);
@@ -689,6 +690,14 @@ int main(int argc, char* argv[]){
 		glDeleteProgram(shaderProgramObject);
 		shaderProgramObject = 0;
 	}
+
+	if (gpFile)
+	{
+		fprintf(gpFile, "Log File Successfully Closes");
+		fclose(gpFile);
+		gpFile = NULL;
+	}
+
 }
 
 - (BOOL)acceptsFirstResponder

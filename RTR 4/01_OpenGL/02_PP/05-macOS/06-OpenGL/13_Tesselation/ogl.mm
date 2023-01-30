@@ -648,6 +648,7 @@ uiNumberOfSegments = 1; // because we want ot draw one line
 		vao = 0;
 	}
 
+	
 	if (shaderProgramObject)
 	{
 		glUseProgram(shaderProgramObject);
@@ -672,6 +673,14 @@ uiNumberOfSegments = 1; // because we want ot draw one line
 		glDeleteProgram(shaderProgramObject);
 		shaderProgramObject = 0;
 	}
+
+	if (gpFile)
+	{
+		fprintf(gpFile, "Log File Successfully Closes");
+		fclose(gpFile);
+		gpFile = NULL;
+	}
+
 }
 
 - (BOOL)acceptsFirstResponder

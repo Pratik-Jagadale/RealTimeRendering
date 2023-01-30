@@ -902,6 +902,14 @@ int main(int argc, char* argv[]){
 		glDeleteProgram(shaderProgramObject);
 		shaderProgramObject = 0;
 	}
+
+	if (gpFile)
+	{
+		fprintf(gpFile, "Log File Successfully Closes");
+		fclose(gpFile);
+		gpFile = NULL;
+	}
+
 }
 
 - (BOOL)acceptsFirstResponder

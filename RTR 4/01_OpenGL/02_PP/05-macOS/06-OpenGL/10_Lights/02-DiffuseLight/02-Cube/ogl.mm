@@ -706,6 +706,7 @@ int main(int argc, char* argv[]){
 		glDeleteVertexArrays(1, &vao_Cube);
 		vao_Cube = 0;
 	}
+	
 	if (shaderProgramObject)
 	{
 		glUseProgram(shaderProgramObject);
@@ -730,6 +731,14 @@ int main(int argc, char* argv[]){
 		glDeleteProgram(shaderProgramObject);
 		shaderProgramObject = 0;
 	}
+
+	if (gpFile)
+	{
+		fprintf(gpFile, "Log File Successfully Closes");
+		fclose(gpFile);
+		gpFile = NULL;
+	}
+
 }
 
 - (BOOL)acceptsFirstResponder

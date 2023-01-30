@@ -621,6 +621,7 @@ glBindVertexArray(0);
 		gVao_sphere = 0;
 	}
 
+	
 	if (shaderProgramObject)
 	{
 		glUseProgram(shaderProgramObject);
@@ -645,6 +646,14 @@ glBindVertexArray(0);
 		glDeleteProgram(shaderProgramObject);
 		shaderProgramObject = 0;
 	}
+
+	if (gpFile)
+	{
+		fprintf(gpFile, "Log File Successfully Closes");
+		fclose(gpFile);
+		gpFile = NULL;
+	}
+
 }
 
 - (BOOL)acceptsFirstResponder
