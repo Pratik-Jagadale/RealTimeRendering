@@ -588,14 +588,13 @@ HRESULT initialize(void)
 
 	const float rectangleVertices[] =
 		{
-			-1.0,1.0,0.0,
-			1.0,1.0,0.0,
-			-1.0,-1.0,0.0,
+			-1.0, 1.0, 0.0,
+			1.0, 1.0, 0.0,
+			-1.0, -1.0, 0.0,
 
-			-1.0,-1.0,0.0,
-			1.0,1.0,0.0,
-			1.0,-1.0,0.0
-		};
+			-1.0, -1.0, 0.0,
+			1.0, 1.0, 0.0,
+			1.0, -1.0, 0.0};
 
 	// CREATE VERTEX BUFFER FOR ABOVE VERTEX POSITIONS
 	// A. INITIALIZE  BUFFER DESC
@@ -814,8 +813,6 @@ HRESULT resize(int width, int height)
 
 void display(void)
 {
-	// VARIABLE DECLARTIONS
-
 	// CODE
 	// CLEAR THE RTV USING CLEAR COLOR
 	gpID3D11DeviceContext->ClearRenderTargetView(gpID3D11RenderTargetView, clearColor);
