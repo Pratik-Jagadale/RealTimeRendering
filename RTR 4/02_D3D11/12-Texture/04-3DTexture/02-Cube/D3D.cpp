@@ -206,9 +206,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLi
 		}
 	}
 
-
 	uninitialize();
-	
+
 	// UNINITIALIZE CONM
 	CoUninitialize();
 
@@ -728,8 +727,7 @@ HRESULT initialize(void)
 			+1.0f, +0.0f,
 			+1.0f, +0.0f,
 			+0.0f, +1.0f,
-			+1.0f, +1.0f
-		};
+			+1.0f, +1.0f};
 
 	// POSITION
 	// CREATE VERTEX BUFFER FOR ABOVE VERTEX POSITIONS
@@ -870,7 +868,7 @@ HRESULT initialize(void)
 	// CREATE TEXTURE SAMPLER STATE
 	D3D11_SAMPLER_DESC d3d11SamplerDescriptor;
 
-	ZeroMemory((void*)&d3d11SamplerDescriptor, sizeof(D3D11_SAMPLER_DESC));
+	ZeroMemory((void *)&d3d11SamplerDescriptor, sizeof(D3D11_SAMPLER_DESC));
 
 	d3d11SamplerDescriptor.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	d3d11SamplerDescriptor.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -890,8 +888,6 @@ HRESULT initialize(void)
 		fprintf(gpFile, "ID3D11Device::CreateSamplerState SUCCEEDED in initialize().\n");
 		fclose(gpFile);
 	}
-
-
 
 	// INITIALIZE CLEAR COLOR ARRAY
 	clearColor[0] = 0.0f;
@@ -993,21 +989,20 @@ HRESULT printD3DInfo()
 	return hr;
 }
 
-HRESULT loadD3DTexture(const wchar_t* textureFileName, ID3D11ShaderResourceView** ppID3D11ShaderResourceView)
+HRESULT loadD3DTexture(const wchar_t *textureFileName, ID3D11ShaderResourceView **ppID3D11ShaderResourceView)
 {
 	// LOCAL BARIABLES
 	HRESULT hr = S_OK;
 
 	// CODE
 	hr = DirectX::CreateWICTextureFromFile(
-			gpID3D11Device,
-			gpID3D11DeviceContext,
-			textureFileName,
-			NULL,
-			ppID3D11ShaderResourceView,
-			0
-		);
-	
+		gpID3D11Device,
+		gpID3D11DeviceContext,
+		textureFileName,
+		NULL,
+		ppID3D11ShaderResourceView,
+		0);
+
 	return hr;
 }
 
@@ -1181,7 +1176,6 @@ void display(void)
 
 	// SET SAMPLER STATE IN PIXEL SHADER
 	gpID3D11DeviceContext->PSSetSamplers(0, 1, &gpID3D11SamplerState_Texture);
-
 
 	// DRAW THE PRIMITIVE
 	gpID3D11DeviceContext->Draw(6, 0);
