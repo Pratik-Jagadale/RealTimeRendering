@@ -47,16 +47,23 @@ ID3D11Device *gpID3D11Device = NULL;
 ID3D11DeviceContext *gpID3D11DeviceContext = NULL;
 ID3D11RenderTargetView *gpID3D11RenderTargetView = NULL;
 
-ID3D11VertexShader *gpID3D11VertexShader = NULL;
-ID3D11PixelShader *gpID3D11PixelShader = NULL;
-ID3D11InputLayout *gpID3D11InputLayout = NULL;
+ID3D11VertexShader *gpID3D11VertexShader_PV = NULL;
+ID3D11PixelShader *gpID3D11PixelShader_PV = NULL;
+ID3D11InputLayout *gpID3D11InputLayout_PV = NULL;
+
 ID3D11Buffer *gpID3D11Buffer_PositionBuffer_Sphere = NULL;
 ID3D11Buffer *gpID3D11Buffer_NormalBuffer_Sphere = NULL;
 ID3D11Buffer *gpID3D11Buffer_IndexBuffer_Sphere = NULL;
-ID3D11Buffer *gpID3D11Buffer_ConstantBuffer = NULL;
+ID3D11Buffer *gpID3D11Buffer_ConstantBuffer_PV = NULL;
 ID3D11RasterizerState *gpID3D11RasterizerState = NULL;
 
 ID3D11DepthStencilView *gpID3D11DepthStencilView = NULL;
+
+// PER PIXEL RELATED VARIABLES
+ID3D11VertexShader *gpID3D11VertexShader_PP = NULL;
+ID3D11PixelShader *gpID3D11PixelShader_PP = NULL;
+ID3D11InputLayout *gpID3D11InputLayout_PP = NULL;
+ID3D11Buffer *gpID3D11Buffer_ConstantBuffer_PP = NULL;
 
 float clearColor[4];
 
@@ -73,15 +80,15 @@ struct CBUFFER
 	unsigned int lightEnabled;
 };
 
-float lightAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
+float lightAmbiant[] = {0.1f, 0.1f, 0.1f, 1.0f};
 float lightDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
 float lightSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
 float lightPositions[] = {100.0f, 100.0f, -100.0f, 1.0f};
 
 float materialAmbiant[] = {0.0f, 0.0f, 0.0f, 1.0f};
-float materialDiffuse[] = {0.5f, 0.5f, 0.5f, 1.0f};
-float materialSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
-float materialShineeness = 50.0f;
+float materialDiffuse[] = {0.5f, 0.2f, 0.7f, 1.0f};
+float materialSpecular[] = {0.7f, 0.7f, 0.7f, 1.0f};
+float materialShineeness = 120.0f;
 BOOL bLight = FALSE;
 
 float sphere_vertices[1146];
@@ -90,6 +97,8 @@ float sphere_textures[764];
 unsigned short sphere_elements[2280];
 int gNumVertices;
 int gNumElements;
+
+BOOL bPerFragShader = TRUE;
 
 // ENTRY POINT FUNCTION
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
@@ -253,6 +262,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			else
 			{
 				bLight = FALSE;
+			}
+			break;
+
+		case 'p':
+		case 'P':
+			if (bPerFragShader == FALSE)
+			{
+				bPerFragShader = TRUE;
+			}
+			else
+			{
+				bPerFragShader = FALSE;
 			}
 			break;
 
@@ -452,237 +473,533 @@ HRESULT initialize(void)
 
 		fclose(gpFile);
 	}
-
-	// VERTEX SHADER
-	const char *vertexShaderSourceCode =
-		"cbuffer ConstantBuffer"
-		"{"
-		"float4x4 worldMatrix;"
-		"float4x4 viewMatrix;"
-		"float4x4 projectionMatrix;"
-		"float4 la;"
-		"float4 ld;"
-		"float4 ls;"
-		"float4 lightPosition;"
-		"float4 ka;"
-		"float4 kd;"
-		"float4 ks;"
-		"float materialShininess;"
-		"uint lightEnabled;"
-		"}"
-		"struct vertex"
-		"{"
-		"float4 position:SV_POSITION;"
-		"float3 phong_ads_light:COLOR;"
-		"};"
-		"vertex main(float4 position:POSITION, float4 normal:NORMAL)"
-		"{"
-		"vertex output;"
-		"if(lightEnabled == 1)"
-		"{"
-		"float4 eyeCoordinate = mul(worldMatrix,position);"
-		"eyeCoordinate = mul(viewMatrix,eyeCoordinate );"
-		"float3x3 normalMatrix = (float3x3)worldMatrix;"
-		"float3 transformedNormals = normalize(mul(normalMatrix, (float3)normal));"
-		"float3 lightDirection = normalize( (float3)lightPosition - (float3)eyeCoordinate );"
-		"float3 ambiant = la * ks;"
-		"float3 diffuse = ld * kd * max(dot(lightDirection,transformedNormals), 0.0);"
-		"float3 reflectionVector = reflect(-lightDirection,transformedNormals);"
-		"float3 viewerVector = normalize(-eyeCoordinate.xyz);"
-		"float3 specular = ls * ks * pow(max(dot(reflectionVector,viewerVector), 0.0),materialShininess);"
-		"output.phong_ads_light = ambiant + diffuse + specular;"
-		"}"
-		"else"
-		"{"
-		"output.phong_ads_light = float3(1.0,1.0,1.0);"
-		"}"
-
-		"float4 pos = mul(worldMatrix, position);"
-		"pos = mul(viewMatrix, pos);"
-		"pos = mul(projectionMatrix, pos);"
-		"output.position = pos;"
-		"return output;"
-		"}";
-
-	ID3DBlob *pID3DBlob_VertexShaderCode = NULL;
-	ID3DBlob *pID3DBlob_error = NULL;
-
-	// COMPILE VERTEX SHADER
-	hr = D3DCompile(vertexShaderSourceCode,
-					lstrlenA(vertexShaderSourceCode) + 1,
-					"VS",
-					NULL,
-					D3D_COMPILE_STANDARD_FILE_INCLUDE,
-					"main",
-					"vs_5_0", // FEATURE LEVEL
-					0,
-					0,
-					&pID3DBlob_VertexShaderCode,
-					&pID3DBlob_error);
-
-	if (FAILED(hr))
 	{
-		fopen_s(&gpFile, "Log.txt", "a+");
-		if (pID3DBlob_error)
+		// VERTEX SHADER
+		const char *vertexShaderSourceCode =
+			"cbuffer ConstantBuffer"
+			"{"
+			"float4x4 worldMatrix;"
+			"float4x4 viewMatrix;"
+			"float4x4 projectionMatrix;"
+			"float4 la;"
+			"float4 ld;"
+			"float4 ls;"
+			"float4 lightPosition;"
+			"float4 ka;"
+			"float4 kd;"
+			"float4 ks;"
+			"float materialShininess;"
+			"uint lightEnabled;"
+			"}"
+			"struct vertex"
+			"{"
+			"float4 position:SV_POSITION;"
+			"float3 phong_ads_light:COLOR;"
+			"};"
+			"vertex main(float4 position:POSITION, float4 normal:NORMAL)"
+			"{"
+			"vertex output;"
+			"if(lightEnabled == 1)"
+			"{"
+			"float4 eyeCoordinate = mul(worldMatrix,position);"
+			"eyeCoordinate = mul(viewMatrix,eyeCoordinate );"
+			"float3x3 normalMatrix = (float3x3)worldMatrix;"
+			"float3 transformedNormals = normalize(mul(normalMatrix, (float3)normal));"
+			"float3 lightDirection = normalize( (float3)lightPosition - (float3)eyeCoordinate );"
+			"float3 ambiant = la * ks;"
+			"float3 diffuse = ld * kd * max(dot(lightDirection,transformedNormals), 0.0);"
+			"float3 reflectionVector = reflect(-lightDirection,transformedNormals);"
+			"float3 viewerVector = normalize(-eyeCoordinate.xyz);"
+			"float3 specular = ls * ks * pow(max(dot(reflectionVector,viewerVector), 0.0),materialShininess);"
+			"output.phong_ads_light = ambiant + diffuse + specular;"
+			"}"
+			"else"
+			"{"
+			"output.phong_ads_light = float3(1.0,1.0,1.0);"
+			"}"
+
+			"float4 pos = mul(worldMatrix, position);"
+			"pos = mul(viewMatrix, pos);"
+			"pos = mul(projectionMatrix, pos);"
+			"output.position = pos;"
+			"return output;"
+			"}";
+
+		ID3DBlob *pID3DBlob_VertexShaderCode = NULL;
+		ID3DBlob *pID3DBlob_error = NULL;
+
+		// COMPILE VERTEX SHADER
+		hr = D3DCompile(vertexShaderSourceCode,
+						lstrlenA(vertexShaderSourceCode) + 1,
+						"VS",
+						NULL,
+						D3D_COMPILE_STANDARD_FILE_INCLUDE,
+						"main",
+						"vs_5_0", // FEATURE LEVEL
+						0,
+						0,
+						&pID3DBlob_VertexShaderCode,
+						&pID3DBlob_error);
+
+		if (FAILED(hr))
 		{
-			fprintf(gpFile, "D3DCompile() Failed for Vertex Shader :\n%s.\n", (char *)pID3DBlob_error->GetBufferPointer());
+			fopen_s(&gpFile, "Log.txt", "a+");
+			if (pID3DBlob_error)
+			{
+				fprintf(gpFile, "D3DCompile() Failed for Vertex Shader :\n%s.\n", (char *)pID3DBlob_error->GetBufferPointer());
+			}
+			else
+			{
+				fprintf(gpFile, "D3DCompile() Failed for Vertex Shader : Unknown.\n");
+			}
+			fclose(gpFile);
+			return (hr);
 		}
 		else
 		{
-			fprintf(gpFile, "D3DCompile() Failed for Vertex Shader : Unknown.\n");
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "D3DCompile() SUCCEEDED for Vertex Shader.\n");
+			fclose(gpFile);
 		}
-		fclose(gpFile);
-		return (hr);
-	}
-	else
-	{
-		fopen_s(&gpFile, "Log.txt", "a+");
-		fprintf(gpFile, "D3DCompile() SUCCEEDED for Vertex Shader.\n");
-		fclose(gpFile);
-	}
 
-	// CREATE VERTEX SHADER
-	hr = gpID3D11Device->CreateVertexShader(
-		pID3DBlob_VertexShaderCode->GetBufferPointer(),
-		pID3DBlob_VertexShaderCode->GetBufferSize(),
-		NULL,
-		&gpID3D11VertexShader);
+		// CREATE VERTEX SHADER
+		hr = gpID3D11Device->CreateVertexShader(
+			pID3DBlob_VertexShaderCode->GetBufferPointer(),
+			pID3DBlob_VertexShaderCode->GetBufferSize(),
+			NULL,
+			&gpID3D11VertexShader_PV);
 
-	if (FAILED(hr))
-	{
-		fopen_s(&gpFile, "Log.txt", "a+");
-		fprintf(gpFile, "ID3D11Device::createVertexShader FAILED in initialize().\n");
-		fclose(gpFile);
-	}
-	else
-	{
-		fopen_s(&gpFile, "Log.txt", "a+");
-		fprintf(gpFile, "ID3D11Device::createVertexShader SUCCEEDED in initialize().\n");
-		fclose(gpFile);
-	}
-
-	// SET THIS VERTEX SHADER IN VERTEX SHADER STAGE OF PIPE LINE
-	gpID3D11DeviceContext->VSSetShader(gpID3D11VertexShader, NULL, 0);
-
-	// PIXEL SHADER
-	const char *pixelShaderSourceCode =
-		"struct vertex"
-		"{"
-		"float4 position:SV_POSITION;"
-		"float3 phong_ads_light:COLOR;"
-		"};"
-		"float4 main(vertex input):SV_TARGET"
-		"{"
-		"float4 color;"
-		"color = float4(input.phong_ads_light, 1.0);"
-		"return color;"
-		"}";
-
-	ID3DBlob *pID3DBlob_PixelShaderCode = NULL;
-	pID3DBlob_error = NULL;
-
-	// COMPILE VERTEX SHADER
-	hr = D3DCompile(pixelShaderSourceCode,
-					lstrlenA(pixelShaderSourceCode) + 1,
-					"PS",
-					NULL,
-					D3D_COMPILE_STANDARD_FILE_INCLUDE,
-					"main",
-					"ps_5_0", // FEATURE LEVEL
-					0,
-					0,
-					&pID3DBlob_PixelShaderCode,
-					&pID3DBlob_error);
-
-	if (FAILED(hr))
-	{
-		fopen_s(&gpFile, "Log.txt", "a+");
-		if (pID3DBlob_error)
+		if (FAILED(hr))
 		{
-			fprintf(gpFile, "D3DCompile() Failed for Pixel Shader :\n%s.\n", (char *)pID3DBlob_error->GetBufferPointer());
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "ID3D11Device::createVertexShader FAILED in initialize().\n");
+			fclose(gpFile);
 		}
 		else
 		{
-			fprintf(gpFile, "D3DCompile() Failed for Pixel Shader : Unknown.\n");
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "ID3D11Device::createVertexShader SUCCEEDED in initialize().\n");
+			fclose(gpFile);
 		}
-		fclose(gpFile);
-		return (hr);
+
+		// PIXEL SHADER
+		const char *pixelShaderSourceCode =
+			"struct vertex"
+			"{"
+			"float4 position:SV_POSITION;"
+			"float3 phong_ads_light:COLOR;"
+			"};"
+			"float4 main(vertex input):SV_TARGET"
+			"{"
+			"float4 color;"
+			"color = float4(input.phong_ads_light, 1.0);"
+			"return color;"
+			"}";
+
+		ID3DBlob *pID3DBlob_PixelShaderCode = NULL;
+		pID3DBlob_error = NULL;
+
+		// COMPILE VERTEX SHADER
+		hr = D3DCompile(pixelShaderSourceCode,
+						lstrlenA(pixelShaderSourceCode) + 1,
+						"PS",
+						NULL,
+						D3D_COMPILE_STANDARD_FILE_INCLUDE,
+						"main",
+						"ps_5_0", // FEATURE LEVEL
+						0,
+						0,
+						&pID3DBlob_PixelShaderCode,
+						&pID3DBlob_error);
+
+		if (FAILED(hr))
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			if (pID3DBlob_error)
+			{
+				fprintf(gpFile, "D3DCompile() Failed for Pixel Shader :\n%s.\n", (char *)pID3DBlob_error->GetBufferPointer());
+			}
+			else
+			{
+				fprintf(gpFile, "D3DCompile() Failed for Pixel Shader : Unknown.\n");
+			}
+			fclose(gpFile);
+			return (hr);
+		}
+		else
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "D3DCompile() SUCCEEDED for Pixel Shader.\n");
+			fclose(gpFile);
+		}
+
+		// CREATE VERTEX SHADER
+		hr = gpID3D11Device->CreatePixelShader(
+			pID3DBlob_PixelShaderCode->GetBufferPointer(),
+			pID3DBlob_PixelShaderCode->GetBufferSize(),
+			NULL,
+			&gpID3D11PixelShader_PV);
+
+		if (FAILED(hr))
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "ID3D11Device::createPixelShader FAILED in initialize().\n");
+			fclose(gpFile);
+		}
+		else
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "ID3D11Device::createPixelShader SUCCEEDED in initialize().\n");
+			fclose(gpFile);
+		}
+
+		// CREATE INPUT LAYOUT
+		D3D11_INPUT_ELEMENT_DESC d3d11InputElementDesc[2];
+
+		ZeroMemory((void *)d3d11InputElementDesc, sizeof(D3D11_INPUT_ELEMENT_DESC) * _ARRAYSIZE(d3d11InputElementDesc));
+
+		d3d11InputElementDesc[0].SemanticName = "POSITION";
+		d3d11InputElementDesc[0].SemanticIndex = 0;
+		d3d11InputElementDesc[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+		d3d11InputElementDesc[0].AlignedByteOffset = 0;
+		d3d11InputElementDesc[0].InputSlot = 0;
+		d3d11InputElementDesc[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+		d3d11InputElementDesc[0].InstanceDataStepRate = 0;
+
+		d3d11InputElementDesc[1].SemanticName = "NORMAL";
+		d3d11InputElementDesc[1].SemanticIndex = 0;
+		d3d11InputElementDesc[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+		d3d11InputElementDesc[1].AlignedByteOffset = 0;
+		d3d11InputElementDesc[1].InputSlot = 1;
+		d3d11InputElementDesc[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+		d3d11InputElementDesc[1].InstanceDataStepRate = 0;
+
+		// CREATE INPUT LAYOUT
+		// INITIALIZE INPUT LAYOUT STRUCTURE
+		hr = gpID3D11Device->CreateInputLayout(d3d11InputElementDesc, _ARRAYSIZE(d3d11InputElementDesc), pID3DBlob_VertexShaderCode->GetBufferPointer(), pID3DBlob_VertexShaderCode->GetBufferSize(), &gpID3D11InputLayout_PV);
+		if (FAILED(hr))
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "ID3D11Device::CreateInputLayout FAILED in initialize().\n");
+			fclose(gpFile);
+		}
+		else
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "ID3D11Device::CreateInputLayout SUCCEEDED in initialize().\n");
+			fclose(gpFile);
+		}
+
+		pID3DBlob_VertexShaderCode->Release();
+		pID3DBlob_VertexShaderCode = NULL;
+
+		pID3DBlob_PixelShaderCode->Release();
+		pID3DBlob_PixelShaderCode = NULL;
+
+		// CONSTANT BUFFER
+		// A. INITIALIZE  BUFFER DESC
+		D3D11_BUFFER_DESC d3d11BufferDescriptor;
+		ZeroMemory((void *)&d3d11BufferDescriptor, sizeof(D3D11_BUFFER_DESC));
+
+		d3d11BufferDescriptor.Usage = D3D11_USAGE_DEFAULT;
+		d3d11BufferDescriptor.ByteWidth = sizeof(CBUFFER);
+		d3d11BufferDescriptor.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+		// B. CREATE THE BUFFER
+		hr = gpID3D11Device->CreateBuffer(&d3d11BufferDescriptor, NULL, &gpID3D11Buffer_ConstantBuffer_PV);
+		if (FAILED(hr))
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "gpID3D11Device::CreateBuffer FAILED Constant in initialize().\n");
+			fclose(gpFile);
+		}
+		else
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "gpID3D11Device::CreateBuffer SUCCEEDED for Constant in initialize().\n");
+			fclose(gpFile);
+		}
 	}
-	else
+
+	// PP
 	{
-		fopen_s(&gpFile, "Log.txt", "a+");
-		fprintf(gpFile, "D3DCompile() SUCCEEDED for Pixel Shader.\n");
-		fclose(gpFile);
+
+		// VERTEX SHADER
+		const char *vertexShaderSourceCode =
+			"cbuffer ConstantBuffer"
+			"{"
+			"float4x4 worldMatrix;"
+			"float4x4 viewMatrix;"
+			"float4x4 projectionMatrix;"
+			"float4 la;"
+			"float4 ld;"
+			"float4 ls;"
+			"float4 lightPosition;"
+			"float4 ka;"
+			"float4 kd;"
+			"float4 ks;"
+			"float materialShininess;"
+			"uint lightEnabled;"
+			"}"
+			"struct vertex"
+			"{"
+			"float4 position:SV_POSITION;"
+			"float3 transformedNormals:NORMAL0;"
+			"float3 lightDirection:NORMAL1;"
+			"float3 viewerVector:NORMAL2;"
+			"};"
+			"vertex main(float4 position:POSITION, float4 normal:NORMAL)"
+			"{"
+			"vertex output;"
+			"if(lightEnabled == 1)"
+			"{"
+			"float4 eyeCoordinate = mul(worldMatrix,position);"
+			"eyeCoordinate = mul(viewMatrix,eyeCoordinate );"
+			"float3x3 normalMatrix = (float3x3)worldMatrix;"
+			"output.transformedNormals = mul(normalMatrix, (float3)normal);"
+			"output.lightDirection = (float3)lightPosition - (float3)eyeCoordinate;"
+			//"float3 ambiant = la * ks;"
+			//"float3 diffuse = ld * kd * max(dot(lightDirection,transformedNormals), 0.0);"
+			//"float3 reflectionVector = reflect(-lightDirection,transformedNormals);"
+			"output.viewerVector = -eyeCoordinate.xyz;"
+			//"float3 specular = ls * ks * pow(max(dot(reflectionVector,viewerVector), 0.0),materialShininess);"
+			//"output.phong_ads_light = ambiant + diffuse + specular;"
+			"}"
+			"float4 pos = mul(worldMatrix, position);"
+			"pos = mul(viewMatrix, pos);"
+			"pos = mul(projectionMatrix, pos);"
+			"output.position = pos;"
+			"return output;"
+			"}";
+
+		ID3DBlob *pID3DBlob_VertexShaderCode = NULL;
+		ID3DBlob *pID3DBlob_error = NULL;
+
+		// COMPILE VERTEX SHADER
+		hr = D3DCompile(vertexShaderSourceCode,
+						lstrlenA(vertexShaderSourceCode) + 1,
+						"VS",
+						NULL,
+						D3D_COMPILE_STANDARD_FILE_INCLUDE,
+						"main",
+						"vs_5_0", // FEATURE LEVEL
+						0,
+						0,
+						&pID3DBlob_VertexShaderCode,
+						&pID3DBlob_error);
+
+		if (FAILED(hr))
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			if (pID3DBlob_error)
+			{
+				fprintf(gpFile, "D3DCompile() Failed for Vertex Shader :\n%s.\n", (char *)pID3DBlob_error->GetBufferPointer());
+			}
+			else
+			{
+				fprintf(gpFile, "D3DCompile() Failed for Vertex Shader : Unknown.\n");
+			}
+			fclose(gpFile);
+			return (hr);
+		}
+		else
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "D3DCompile() SUCCEEDED for Vertex Shader.\n");
+			fclose(gpFile);
+		}
+
+		// CREATE VERTEX SHADER
+		hr = gpID3D11Device->CreateVertexShader(
+			pID3DBlob_VertexShaderCode->GetBufferPointer(),
+			pID3DBlob_VertexShaderCode->GetBufferSize(),
+			NULL,
+			&gpID3D11VertexShader_PP);
+
+		if (FAILED(hr))
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "ID3D11Device::createVertexShader FAILED in initialize().\n");
+			fclose(gpFile);
+		}
+		else
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "ID3D11Device::createVertexShader SUCCEEDED in initialize().\n");
+			fclose(gpFile);
+		}
+
+		// PIXEL SHADER
+		const char *pixelShaderSourceCode =
+			"cbuffer ConstantBuffer"
+			"{"
+			"float4x4 worldMatrix;"
+			"float4x4 viewMatrix;"
+			"float4x4 projectionMatrix;"
+			"float4 la;"
+			"float4 ld;"
+			"float4 ls;"
+			"float4 lightPosition;"
+			"float4 ka;"
+			"float4 kd;"
+			"float4 ks;"
+			"float materialShininess;"
+			"uint lightEnabled;"
+			"}"
+			"struct vertex"
+			"{"
+			"float4 position:SV_POSITION;"
+			"float3 transformedNormals:NORMAL0;"
+			"float3 lightDirection:NORMAL1;"
+			"float3 viewerVector:NORMAL2;"
+			"};"
+			"float4 main(vertex input):SV_TARGET"
+			"{"
+			"float3 phong_ads_light;"
+
+			"if(lightEnabled == 1)"
+			"{"
+			"float3 normalized_transformed_normals= normalize(input.transformedNormals);"
+			"float3 normalized_light_direction = normalize(input.lightDirection);"
+			"float3 normalized_view_vector = normalize(input.viewerVector);"
+
+			"float3 ambiant = la * ks;"
+			"float3 diffuse = ld * kd * max(dot(normalized_light_direction,normalized_transformed_normals), 0.0);"
+			"float3 reflectionVector = reflect(-normalized_light_direction,normalized_transformed_normals);"
+			"float3 specular = ls * ks * pow(max(dot(reflectionVector,normalized_view_vector), 0.0),materialShininess);"
+			"phong_ads_light = ambiant + diffuse + specular;"
+			"}"
+			"else"
+			"{"
+			"phong_ads_light = float3(1.0,1.0,1.0);"
+			"}"
+			"return float4(phong_ads_light, 1.0);;"
+			"}";
+
+		ID3DBlob *pID3DBlob_PixelShaderCode = NULL;
+		pID3DBlob_error = NULL;
+
+		// COMPILE VERTEX SHADER
+		hr = D3DCompile(pixelShaderSourceCode,
+						lstrlenA(pixelShaderSourceCode) + 1,
+						"PS",
+						NULL,
+						D3D_COMPILE_STANDARD_FILE_INCLUDE,
+						"main",
+						"ps_5_0", // FEATURE LEVEL
+						0,
+						0,
+						&pID3DBlob_PixelShaderCode,
+						&pID3DBlob_error);
+
+		if (FAILED(hr))
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			if (pID3DBlob_error)
+			{
+				fprintf(gpFile, "D3DCompile() Failed for Pixel Shader :\n%s.\n", (char *)pID3DBlob_error->GetBufferPointer());
+			}
+			else
+			{
+				fprintf(gpFile, "D3DCompile() Failed for Pixel Shader : Unknown.\n");
+			}
+			fclose(gpFile);
+			return (hr);
+		}
+		else
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "D3DCompile() SUCCEEDED for Pixel Shader.\n");
+			fclose(gpFile);
+		}
+
+		// CREATE VERTEX SHADER
+		hr = gpID3D11Device->CreatePixelShader(
+			pID3DBlob_PixelShaderCode->GetBufferPointer(),
+			pID3DBlob_PixelShaderCode->GetBufferSize(),
+			NULL,
+			&gpID3D11PixelShader_PP);
+
+		if (FAILED(hr))
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "ID3D11Device::createPixelShader FAILED in initialize().\n");
+			fclose(gpFile);
+		}
+		else
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "ID3D11Device::createPixelShader SUCCEEDED in initialize().\n");
+			fclose(gpFile);
+		}
+
+		// CREATE INPUT LAYOUT
+		D3D11_INPUT_ELEMENT_DESC d3d11InputElementDesc[2];
+
+		ZeroMemory((void *)d3d11InputElementDesc, sizeof(D3D11_INPUT_ELEMENT_DESC) * _ARRAYSIZE(d3d11InputElementDesc));
+
+		d3d11InputElementDesc[0].SemanticName = "POSITION";
+		d3d11InputElementDesc[0].SemanticIndex = 0;
+		d3d11InputElementDesc[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+		d3d11InputElementDesc[0].AlignedByteOffset = 0;
+		d3d11InputElementDesc[0].InputSlot = 0;
+		d3d11InputElementDesc[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+		d3d11InputElementDesc[0].InstanceDataStepRate = 0;
+
+		d3d11InputElementDesc[1].SemanticName = "NORMAL";
+		d3d11InputElementDesc[1].SemanticIndex = 0;
+		d3d11InputElementDesc[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+		d3d11InputElementDesc[1].AlignedByteOffset = 0;
+		d3d11InputElementDesc[1].InputSlot = 1;
+		d3d11InputElementDesc[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+		d3d11InputElementDesc[1].InstanceDataStepRate = 0;
+
+		// CREATE INPUT LAYOUT
+		// INITIALIZE INPUT LAYOUT STRUCTURE
+		hr = gpID3D11Device->CreateInputLayout(d3d11InputElementDesc, _ARRAYSIZE(d3d11InputElementDesc), pID3DBlob_VertexShaderCode->GetBufferPointer(), pID3DBlob_VertexShaderCode->GetBufferSize(), &gpID3D11InputLayout_PP);
+		if (FAILED(hr))
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "ID3D11Device::CreateInputLayout FAILED in initialize().\n");
+			fclose(gpFile);
+		}
+		else
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "ID3D11Device::CreateInputLayout SUCCEEDED in initialize().\n");
+			fclose(gpFile);
+		}
+
+		pID3DBlob_VertexShaderCode->Release();
+		pID3DBlob_VertexShaderCode = NULL;
+
+		pID3DBlob_PixelShaderCode->Release();
+		pID3DBlob_PixelShaderCode = NULL;
+
+		// CONSTANT BUFFER
+		// A. INITIALIZE  BUFFER DESC
+		D3D11_BUFFER_DESC d3d11BufferDescriptor;
+		ZeroMemory((void *)&d3d11BufferDescriptor, sizeof(D3D11_BUFFER_DESC));
+
+		d3d11BufferDescriptor.Usage = D3D11_USAGE_DEFAULT;
+		d3d11BufferDescriptor.ByteWidth = sizeof(CBUFFER);
+		d3d11BufferDescriptor.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+		// B. CREATE THE BUFFER
+		hr = gpID3D11Device->CreateBuffer(&d3d11BufferDescriptor, NULL, &gpID3D11Buffer_ConstantBuffer_PP);
+		if (FAILED(hr))
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "gpID3D11Device::CreateBuffer FAILED Constant in initialize().\n");
+			fclose(gpFile);
+		}
+		else
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "gpID3D11Device::CreateBuffer SUCCEEDED for Constant in initialize().\n");
+			fclose(gpFile);
+		}
 	}
-
-	// CREATE VERTEX SHADER
-	hr = gpID3D11Device->CreatePixelShader(
-		pID3DBlob_PixelShaderCode->GetBufferPointer(),
-		pID3DBlob_PixelShaderCode->GetBufferSize(),
-		NULL,
-		&gpID3D11PixelShader);
-
-	if (FAILED(hr))
-	{
-		fopen_s(&gpFile, "Log.txt", "a+");
-		fprintf(gpFile, "ID3D11Device::createPixelShader FAILED in initialize().\n");
-		fclose(gpFile);
-	}
-	else
-	{
-		fopen_s(&gpFile, "Log.txt", "a+");
-		fprintf(gpFile, "ID3D11Device::createPixelShader SUCCEEDED in initialize().\n");
-		fclose(gpFile);
-	}
-
-	// SET THIS VERTEX SHADER IN VERTEX SHADER STAGE OF PIPE LINE
-	gpID3D11DeviceContext->PSSetShader(gpID3D11PixelShader, NULL, 0);
-
-	// CREATE INPUT LAYOUT
-	D3D11_INPUT_ELEMENT_DESC d3d11InputElementDesc[2];
-
-	ZeroMemory((void *)d3d11InputElementDesc, sizeof(D3D11_INPUT_ELEMENT_DESC) * _ARRAYSIZE(d3d11InputElementDesc));
-
-	d3d11InputElementDesc[0].SemanticName = "POSITION";
-	d3d11InputElementDesc[0].SemanticIndex = 0;
-	d3d11InputElementDesc[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	d3d11InputElementDesc[0].AlignedByteOffset = 0;
-	d3d11InputElementDesc[0].InputSlot = 0;
-	d3d11InputElementDesc[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	d3d11InputElementDesc[0].InstanceDataStepRate = 0;
-
-	d3d11InputElementDesc[1].SemanticName = "NORMAL";
-	d3d11InputElementDesc[1].SemanticIndex = 0;
-	d3d11InputElementDesc[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	d3d11InputElementDesc[1].AlignedByteOffset = 0;
-	d3d11InputElementDesc[1].InputSlot = 1;
-	d3d11InputElementDesc[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	d3d11InputElementDesc[1].InstanceDataStepRate = 0;
-
-	// CREATE INPUT LAYOUT
-	// INITIALIZE INPUT LAYOUT STRUCTURE
-	hr = gpID3D11Device->CreateInputLayout(d3d11InputElementDesc, _ARRAYSIZE(d3d11InputElementDesc), pID3DBlob_VertexShaderCode->GetBufferPointer(), pID3DBlob_VertexShaderCode->GetBufferSize(), &gpID3D11InputLayout);
-	if (FAILED(hr))
-	{
-		fopen_s(&gpFile, "Log.txt", "a+");
-		fprintf(gpFile, "ID3D11Device::CreateInputLayout FAILED in initialize().\n");
-		fclose(gpFile);
-	}
-	else
-	{
-		fopen_s(&gpFile, "Log.txt", "a+");
-		fprintf(gpFile, "ID3D11Device::CreateInputLayout SUCCEEDED in initialize().\n");
-		fclose(gpFile);
-	}
-
-	// SET THIS INPUT LAYOUT IN INPUT ASSEMBLY STET OF PIPELIE
-	gpID3D11DeviceContext->IASetInputLayout(gpID3D11InputLayout);
-
-	pID3DBlob_VertexShaderCode->Release();
-	pID3DBlob_VertexShaderCode = NULL;
-
-	pID3DBlob_PixelShaderCode->Release();
-	pID3DBlob_PixelShaderCode = NULL;
 
 	getSphereVertexData(sphere_vertices, sphere_normals, sphere_textures, sphere_elements);
 	gNumVertices = getNumberOfSphereVertices();
@@ -776,32 +1093,6 @@ HRESULT initialize(void)
 		fprintf(gpFile, "gpID3D11Device::CreateBuffer SUCCEEDED for NORMAL in initialize().\n");
 		fclose(gpFile);
 	}
-
-	// CONSTANT BUFFER
-	// A. INITIALIZE  BUFFER DESC
-	ZeroMemory((void *)&d3d11BufferDescriptor, sizeof(D3D11_BUFFER_DESC));
-
-	d3d11BufferDescriptor.Usage = D3D11_USAGE_DEFAULT;
-	d3d11BufferDescriptor.ByteWidth = sizeof(CBUFFER);
-	d3d11BufferDescriptor.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-
-	// B. CREATE THE BUFFER
-	hr = gpID3D11Device->CreateBuffer(&d3d11BufferDescriptor, NULL, &gpID3D11Buffer_ConstantBuffer);
-	if (FAILED(hr))
-	{
-		fopen_s(&gpFile, "Log.txt", "a+");
-		fprintf(gpFile, "gpID3D11Device::CreateBuffer FAILED Constant in initialize().\n");
-		fclose(gpFile);
-	}
-	else
-	{
-		fopen_s(&gpFile, "Log.txt", "a+");
-		fprintf(gpFile, "gpID3D11Device::CreateBuffer SUCCEEDED for Constant in initialize().\n");
-		fclose(gpFile);
-	}
-
-	// C. SET CONSTANT BUFFER IN VERTEX SHADER STAGE OF PIPELINE
-	gpID3D11DeviceContext->VSSetConstantBuffers(0, 1, &gpID3D11Buffer_ConstantBuffer);
 
 	// ENABALING RATSERIZER STATE
 	// A. INITAILIZE RASTERIZER INTERFACE
@@ -1055,7 +1346,36 @@ HRESULT resize(int width, int height)
 
 void display(void)
 {
-	// VARIABLE DECLARTIONS
+	if (bPerFragShader == FALSE)
+	{
+		// SET THIS VERTEX SHADER IN VERTEX SHADER STAGE OF PIPE LINE
+		gpID3D11DeviceContext->VSSetShader(gpID3D11VertexShader_PV, NULL, 0);
+
+		// SET THIS VERTEX SHADER IN VERTEX SHADER STAGE OF PIPE LINE
+		gpID3D11DeviceContext->PSSetShader(gpID3D11PixelShader_PV, NULL, 0);
+
+		// SET THIS INPUT LAYOUT IN INPUT ASSEMBLY STEP OF PIPELIE
+		gpID3D11DeviceContext->IASetInputLayout(gpID3D11InputLayout_PV);
+
+		//  SET CONSTANT BUFFER IN VERTEX SHADER STAGE OF PIPELINE
+		gpID3D11DeviceContext->VSSetConstantBuffers(0, 1, &gpID3D11Buffer_ConstantBuffer_PV);
+	}
+	else
+	{
+		// SET THIS INPUT LAYOUT IN INPUT ASSEMBLY STET OF PIPELIE
+		gpID3D11DeviceContext->IASetInputLayout(gpID3D11InputLayout_PP);
+
+		// SET THIS VERTEX SHADER IN VERTEX SHADER STAGE OF PIPE LINE
+		gpID3D11DeviceContext->PSSetShader(gpID3D11PixelShader_PP, NULL, 0);
+
+		// SET THIS VERTEX SHADER IN VERTEX SHADER STAGE OF PIPE LINE
+		gpID3D11DeviceContext->VSSetShader(gpID3D11VertexShader_PP, NULL, 0);
+
+		//  SET CONSTANT BUFFER IN VERTEX SHADER STAGE OF PIPELINE
+		gpID3D11DeviceContext->VSSetConstantBuffers(0, 1, &gpID3D11Buffer_ConstantBuffer_PP);
+
+		gpID3D11DeviceContext->PSSetConstantBuffers(0, 1, &gpID3D11Buffer_ConstantBuffer_PP);
+	}
 
 	// CODE
 	// CLEAR THE RTV USING CLEAR COLOR
@@ -1126,9 +1446,16 @@ void display(void)
 		constantBuffer.lightEnabled = 0;
 	}
 
-	// C. PUSH THEM INTO THE SHADER
-	gpID3D11DeviceContext->UpdateSubresource(gpID3D11Buffer_ConstantBuffer, 0, NULL, &constantBuffer, 0, 0);
-
+	if (bPerFragShader == FALSE)
+	{
+		// C. PUSH THEM INTO THE SHADER
+		gpID3D11DeviceContext->UpdateSubresource(gpID3D11Buffer_ConstantBuffer_PV, 0, NULL, &constantBuffer, 0, 0);
+	}
+	else
+	{
+		// C. PUSH THEM INTO THE SHADER
+		gpID3D11DeviceContext->UpdateSubresource(gpID3D11Buffer_ConstantBuffer_PP, 0, NULL, &constantBuffer, 0, 0);
+	}
 	// DRAW THE PRIMITIVE
 	gpID3D11DeviceContext->DrawIndexed(gNumElements, 0, 0);
 
@@ -1149,6 +1476,30 @@ void uninitialize(void)
 	void ToggleFullScreen(void);
 
 	// CODE
+	if (gpID3D11Buffer_ConstantBuffer_PP)
+	{
+		gpID3D11Buffer_ConstantBuffer_PP->Release();
+		gpID3D11Buffer_ConstantBuffer_PP = NULL;
+	}
+
+	if (gpID3D11InputLayout_PP)
+	{
+		gpID3D11InputLayout_PP->Release();
+		gpID3D11InputLayout_PP = NULL;
+	}
+
+	if (gpID3D11PixelShader_PP)
+	{
+		gpID3D11PixelShader_PP->Release();
+		gpID3D11PixelShader_PP = NULL;
+	}
+
+	if (gpID3D11VertexShader_PP)
+	{
+		gpID3D11VertexShader_PP->Release();
+		gpID3D11VertexShader_PP = NULL;
+	}
+
 	if (gpID3D11DepthStencilView)
 	{
 		gpID3D11DepthStencilView->Release();
@@ -1161,10 +1512,10 @@ void uninitialize(void)
 		gpID3D11RasterizerState = NULL;
 	}
 
-	if (gpID3D11Buffer_ConstantBuffer)
+	if (gpID3D11Buffer_ConstantBuffer_PV)
 	{
-		gpID3D11Buffer_ConstantBuffer->Release();
-		gpID3D11Buffer_ConstantBuffer = NULL;
+		gpID3D11Buffer_ConstantBuffer_PV->Release();
+		gpID3D11Buffer_ConstantBuffer_PV = NULL;
 	}
 
 	if (gpID3D11Buffer_NormalBuffer_Sphere)
@@ -1179,22 +1530,22 @@ void uninitialize(void)
 		gpID3D11Buffer_PositionBuffer_Sphere = NULL;
 	}
 
-	if (gpID3D11InputLayout)
+	if (gpID3D11InputLayout_PV)
 	{
-		gpID3D11InputLayout->Release();
-		gpID3D11InputLayout = NULL;
+		gpID3D11InputLayout_PV->Release();
+		gpID3D11InputLayout_PV = NULL;
 	}
 
-	if (gpID3D11PixelShader)
+	if (gpID3D11PixelShader_PV)
 	{
-		gpID3D11PixelShader->Release();
-		gpID3D11PixelShader = NULL;
+		gpID3D11PixelShader_PV->Release();
+		gpID3D11PixelShader_PV = NULL;
 	}
 
-	if (gpID3D11VertexShader)
+	if (gpID3D11VertexShader_PV)
 	{
-		gpID3D11VertexShader->Release();
-		gpID3D11VertexShader = NULL;
+		gpID3D11VertexShader_PV->Release();
+		gpID3D11VertexShader_PV = NULL;
 	}
 
 	if (gpID3D11RenderTargetView)
