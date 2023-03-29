@@ -1264,6 +1264,12 @@ void display(void)
 	gpIDXGISwapChain->Present(0, // NO NEED OF SYNCRONIZATION WITH MONITOR REFRESH RATE
 							  0	 // SWAP WITH ALL BUFFERS IN SWAP CHAIN
 	);
+
+	if (gpID3D11Buffer_TextureBuffer_Square)
+	{
+		gpID3D11Buffer_TextureBuffer_Square->Release();
+		gpID3D11Buffer_TextureBuffer_Square = NULL;
+	}
 }
 
 void update(void)
@@ -1305,12 +1311,6 @@ void uninitialize(void)
 	{
 		gpID3D11Buffer_ConstantBuffer->Release();
 		gpID3D11Buffer_ConstantBuffer = NULL;
-	}
-
-	if (gpID3D11Buffer_TextureBuffer_Square)
-	{
-		gpID3D11Buffer_TextureBuffer_Square->Release();
-		gpID3D11Buffer_TextureBuffer_Square = NULL;
 	}
 
 	if (gpID3D11Buffer_PositionBuffer_Square)
