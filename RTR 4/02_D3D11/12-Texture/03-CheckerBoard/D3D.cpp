@@ -642,15 +642,6 @@ HRESULT initialize(void)
 	pID3DBlob_PixelShaderCode->Release();
 	pID3DBlob_PixelShaderCode = NULL;
 
-	const float SquareVertices[] =
-		{
-			-1.0f, +1.0f, 0.0f,
-			+1.0f, +1.0f, 0.0f,
-			-1.0f, -1.0f, 0.0f,
-			-1.0f, -1.0f, 0.0f,
-			+1.0f, +1.0f, 0.0f,
-			+1.0f, -1.0f, 0.0f};
-
 	const float SquareTexCoord[] =
 		{
 			+0.0f, +0.0f,
@@ -661,40 +652,10 @@ HRESULT initialize(void)
 			+1.0f, +0.0f,
 			+1.0f, +1.0f};
 
-	// POSITION
-	// CREATE VERTEX BUFFER FOR ABOVE VERTEX POSITIONS
-	// A. INITIALIZE  BUFFER DESC
-	D3D11_BUFFER_DESC d3d11BufferDescriptor;
-	ZeroMemory((void *)&d3d11BufferDescriptor, sizeof(D3D11_BUFFER_DESC));
-
-	d3d11BufferDescriptor.Usage = D3D11_USAGE_DEFAULT;
-	d3d11BufferDescriptor.ByteWidth = sizeof(float) * _ARRAYSIZE(SquareVertices);
-	d3d11BufferDescriptor.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-
-	// B. INITIALIZE SUB RESOURCE DATA STRUCTURE TO PUT DATA INTO THE BUFFER
-	D3D11_SUBRESOURCE_DATA d3d11SubResourceData;
-	ZeroMemory((void *)&d3d11SubResourceData, sizeof(D3D11_SUBRESOURCE_DATA));
-
-	d3d11SubResourceData.pSysMem = SquareVertices;
-
-	// C. CREATE THE BUFFER
-	hr = gpID3D11Device->CreateBuffer(&d3d11BufferDescriptor, &d3d11SubResourceData, &gpID3D11Buffer_PositionBuffer_Square);
-	if (FAILED(hr))
-	{
-		fopen_s(&gpFile, "Log.txt", "a+");
-		fprintf(gpFile, "gpID3D11Device::CreateBuffer FAILED for Position in initialize().\n");
-		fclose(gpFile);
-	}
-	else
-	{
-		fopen_s(&gpFile, "Log.txt", "a+");
-		fprintf(gpFile, "gpID3D11Device::CreateBuffer SUCCEEDED for Position in initialize().\n");
-		fclose(gpFile);
-	}
-
 	// COLOR
 	// CREATE VERTEX BUFFER FOR ABOVE VERTEX COLORS
 	// A. INITIALIZE  BUFFER DESC
+	D3D11_BUFFER_DESC d3d11BufferDescriptor;
 	ZeroMemory((void *)&d3d11BufferDescriptor, sizeof(D3D11_BUFFER_DESC));
 
 	d3d11BufferDescriptor.Usage = D3D11_USAGE_DEFAULT;
@@ -702,6 +663,7 @@ HRESULT initialize(void)
 	d3d11BufferDescriptor.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 	// B. INITIALIZE SUB RESOURCE DATA STRUCTURE TO PUT DATA INTO THE BUFFER
+	D3D11_SUBRESOURCE_DATA d3d11SubResourceData;
 	ZeroMemory((void *)&d3d11SubResourceData, sizeof(D3D11_SUBRESOURCE_DATA));
 
 	d3d11SubResourceData.pSysMem = SquareTexCoord;
@@ -927,7 +889,6 @@ HRESULT loadD3DTexture(ID3D11ShaderResourceView **ppID3D11ShaderResourceView)
 
 	// LOCAL BARIABLES
 	HRESULT hr = S_OK;
-	;
 
 	// CODE
 	MakeCheckerBoard();
@@ -1109,54 +1070,189 @@ void display(void)
 	gpID3D11DeviceContext->ClearRenderTargetView(gpID3D11RenderTargetView, clearColor);
 
 	gpID3D11DeviceContext->ClearDepthStencilView(gpID3D11DepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+	{
+		// POSITION
+		const float SquareVertices[] =
+			{
+				-2.0f, +1.0f, 0.0f,
+				+0.0f, +1.0f, 0.0f,
+				-2.0f, -1.0f, 0.0f,
 
-	// SET POSITION BUFFER INTO IA STAGE IN PIPELINE
-	UINT stride = sizeof(float) * 3;
-	UINT offset = 0;
+				-2.0f, -1.0f, 0.0f,
+				+0.0f, +1.0f, 0.0f,
+				+0.0f, -1.0f, 0.0f};
 
-	gpID3D11DeviceContext->IASetVertexBuffers(0, 1, &gpID3D11Buffer_PositionBuffer_Square, &stride, &offset);
+		// CREATE VERTEX BUFFER FOR ABOVE VERTEX POSITIONS
+		// A. INITIALIZE  BUFFER DESC
+		D3D11_BUFFER_DESC d3d11BufferDescriptor;
+		ZeroMemory((void *)&d3d11BufferDescriptor, sizeof(D3D11_BUFFER_DESC));
 
-	// SET TEXCOORD BUFFER INTO IA STAGE IN PIPELINE
-	stride = sizeof(float) * 2;
-	offset = 0;
+		d3d11BufferDescriptor.Usage = D3D11_USAGE_DEFAULT;
+		d3d11BufferDescriptor.ByteWidth = sizeof(float) * _ARRAYSIZE(SquareVertices);
+		d3d11BufferDescriptor.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
-	gpID3D11DeviceContext->IASetVertexBuffers(1, 1, &gpID3D11Buffer_TextureBuffer_Square, &stride, &offset);
+		// B. INITIALIZE SUB RESOURCE DATA STRUCTURE TO PUT DATA INTO THE BUFFER
+		D3D11_SUBRESOURCE_DATA d3d11SubResourceData;
+		ZeroMemory((void *)&d3d11SubResourceData, sizeof(D3D11_SUBRESOURCE_DATA));
 
-	// SET PRIMITIVE TROPOLOGY IN IA STAGE
-	gpID3D11DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		d3d11SubResourceData.pSysMem = SquareVertices;
 
-	// TRANSFORMATION
-	// A.INITIALIZE MATRICES
-	XMMATRIX worldMatrix = XMMatrixIdentity();
-	XMMATRIX viewdMatrix = XMMatrixIdentity();
-	XMMATRIX translationMatrix = XMMatrixIdentity();
+		// C. CREATE THE BUFFER
+		HRESULT hr = gpID3D11Device->CreateBuffer(&d3d11BufferDescriptor, &d3d11SubResourceData, &gpID3D11Buffer_PositionBuffer_Square);
+		if (FAILED(hr))
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "gpID3D11Device::CreateBuffer FAILED for Position in initialize().\n");
+			fclose(gpFile);
+		}
+		else
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "gpID3D11Device::CreateBuffer SUCCEEDED for Position in initialize().\n");
+			fclose(gpFile);
+		}
 
-	translationMatrix = XMMatrixTranslation(0.0f, 0.0f, 4.0f);
+		// SET POSITION BUFFER INTO IA STAGE IN PIPELINE
+		UINT stride = sizeof(float) * 3;
+		UINT offset = 0;
 
-	worldMatrix = translationMatrix;
-	XMMATRIX wvpMatrix = worldMatrix * viewdMatrix * perspectiveProjectionMatrix;
+		gpID3D11DeviceContext->IASetVertexBuffers(0, 1, &gpID3D11Buffer_PositionBuffer_Square, &stride, &offset);
 
-	// B. PUT THEM INTO CONSTANT BUFFERS
-	CBUFFER constantBuffer;
-	ZeroMemory((void *)&constantBuffer, sizeof(CBUFFER));
-	constantBuffer.wordViewProjectionMatrix = wvpMatrix;
+		// SET TEXCOORD BUFFER INTO IA STAGE IN PIPELINE
+		stride = sizeof(float) * 2;
+		offset = 0;
 
-	// C. PUSH THEM INTO THE SHADER
-	gpID3D11DeviceContext->UpdateSubresource(gpID3D11Buffer_ConstantBuffer, 0, NULL, &constantBuffer, 0, 0);
+		gpID3D11DeviceContext->IASetVertexBuffers(1, 1, &gpID3D11Buffer_TextureBuffer_Square, &stride, &offset);
 
-	// SET SHADER VIEW INTO PIXEL SHADER
-	gpID3D11DeviceContext->PSSetShaderResources(0, 1, &gpID3D11ShaderResourceView_Texture);
+		// SET PRIMITIVE TROPOLOGY IN IA STAGE
+		gpID3D11DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	// SET SAMPLER STATE IN PIXEL SHADER
-	gpID3D11DeviceContext->PSSetSamplers(0, 1, &gpID3D11SamplerState_Texture);
+		// TRANSFORMATION
+		// A.INITIALIZE MATRICES
+		XMMATRIX worldMatrix = XMMatrixIdentity();
+		XMMATRIX viewdMatrix = XMMatrixIdentity();
+		XMMATRIX translationMatrix = XMMatrixIdentity();
 
-	// DRAW THE PRIMITIVE
-	gpID3D11DeviceContext->Draw(6, 0);
+		translationMatrix = XMMatrixTranslation(0.0f, 0.0f, 4.0f);
+
+		worldMatrix = translationMatrix;
+		XMMATRIX wvpMatrix = worldMatrix * viewdMatrix * perspectiveProjectionMatrix;
+
+		// B. PUT THEM INTO CONSTANT BUFFERS
+		CBUFFER constantBuffer;
+		ZeroMemory((void *)&constantBuffer, sizeof(CBUFFER));
+		constantBuffer.wordViewProjectionMatrix = wvpMatrix;
+
+		// C. PUSH THEM INTO THE SHADER
+		gpID3D11DeviceContext->UpdateSubresource(gpID3D11Buffer_ConstantBuffer, 0, NULL, &constantBuffer, 0, 0);
+
+		// SET SHADER VIEW INTO PIXEL SHADER
+		gpID3D11DeviceContext->PSSetShaderResources(0, 1, &gpID3D11ShaderResourceView_Texture);
+
+		// SET SAMPLER STATE IN PIXEL SHADER
+		gpID3D11DeviceContext->PSSetSamplers(0, 1, &gpID3D11SamplerState_Texture);
+
+		// DRAW THE PRIMITIVE
+		gpID3D11DeviceContext->Draw(6, 0);
+	}
+
+	{
+		// POSITION
+		const float SquareVerticesTwo[] =
+			{
+				1.0f, +1.0f, 0.0f,
+				+2.41421f, +1.0f, +1.41421f,
+				1.0f, -1.0f, 0.0f,
+
+				1.0f, -1.0f, 0.0f,
+				+2.41421f, +1.0f, +1.41421f,
+				+2.41421f, -1.0f, +1.41421f};
+
+		// CREATE VERTEX BUFFER FOR ABOVE VERTEX POSITIONS
+		// A. INITIALIZE  BUFFER DESC
+		D3D11_BUFFER_DESC d3d11BufferDescriptor;
+		ZeroMemory((void *)&d3d11BufferDescriptor, sizeof(D3D11_BUFFER_DESC));
+
+		d3d11BufferDescriptor.Usage = D3D11_USAGE_DEFAULT;
+		d3d11BufferDescriptor.ByteWidth = sizeof(float) * _ARRAYSIZE(SquareVerticesTwo);
+		d3d11BufferDescriptor.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+		// B. INITIALIZE SUB RESOURCE DATA STRUCTURE TO PUT DATA INTO THE BUFFER
+		D3D11_SUBRESOURCE_DATA d3d11SubResourceData;
+		ZeroMemory((void *)&d3d11SubResourceData, sizeof(D3D11_SUBRESOURCE_DATA));
+
+		d3d11SubResourceData.pSysMem = SquareVerticesTwo;
+
+		// C. CREATE THE BUFFER
+		HRESULT hr = gpID3D11Device->CreateBuffer(&d3d11BufferDescriptor, &d3d11SubResourceData, &gpID3D11Buffer_PositionBuffer_Square);
+		if (FAILED(hr))
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "gpID3D11Device::CreateBuffer FAILED for Position in initialize().\n");
+			fclose(gpFile);
+		}
+		else
+		{
+			fopen_s(&gpFile, "Log.txt", "a+");
+			fprintf(gpFile, "gpID3D11Device::CreateBuffer SUCCEEDED for Position in initialize().\n");
+			fclose(gpFile);
+		}
+
+		// SET POSITION BUFFER INTO IA STAGE IN PIPELINE
+		UINT stride = sizeof(float) * 3;
+		UINT offset = 0;
+
+		gpID3D11DeviceContext->IASetVertexBuffers(0, 1, &gpID3D11Buffer_PositionBuffer_Square, &stride, &offset);
+
+		// SET TEXCOORD BUFFER INTO IA STAGE IN PIPELINE
+		stride = sizeof(float) * 2;
+		offset = 0;
+
+		gpID3D11DeviceContext->IASetVertexBuffers(1, 1, &gpID3D11Buffer_TextureBuffer_Square, &stride, &offset);
+
+		// SET PRIMITIVE TROPOLOGY IN IA STAGE
+		gpID3D11DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		// TRANSFORMATION
+		// A.INITIALIZE MATRICES
+		XMMATRIX worldMatrix = XMMatrixIdentity();
+		XMMATRIX viewdMatrix = XMMatrixIdentity();
+		XMMATRIX translationMatrix = XMMatrixIdentity();
+
+		translationMatrix = XMMatrixTranslation(0.0, 0.0f, 4.0f);
+
+		worldMatrix = translationMatrix;
+		XMMATRIX wvpMatrix = worldMatrix * viewdMatrix * perspectiveProjectionMatrix;
+
+		// B. PUT THEM INTO CONSTANT BUFFERS
+		CBUFFER constantBuffer;
+		ZeroMemory((void *)&constantBuffer, sizeof(CBUFFER));
+		constantBuffer.wordViewProjectionMatrix = wvpMatrix;
+
+		// C. PUSH THEM INTO THE SHADER
+		gpID3D11DeviceContext->UpdateSubresource(gpID3D11Buffer_ConstantBuffer, 0, NULL, &constantBuffer, 0, 0);
+
+		// SET SHADER VIEW INTO PIXEL SHADER
+		gpID3D11DeviceContext->PSSetShaderResources(0, 1, &gpID3D11ShaderResourceView_Texture);
+
+		// SET SAMPLER STATE IN PIXEL SHADER
+		gpID3D11DeviceContext->PSSetSamplers(0, 1, &gpID3D11SamplerState_Texture);
+
+		// DRAW THE PRIMITIVE
+		gpID3D11DeviceContext->Draw(6, 0);
+	}
+	// 2nd Quad
 
 	// SWAP BUFFFERS BY PRESENTING THEM
 	gpIDXGISwapChain->Present(0, // NO NEED OF SYNCRONIZATION WITH MONITOR REFRESH RATE
 							  0	 // SWAP WITH ALL BUFFERS IN SWAP CHAIN
 	);
+
+	if (gpID3D11Buffer_PositionBuffer_Square)
+	{
+		gpID3D11Buffer_PositionBuffer_Square->Release();
+		gpID3D11Buffer_PositionBuffer_Square = NULL;
+	}
 }
 
 void update(void)
@@ -1211,12 +1307,6 @@ void uninitialize(void)
 	{
 		gpID3D11Buffer_TextureBuffer_Square->Release();
 		gpID3D11Buffer_TextureBuffer_Square = NULL;
-	}
-
-	if (gpID3D11Buffer_PositionBuffer_Square)
-	{
-		gpID3D11Buffer_PositionBuffer_Square->Release();
-		gpID3D11Buffer_PositionBuffer_Square = NULL;
 	}
 
 	if (gpID3D11InputLayout)
