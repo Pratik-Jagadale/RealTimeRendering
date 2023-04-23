@@ -69,8 +69,6 @@ XMMATRIX perspectiveProjectionMatrix;
 
 // const char* gszLogFile
 
-float angleTriangle = 0.0f;
-
 // ENTRY POINT FUNCTION
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
 {
@@ -1112,9 +1110,6 @@ void display(void)
 void update(void)
 {
 	// CODE
-	angleTriangle = angleTriangle + 0.1f;
-	if (angleTriangle >= 360.0f)
-		angleTriangle = angleTriangle - 360.0f;
 }
 
 void uninitialize(void)

@@ -1,0 +1,4 @@
+#include "D3D.h"
+
+MYICON ICON p_logo.ico
+SMILEY_DDS_TEXTURE RCDATA Smiley.dds
