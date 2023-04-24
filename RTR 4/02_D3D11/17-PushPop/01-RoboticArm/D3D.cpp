@@ -52,7 +52,7 @@ ID3D11PixelShader *gpID3D11PixelShader = NULL;
 ID3D11InputLayout *gpID3D11InputLayout = NULL;
 ID3D11Buffer *gpID3D11Buffer_PositionBuffer_Sphere = NULL;
 ID3D11Buffer *gpID3D11Buffer_NormalBuffer_Sphere = NULL;
-ID3D11Buffer* gpID3D11Buffer_IndexBuffer_Sphere = NULL;
+ID3D11Buffer *gpID3D11Buffer_IndexBuffer_Sphere = NULL;
 ID3D11Buffer *gpID3D11Buffer_ConstantBuffer = NULL;
 ID3D11RasterizerState *gpID3D11RasterizerState = NULL;
 
@@ -73,6 +73,12 @@ float sphere_textures[764];
 unsigned short sphere_elements[2280];
 int gNumVertices;
 int gNumElements;
+
+#define MODEL_VIEW_MATRIX_STACK 32
+XMMATRIX matrixStack[MODEL_VIEW_MATRIX_STACK]; //
+int matrixStackTop = -1;
+
+int year = 0, day = 0;
 
 // ENTRY POINT FUNCTION
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdLine, int iCmdShow)
@@ -228,6 +234,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		case 'F':
 			ToggleFullScreen();
 			break;
+		case 'd':
+			day = (day + 6) % 360;
+			break;
+
+		case 'D':
+			day = (day - 6) % 360;
+			break;
+
+		case 'y':
+			day = (day + 6) % 360;
+			year = (year + 3) % 360;
+			break;
+
+		case 'Y':
+			day = (day - 6) % 360;
+			year = (year - 3) % 360;
+			break;
 
 		case 27:
 			if (gpFile)
@@ -312,6 +335,7 @@ HRESULT initialize(void)
 	// FUNCTION DECLARATIONS
 	HRESULT printD3DInfo();
 	HRESULT resize(int width, int height);
+	void initializeMatrixStack(void);
 
 	// VARIABLE DECLARTIONS
 	D3D_DRIVER_TYPE d3dDriverType;
@@ -624,7 +648,6 @@ HRESULT initialize(void)
 	gNumVertices = getNumberOfSphereVertices();
 	gNumElements = getNumberOfSphereElements();
 
-
 	// POSITION
 	// CREATE VERTEX BUFFER FOR ABOVE VERTEX POSITIONS
 	// A. INITIALIZE  BUFFER DESC
@@ -632,7 +655,7 @@ HRESULT initialize(void)
 	ZeroMemory((void *)&d3d11BufferDescriptor, sizeof(D3D11_BUFFER_DESC));
 
 	d3d11BufferDescriptor.Usage = D3D11_USAGE_DEFAULT;
-	d3d11BufferDescriptor.ByteWidth = gNumVertices * 3 * sizeof(float) ;
+	d3d11BufferDescriptor.ByteWidth = gNumVertices * 3 * sizeof(float);
 	d3d11BufferDescriptor.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 	// B. INITIALIZE SUB RESOURCE DATA STRUCTURE TO PUT DATA INTO THE BUFFER
@@ -688,14 +711,14 @@ HRESULT initialize(void)
 	// INDEX
 	// CREATE VERTEX BUFFER FOR ABOVE VERTEX INDEX
 	// A. INITIALIZE  BUFFER DESC
-	ZeroMemory((void*)&d3d11BufferDescriptor, sizeof(D3D11_BUFFER_DESC));
+	ZeroMemory((void *)&d3d11BufferDescriptor, sizeof(D3D11_BUFFER_DESC));
 
 	d3d11BufferDescriptor.Usage = D3D11_USAGE_DEFAULT;
 	d3d11BufferDescriptor.ByteWidth = gNumElements * 3 * sizeof(float);
 	d3d11BufferDescriptor.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 	// B. INITIALIZE SUB RESOURCE DATA STRUCTURE TO PUT DATA INTO THE BUFFER
-	ZeroMemory((void*)&d3d11SubResourceData, sizeof(D3D11_SUBRESOURCE_DATA));
+	ZeroMemory((void *)&d3d11SubResourceData, sizeof(D3D11_SUBRESOURCE_DATA));
 
 	d3d11SubResourceData.pSysMem = sphere_elements;
 
@@ -713,7 +736,6 @@ HRESULT initialize(void)
 		fprintf(gpFile, "gpID3D11Device::CreateBuffer SUCCEEDED for NORMAL in initialize().\n");
 		fclose(gpFile);
 	}
-
 
 	// CONSTANT BUFFER
 	// A. INITIALIZE  BUFFER DESC
@@ -800,6 +822,10 @@ HRESULT initialize(void)
 		fprintf(gpFile, "resize() Successful in initialize()...\n");
 		fclose(gpFile);
 	}
+
+	// Initializing Model View Matrix Stack
+	initializeMatrixStack();
+
 	return (hr);
 }
 
@@ -993,6 +1019,9 @@ HRESULT resize(int width, int height)
 
 void display(void)
 {
+	XMMATRIX popMatrix(void);
+	void pushMatrix(XMMATRIX matrix);
+
 	// VARIABLE DECLARTIONS
 
 	// CODE
@@ -1013,37 +1042,85 @@ void display(void)
 
 	gpID3D11DeviceContext->IASetVertexBuffers(1, 1, &gpID3D11Buffer_NormalBuffer_Sphere, &stride, &offset);
 
-
 	// SET ELEMENT BUFFER INTO IA STAGE IN PIPELINE
 	stride = sizeof(float) * 3;
 	offset = 0;
 
-	gpID3D11DeviceContext->IASetIndexBuffer(gpID3D11Buffer_IndexBuffer_Sphere, DXGI_FORMAT_R16_UINT/* RESP. SHORT */, 0);
+	gpID3D11DeviceContext->IASetIndexBuffer(gpID3D11Buffer_IndexBuffer_Sphere, DXGI_FORMAT_R16_UINT /* RESP. SHORT */, 0);
 
 	// SET PRIMITIVE TROPOLOGY IN IA STAGE
 	gpID3D11DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// TRANSFORMATION
 	// A.INITIALIZE MATRICES
+	XMMATRIX translationMatrix = XMMatrixIdentity();
+	XMMATRIX rotationMatrix_Year = XMMatrixIdentity();
+	XMMATRIX rotationMatrix_Day = XMMatrixIdentity();
+	XMMATRIX scaleMatrix = XMMatrixIdentity();
+
 	XMMATRIX worldMatrix = XMMatrixIdentity();
 	XMMATRIX viewdMatrix = XMMatrixIdentity();
-	XMMATRIX translationMatrix = XMMatrixIdentity();
 
-	translationMatrix = XMMatrixTranslation(0.0f, 0.0f, 1.5f);
+	XMVECTOR eye = XMVectorSet(0.0f, 0.0f, 2.0f, 1.0f);
+	XMVECTOR center = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	XMVECTOR Up = XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f);
 
-	worldMatrix = translationMatrix;
-	XMMATRIX wvpMatrix = worldMatrix * viewdMatrix * perspectiveProjectionMatrix;
+	viewdMatrix = XMMatrixLookAtLH(eye, center, Up);
 
-	// B. PUT THEM INTO CONSTANT BUFFERS
-	CBUFFER constantBuffer;
-	ZeroMemory((void *)&constantBuffer, sizeof(CBUFFER));
-	constantBuffer.wordViewProjectionMatrix = wvpMatrix;
+	pushMatrix(viewdMatrix);
+	{
+		pushMatrix(worldMatrix);
+		{
 
-	// C. PUSH THEM INTO THE SHADER
-	gpID3D11DeviceContext->UpdateSubresource(gpID3D11Buffer_ConstantBuffer, 0, NULL, &constantBuffer, 0, 0);
+			translationMatrix = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 
-	// DRAW THE PRIMITIVE
-	gpID3D11DeviceContext->DrawIndexed(gNumElements, 0, 0);
+			worldMatrix = translationMatrix;
+
+			XMMATRIX wvpMatrix = worldMatrix * viewdMatrix * perspectiveProjectionMatrix;
+
+			// B. PUT THEM INTO CONSTANT BUFFERS
+			CBUFFER constantBuffer;
+			ZeroMemory((void *)&constantBuffer, sizeof(CBUFFER));
+			constantBuffer.wordViewProjectionMatrix = wvpMatrix;
+
+			// C. PUSH THEM INTO THE SHADER
+			gpID3D11DeviceContext->UpdateSubresource(gpID3D11Buffer_ConstantBuffer, 0, NULL, &constantBuffer, 0, 0);
+
+			// DRAW THE PRIMITIVE
+			gpID3D11DeviceContext->DrawIndexed(gNumElements, 0, 0);
+		}
+		worldMatrix = popMatrix();
+
+		pushMatrix(worldMatrix);
+		{
+
+			rotationMatrix_Year = XMMatrixRotationY(XMConvertToRadians(year));
+			translationMatrix = XMMatrixTranslation(1.0f, 0.0f, 0.0f);
+			rotationMatrix_Day = XMMatrixRotationY(XMConvertToRadians(day));
+
+			scaleMatrix = XMMatrixScaling(0.2f, 0.2f, 0.2f);
+
+			worldMatrix = rotationMatrix_Year * worldMatrix;
+			worldMatrix = translationMatrix * worldMatrix;
+			worldMatrix = rotationMatrix_Day * worldMatrix;
+			worldMatrix = scaleMatrix * worldMatrix;
+
+			XMMATRIX wvpMatrix = worldMatrix * viewdMatrix * perspectiveProjectionMatrix;
+
+			// B. PUT THEM INTO CONSTANT BUFFERS
+			CBUFFER constantBuffer;
+			ZeroMemory((void *)&constantBuffer, sizeof(CBUFFER));
+			constantBuffer.wordViewProjectionMatrix = wvpMatrix;
+
+			// C. PUSH THEM INTO THE SHADER
+			gpID3D11DeviceContext->UpdateSubresource(gpID3D11Buffer_ConstantBuffer, 0, NULL, &constantBuffer, 0, 0);
+
+			// DRAW THE PRIMITIVE
+			gpID3D11DeviceContext->DrawIndexed(gNumElements, 0, 0);
+		}
+		worldMatrix = popMatrix();
+	}
+	viewdMatrix = popMatrix();
 
 	// SWAP BUFFFERS BY PRESENTING THEM
 	gpIDXGISwapChain->Present(0, // NO NEED OF SYNCRONIZATION WITH MONITOR REFRESH RATE
@@ -1054,7 +1131,6 @@ void display(void)
 void update(void)
 {
 	// CODE
-	
 }
 
 void uninitialize(void)
@@ -1151,21 +1227,57 @@ void uninitialize(void)
 	}
 }
 
-/*
-1.Declare DSV Interface Depth Stencile View
+void initializeMatrixStack(void)
 {
-// in to resize
-2.
-	a. Intialize Texture 2d descriptor
-	b. Cerate 2D Texture as local Depth Buffer
-	c. Creatr depth stencic view using above depth buffer
-3
-	a. uninitilize old dsv
-	b. initilize depth stencil descripator
-	c. now create depth DSV using above dpth buffer and descriptor
-4. Uninitilize local depth buffer
-5. use this dsv as 3 Param to OMSetTarget
+	// code
+	matrixStackTop = 0;
+	for (int i = matrixStackTop; i < MODEL_VIEW_MATRIX_STACK; i++)
+		matrixStack[i] = XMMatrixIdentity();
 }
-6. clear the depth stencil view
-7. Release the dsv
-*/
+
+void pushMatrix(XMMATRIX matrix)
+{
+	// Function Prototype
+	void uninitialize(void);
+
+	//	Code
+	fprintf(gpFile, "Before Push Stack Top = %d\n", matrixStackTop);
+
+	if (matrixStackTop > (MODEL_VIEW_MATRIX_STACK - 1))
+	{
+		fprintf(gpFile, "ERROR - EXCEEDED MATRIX STACK LIMIT:\n");
+		uninitialize();
+	}
+
+	matrixStack[matrixStackTop] = matrix;
+	matrixStackTop++;
+
+	fprintf(gpFile, "After Push Stack Top = %d\n", matrixStackTop);
+}
+
+XMMATRIX popMatrix(void)
+{
+	// function ptototype
+	void uninitialize(void);
+
+	// variable declartions
+	XMMATRIX matrix;
+
+	// code
+	fprintf(gpFile, "Before Pop Staqck Top = %d\n", matrixStackTop);
+
+	if (matrixStackTop < 0)
+	{
+		fprintf(gpFile, "ERROR : MATRIX STACK EMPTY!\n");
+		uninitialize();
+	}
+
+	matrixStack[matrixStackTop] = XMMatrixIdentity();
+	matrixStackTop--;
+
+	matrix = matrixStack[matrixStackTop];
+
+	fprintf(gpFile, "After Pop Staqck Top = %d\n", matrixStackTop);
+
+	return (matrix);
+}
