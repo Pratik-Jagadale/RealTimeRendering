@@ -11,12 +11,12 @@ This is a curated collection of projects developed as part of my **Real-Time Ren
 ## 🎯 Project Highlights
 
 ### 🧱 Core Topics Covered
-- 🔺 **OpenGL** — Forward & Post-Processing Pipelines  
+- 🔺 **OpenGL** — Fixed Function & Programble Pipeline
 - 🎮 **DirectX11** — Real-time 3D rendering on Windows  
 - ⚡ **HPP (High-Performance Parallelism)** using **CUDA & OpenCL**  
-- 🔄 **CUDA–OpenGL Interop** — Zero-copy data sharing for simulation/visualization  
-- 🧠 **Data Structures for Real-Time Rendering**  
-- 🌐 **Cross-Platform Builds**: Windows, Linux, MacOS, Android, iOS, WebAssembly
+- 🔄 **CUDA–OpenGL Interop** 
+- 🧠 **Data Structures**  
+- 🌐 **Cross-Platform Builds**: Windows, Linux, MacOS, Android, iOS, Web
 
 ---
 
